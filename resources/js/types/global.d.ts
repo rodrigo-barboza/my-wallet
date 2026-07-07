@@ -5,3 +5,10 @@ declare module '*.vue' {
     const component: DefineComponent<object, object, unknown>
     export default component
 }
+
+import { route as ziggyRoute } from 'ziggy-js';
+
+declare global {
+    /* eslint-disable no-var */
+    var route: typeof ziggyRoute;
+}

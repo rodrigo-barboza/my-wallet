@@ -13,6 +13,7 @@ Essa aplicação é uma aplicação que tem como objetivo gerenciar finanças pe
 - Que ele possa atualizar dados cadastraos
 - Que ele possa receber notificações (via email) quando a fatura de um cartão for fechada e quando estiver 1 dia do vencimento e quando estiver no dia do vencimento
 - que ele possa receber notificações (via email) quando um pagamento estiver próximo ao vencimento
+- Essa aplicação toda deve ser no idioma PT-BR
 
 # App/Actions guidelines
 

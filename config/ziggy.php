@@ -3,8 +3,10 @@
 return [
     'only' => [
         'home',
-        'login',
         'register',
-        'dashboard',
+        'register.store',
+        'verification.notice',
+        'verification.verify',
+        'verification.send',
     ],
 ];
