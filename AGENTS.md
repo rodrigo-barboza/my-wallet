@@ -1,6 +1,19 @@
 <laravel-boost-guidelines>
 === .ai/app.actions rules ===
 
+# Application summary
+Essa aplicação é uma aplicação que tem como objetivo gerenciar finanças pessoais
+- Ela permite que um usuário se cadastre
+- Que ele possa gerenciar compras realizadas
+- Que ele possa gerenciar pagamentos recorrentes
+- Que ele possa gerenciar pagamentos avulsos
+- Que ele tenha uma dashboard exibindo os dados do mês atual assim que fizer login
+- Que ele possa gerenciar cartões
+- Que ele possa visualizar os gastos por mês do ano inteiro
+- Que ele possa atualizar dados cadastraos
+- Que ele possa receber notificações (via email) quando a fatura de um cartão for fechada e quando estiver 1 dia do vencimento e quando estiver no dia do vencimento
+- que ele possa receber notificações (via email) quando um pagamento estiver próximo ao vencimento
+
 # App/Actions guidelines
 
 - This application uses the Action pattern and prefers for much logic to live in reusable and composable Action classes.
@@ -51,14 +64,19 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
 - php - 8.4
+- inertiajs/inertia-laravel (INERTIA_LARAVEL) - v3
 - laravel/framework (LARAVEL) - v13
 - laravel/prompts (PROMPTS) - v0
+- tightenco/ziggy (ZIGGY) - v2
 - laravel/boost (BOOST) - v2
 - laravel/mcp (MCP) - v0
 - laravel/pail (PAIL) - v1
 - laravel/pint (PINT) - v1
 - pestphp/pest (PEST) - v4
 - phpunit/phpunit (PHPUNIT) - v12
+- @inertiajs/vue3 (INERTIA_VUE) - v3
+- tailwindcss (TAILWINDCSS) - v4
+- vue (VUE) - v3
 
 ## Skills Activation
 
@@ -146,6 +164,29 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - Laravel can be deployed using [Laravel Cloud](https://cloud.laravel.com/), which is the fastest way to deploy and scale production Laravel applications.
 
+=== inertia-laravel/core rules ===
+
+# Inertia
+
+- Inertia creates fully client-side rendered SPAs without modern SPA complexity, leveraging existing server-side patterns.
+- Components live in `resources/js/Pages` (unless specified in `vite.config.js`). Use `Inertia::render()` for server-side routing instead of Blade views.
+- ALWAYS use `search-docs` tool for version-specific Inertia documentation and updated code examples.
+- IMPORTANT: Activate `inertia-vue-development` when working with Inertia Vue client-side patterns.
+
+# Inertia v3
+
+- Use all Inertia features from v1, v2, and v3. Check the documentation before making changes to ensure the correct approach.
+- New v3 features: standalone HTTP requests (`useHttp` hook), optimistic updates with automatic rollback, layout props (`useLayoutProps` hook), instant visits, simplified SSR via `@inertiajs/vite` plugin, custom exception handling for error pages.
+- Carried over from v2: deferred props, infinite scroll, merging props, polling, prefetching, once props, flash data.
+- When using deferred props, add an empty state with a pulsing or animated skeleton.
+- Axios has been removed. Use the built-in XHR client with interceptors, or install Axios separately if needed.
+- `Inertia::lazy()` / `LazyProp` has been removed. Use `Inertia::optional()` instead.
+- Prop types (`Inertia::optional()`, `Inertia::defer()`, `Inertia::merge()`) work inside nested arrays with dot-notation paths.
+- SSR works automatically in Vite dev mode with `@inertiajs/vite` - no separate Node.js server needed during development.
+- Event renames: `invalid` is now `httpException`, `exception` is now `networkError`.
+- `router.cancel()` replaced by `router.cancelAll()`.
+- The `future` configuration namespace has been removed - all v2 future options are now always enabled.
+
 === laravel/core rules ===
 
 # Do Things the Laravel Way
@@ -191,5 +232,20 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - The `{name}` argument should not include the test suite directory. Use `php artisan make:test --pest SomeFeatureTest` instead of `php artisan make:test --pest Feature/SomeFeatureTest`.
 - Run tests: `php artisan test --compact` or filter: `php artisan test --compact --filter=testName`.
 - Do NOT delete tests without approval.
+
+=== inertia-vue/core rules ===
+
+# Inertia + Vue
+
+Vue components must have a single root element.
+- IMPORTANT: Activate `inertia-vue-development` when working with Inertia Vue client-side patterns.
+
+# Financial Domain Rules
+
+- Monetary values must never use float. Use integer cents or decimal database fields.
+- Financial records belong to users and must always be scoped by authenticated user.
+- Avoid deleting financial records unless explicitly required.
+- All financial calculations should be centralized in domain actions/services.
+- Notifications should be handled asynchronously using jobs when possible.
 
 </laravel-boost-guidelines>
