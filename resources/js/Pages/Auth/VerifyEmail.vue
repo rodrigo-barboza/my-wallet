@@ -9,6 +9,9 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card'
+import AppLayout from '@/Layouts/AppLayout.vue'
+
+defineOptions({ layout: AppLayout })
 
 const page = usePage()
 
@@ -22,7 +25,7 @@ function resend() {
 </script>
 
 <template>
-    <div class="flex min-h-screen items-center justify-center bg-background p-4">
+    <div class="flex flex-1 items-center justify-center">
         <Card class="w-full max-w-md">
             <CardHeader class="text-center">
                 <CardTitle class="text-2xl">Verifique seu e-mail</CardTitle>
