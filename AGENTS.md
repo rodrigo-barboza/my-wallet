@@ -1,59 +1,4 @@
 <laravel-boost-guidelines>
-=== .ai/app.actions rules ===
-
-# Application summary
-Essa aplicação é uma aplicação que tem como objetivo gerenciar finanças pessoais
-- Ela permite que um usuário se cadastre
-- Que ele possa gerenciar compras realizadas
-- Que ele possa gerenciar pagamentos recorrentes
-- Que ele possa gerenciar pagamentos avulsos
-- Que ele tenha uma dashboard exibindo os dados do mês atual assim que fizer login
-- Que ele possa gerenciar cartões
-- Que ele possa visualizar os gastos por mês do ano inteiro
-- Que ele possa atualizar dados cadastraos
-- Que ele possa receber notificações (via email) quando a fatura de um cartão for fechada e quando estiver 1 dia do vencimento e quando estiver no dia do vencimento
-- que ele possa receber notificações (via email) quando um pagamento estiver próximo ao vencimento
-- Essa aplicação toda deve ser no idioma PT-BR
-
-# App/Actions guidelines
-
-- This application uses the Action pattern and prefers for much logic to live in reusable and composable Action classes.
-- Actions live in `app/Actions`, they are named based on what they do, with no suffix.
-- Actions will be called from many different places: jobs, commands, HTTP requests, API requests, MCP requests, and more.
-- Create dedicated Action classes for business logic with a single `handle()` method.
-- Inject dependencies via constructor using private properties.
-- Create new actions with `php artisan make:action "{name}" --no-interaction`
-- Wrap complex operations in `DB::transaction()` within actions when multiple models are involved.
-- Some actions won't require dependencies via `__construct` and they can use just the `handle()` method.
-
-<!-- Example action class -->
-```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Actions;
-
-final readonly class CreateFavorite
-{
-    public function __construct(private FavoriteService $favorites)
-    {
-        //
-    }
-
-    public function handle(User $user, string $favorite): bool
-    {
-        return $this->favorites->add($user, $favorite);
-    }
-}
-```
-
-=== .ai/general rules ===
-
-# General Guidelines
-
-- Don't include any superfluous PHP Annotations, except ones that start with `@` for typing variables.
-
 === foundation rules ===
 
 # Laravel Boost Guidelines
@@ -78,6 +23,39 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - @inertiajs/vue3 (INERTIA_VUE) - v3
 - tailwindcss (TAILWINDCSS) - v4
 - vue (VUE) - v3
+
+## Application Context
+
+Esta aplicação é um gerenciador de finanças pessoais em PT-BR com as seguintes funcionalidades:
+
+- **Autenticação e Cadastro**: Usuário pode se cadastrar e gerenciar seus dados cadastrais.
+- **Dashboard**: Exibe os dados financeiros do mês atual assim que o usuário faz login.
+- **Compras**: Gerenciamento de compras realizadas.
+- **Pagamentos Recorrentes**: Gerenciamento de pagamentos que se repetem mensalmente.
+- **Pagamentos Avulsos**: Gerenciamento de pagamentos eventuais/únicos.
+- **Cartões**: Gerenciamento de cartões de crédito/débito.
+- **Visão Anual**: Visualização de gastos por mês ao longo do ano inteiro.
+- **Notificações por E-mail**:
+  - Quando a fatura de um cartão for fechada.
+  - Quando estiver 1 dia antes do vencimento da fatura.
+  - No dia do vencimento da fatura.
+  - Quando um pagamento estiver próximo ao vencimento.
+
+## UI & Design
+
+- **Componentes**: Utilize exclusivamente componentes **shadcn-vue** (`shadcn-vue`) disponíveis em `@/components/ui/`. Os componentes já instalados são: `Button`, `Card`, `Input`, `Label`.
+- **Novos componentes**: Para adicionar novos componentes shadcn, execute `npx shadcn-vue add <componente>` (ex: `npx shadcn-vue add dialog`, `npx shadcn-vue add table`). Sempre prefira adicionar via CLI em vez de criar manualmente.
+- **Estilo**: Configuração atual: `reka-nova` (style), `geist-sans` (font), `neutral` (baseColor), `lucide` (ícones).
+- **Utilitário**: Use `cn()` de `@/lib/utils` para mesclar classes Tailwind.
+- **Padrão visual**:
+  - Layout limpo e arejado, com bastante espaçamento (`space-y-*`, `gap-*`).
+  - Cards centralizados para formulários e autenticação.
+  - Botões com `w-full` em formulários e ações principais.
+  - Mensagens de erro em `text-sm text-destructive`.
+  - Use `bg-background` para fundos de página.
+  - Aproveite variáveis CSS do shadcn (`--primary`, `--destructive`, `--muted`, etc.).
+- **Layout**: Deve ser responsivo, utilizando as classes `min-h-screen`, `p-4`, e `max-w-*` para containeres.
+- **Idioma**: Toda interface em **PT-BR**.
 
 ## Skills Activation
 
@@ -247,13 +225,5 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 Vue components must have a single root element.
 - IMPORTANT: Activate `inertia-vue-development` when working with Inertia Vue client-side patterns.
-
-# Financial Domain Rules
-
-- Monetary values must never use float. Use integer cents or decimal database fields.
-- Financial records belong to users and must always be scoped by authenticated user.
-- Avoid deleting financial records unless explicitly required.
-- All financial calculations should be centralized in domain actions/services.
-- Notifications should be handled asynchronously using jobs when possible.
 
 </laravel-boost-guidelines>
