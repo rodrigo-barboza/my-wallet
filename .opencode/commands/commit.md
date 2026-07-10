@@ -25,3 +25,4 @@ Rules:
 5. Process groups sequentially (one commit per step), stopping after each
 6. Ask me before making a commit that touches 4+ files — it might be too large
 7. If there's only one file changed, one commit is fine
+8. NEVER run `git push` — this command is for committing only

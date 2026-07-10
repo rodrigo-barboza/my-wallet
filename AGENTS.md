@@ -55,6 +55,8 @@ Esta aplicação é um gerenciador de finanças pessoais em PT-BR com as seguint
   - Use `bg-background` para fundos de página.
   - Aproveite variáveis CSS do shadcn (`--primary`, `--destructive`, `--muted`, etc.).
 - **Layout**: Deve ser responsivo, utilizando as classes `min-h-screen`, `p-4`, e `max-w-*` para containeres.
+- **Responsividade**: Toda página deve ser responsiva (mobile-first), testada nas breakpoints 375px (mobile), 768px (tablet) e 1024px+ (desktop). Use `w-full` em cards e containers para ocupar toda largura em mobile e `max-w-*` para limitar em desktop. Ajuste padding com `p-4 sm:p-6 lg:p-8`. Nunca permita rolagem horizontal ou conteúdo cortado em telas pequenas.
+- **Ziggy**: As rotas usadas no frontend (via `route()`) precisam estar listadas no `only` do `config/ziggy.php`. Sempre que criar uma nova rota usada pelo frontend, adicione-a lá.
 - **Idioma**: Toda interface em **PT-BR**.
 
 ## Skills Activation
