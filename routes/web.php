@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -10,11 +13,18 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware('guest')->group(function () {
+    Route::get('login', [LoginController::class, 'create'])->name('login');
+    Route::post('login', [LoginController::class, 'store'])->name('login.store');
+
     Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
     Route::post('register', [RegisteredUserController::class, 'store'])->name('register.store');
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    Route::post('logout', LogoutController::class)->name('logout');
+
     Route::get('verify-email', [EmailVerificationController::class, 'notice'])->name('verification.notice');
     Route::get('verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])
         ->middleware('signed')
