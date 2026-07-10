@@ -1,17 +1,27 @@
 ---
-description: Stage changes and create a conventional commit in English. Run this when the user says "commit" or wants to create a git commit.
+description: Commit changes with conventional commits in English, grouped by related files
 ---
 
-Create a git commit following **Conventional Commits** format (`type(scope): description`), written in **English**.
+Analyze the current git state and make commits using conventional commit format.
 
-1. Run `git status` and `git diff` to understand the current changes.
-2. If nothing is staged, show the user what files were modified/deleted/created and ask if they want to stage **all** or **specific files**.
-3. **Before committing**, sort all import statements alphabetically in every `.vue` and `.ts` file that was modified. Group them: external packages first, then relative imports (`@/` or `./`). Within each group, sort by the import source path alphabetically.
-4. Once files are staged, ask the user for the **commit type** (feat, fix, chore, refactor, docs, style, test, perf, ci, build, revert) and **scope** (optional). Suggest these based on the diff.
-5. Generate a concise commit message in English following the Conventional Commits spec.
-6. Show the proposed message to the user and ask for confirmation before committing.
-7. Run `git commit -m "type(scope): description"` to execute.
+Context:
+- Git status: !`git status`
+- Git diff summary: !`git diff --stat`
 
-If `$ARGUMENTS` is provided, use it as the commit message directly (skip steps 3-4, just confirm and commit).
+Group files into logical commits following these conventions:
+- **feat**: new features (e.g., `feat: add user registration form`)
+- **fix**: bug fixes (e.g., `fix: resolve date parsing in purchases`)
+- **docs**: documentation changes (e.g., `docs: update AGENTS.md with UI guidelines`)
+- **chore**: maintenance tasks (e.g., `chore: add shadcn dialog component`)
+- **refactor**: code refactoring (e.g., `refactor: extract card footer into component`)
+- **style**: formatting/style changes (e.g., `style: format Register.vue indentation`)
+- **test**: test additions/modifications (e.g., `test: add Register page assertions`)
 
-Do NOT use `-m` with multiline strings. If a body is needed, use `git commit` without `-m` so the editor opens.
+Rules:
+1. Group only related files together in the same commit — never lump unrelated changes
+2. Each commit must make sense independently
+3. Commit messages in English only, imperative mood, no period at end
+4. For each group, run: `git add <files>` then `git commit -m "<type>: <message>"`
+5. Process groups sequentially (one commit per step), stopping after each
+6. Ask me before making a commit that touches 4+ files — it might be too large
+7. If there's only one file changed, one commit is fine
