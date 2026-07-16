@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
-final class PurchaseController
+final readonly class PurchaseController
 {
     public function index(): Response
     {
