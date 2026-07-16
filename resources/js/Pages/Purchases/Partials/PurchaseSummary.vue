@@ -62,13 +62,13 @@ function toTitleCase(str: string): string {
                     </thead>
                     <tbody>
                         <tr
-                            v-for="item in items"
-                            :key="item.name"
+                            v-for="(item, index) in items"
+                            :key="item.name ?? `individual-${index}`"
                             class="border-b transition-colors"
                             :class="item.items[0].card_id ? '' : 'cursor-pointer hover:bg-muted/30'"
                             @click="openDetails(item)"
                         >
-                            <td class="px-4 py-3 font-medium">{{ toTitleCase(item.name) }}</td>
+                            <td class="px-4 py-3 font-medium">{{ item.name ? toTitleCase(item.name) : 'Sem nome' }}</td>
                             <td class="px-4 py-3 text-muted-foreground">
                                 <template v-if="Array.isArray(item.dates)">
                                     <span v-for="(day, index) in item.dates" :key="index">
