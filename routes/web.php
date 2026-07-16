@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PurchaseController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -40,4 +41,6 @@ Route::middleware('auth')->group(function () {
     Route::post('cards/bulk-destroy', [CardController::class, 'bulkDestroy'])->name('cards.bulk-destroy');
 
     Route::resource('purchases', PurchaseController::class)->except(['create', 'edit']);
+
+    Route::patch('/invoices/{invoice}/mark-as-paid', [InvoiceController::class, 'markAsPaid'])->name('invoices.mark-as-paid');
 });
