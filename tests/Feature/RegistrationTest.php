@@ -25,7 +25,7 @@ it('authenticated users cannot view the registration page', function () {
 
     $response = get(route('register'));
 
-    $response->assertRedirect(route('home'));
+    $response->assertRedirect(route('dashboard'));
 });
 
 it('guests can register with valid data', function () {
@@ -182,7 +182,7 @@ it('authenticated users cannot register', function () {
         'password_confirmation' => 'password123',
     ]);
 
-    $response->assertRedirect(route('home'));
+    $response->assertRedirect(route('dashboard'));
 
     assertDatabaseMissing('users', ['email' => 'outro@example.com']);
 });
