@@ -87,6 +87,6 @@ final class PurchaseController
                     : $items->pluck('payment_day')->filter()->values(),
                 'items' => $items->values(),
             ];
-        })->values();
+        })->values()->all();
     }
 }
