@@ -1,0 +1,134 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import type { Card } from '@/types/card';
+import { Button } from '@/components/ui/button';
+import Checkbox from '@/Components/Checkbox.vue';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { CreditCard, Trash2 } from '@lucide/vue';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+const props = defineProps<{
+    cards: Card[];
+}>();
+
+const emit = defineEmits<{
+    edit: [card: Card];
+    delete: [card: Card];
+    bulkDelete: [ids: number[]];
+}>();
+
+const selectedIds = ref<number[]>([]);
+
+const allSelected = computed((): boolean =>
+    selectedIds.value.length === props.cards.length && props.cards.length > 0
+);
+
+function toggleSelectAll(): void {
+    if (allSelected.value) {
+        selectedIds.value = [];
+        return;
+    };
+
+    selectedIds.value = props.cards.map((c) => c.id);
+};
+
+function toggleSelect(id: number): void {
+    const index = selectedIds.value.indexOf(id);
+
+    if (index === -1) {
+        selectedIds.value.push(id);
+        return;
+    };
+
+    selectedIds.value.splice(index, 1);
+};
+
+function handleBulkDelete(): void {
+    if (selectedIds.value.length === 0) {
+        return;
+    };
+
+    emit('bulkDelete', selectedIds.value);
+    selectedIds.value = [];
+};
+</script>
+
+<template>
+    <div class="space-y-4">
+        <div v-if="selectedIds.length > 0" class="flex items-center gap-2">
+            <span class="text-sm text-muted-foreground">{{ selectedIds.length }} selecionado(s)</span>
+            <Button variant="destructive" size="sm" @click="handleBulkDelete">
+                <Trash2 class="mr-2 size-4" />
+                Excluir selecionados
+            </Button>
+        </div>
+
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead class="w-12">
+                        <Checkbox :checked="allSelected" @update:checked="toggleSelectAll" />
+                    </TableHead>
+                    <TableHead>Cor</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Fechamento</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Notificações</TableHead>
+                    <TableHead class="text-right">Ações</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                <TableRow v-for="card in cards" :key="card.id">
+                    <TableCell>
+                        <Checkbox :checked="selectedIds.includes(card.id)" @update:checked="toggleSelect(card.id)" />
+                    </TableCell>
+                    <TableCell>
+                        <div class="flex items-center gap-2">
+                            <div class="size-4 rounded-full" :style="{ backgroundColor: card.color }" />
+                            <CreditCard class="size-4" :style="{ color: card.color }" />
+                        </div>
+                    </TableCell>
+                    <TableCell class="font-medium">{{ card.name }}</TableCell>
+                    <TableCell>Dia {{ card.closing_day }}</TableCell>
+                    <TableCell>Dia {{ card.due_day }}</TableCell>
+                    <TableCell>
+                        <TooltipProvider>
+                            <div class="flex gap-1">
+                                <Tooltip>
+                                    <TooltipTrigger as-child>
+                                        <span :class="[
+                                            'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+                                            card.notify_closing ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500',
+                                        ]">
+                                            Fechamento
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Notificação de fechamento {{ card.notify_closing ? 'ativa' : 'inativa' }}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger as-child>
+                                        <span :class="[
+                                            'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+                                            card.notify_due ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500',
+                                        ]">
+                                            Vencimento
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Notificação de vencimento {{ card.notify_due ? 'ativa' : 'inativa' }}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </div>
+                        </TooltipProvider>
+                    </TableCell>
+                    <TableCell class="text-right">
+                        <Button variant="ghost" size="sm" @click="emit('edit', card)">Editar</Button>
+                        <Button variant="ghost" size="sm" @click="emit('delete', card)">Excluir</Button>
+                    </TableCell>
+                </TableRow>
+            </TableBody>
+        </Table>
+    </div>
+</template>

@@ -12,5 +12,10 @@ return [
         'verification.notice',
         'verification.verify',
         'verification.send',
+        'cards.index',
+        'cards.store',
+        'cards.update',
+        'cards.destroy',
+        'cards.bulk-destroy',
     ],
 ];

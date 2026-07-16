@@ -6,7 +6,12 @@ import { Button } from '@/components/ui/button'
 <template>
     <div class="flex min-h-screen flex-col bg-muted/30">
         <header class="flex items-center justify-between border-b bg-background px-4 py-3 sm:px-6 lg:px-8">
-            <h1 class="text-lg font-semibold">Minha Carteira</h1>
+            <div class="flex items-center gap-4">
+                <h1 class="text-lg font-semibold">Minha Carteira</h1>
+                <Link :href="route('cards.index')" class="text-sm font-medium text-muted-foreground hover:text-foreground">
+                    Cartões
+                </Link>
+            </div>
             <Button variant="outline" as-child>
                 <Link :href="route('logout')" method="post">Sair</Link>
             </Button>

@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\CardController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -30,4 +31,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('signed')
         ->name('verification.verify');
     Route::post('verify-email/send', [EmailVerificationController::class, 'send'])->name('verification.send');
+
+    Route::get('cards', [CardController::class, 'index'])->name('cards.index');
+    Route::post('cards', [CardController::class, 'store'])->name('cards.store');
+    Route::put('cards/{card}', [CardController::class, 'update'])->name('cards.update');
+    Route::delete('cards/{card}', [CardController::class, 'destroy'])->name('cards.destroy');
+    Route::post('cards/bulk-destroy', [CardController::class, 'bulkDestroy'])->name('cards.bulk-destroy');
 });
