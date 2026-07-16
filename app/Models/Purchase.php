@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\PurchaseStatus;
 use App\Enums\PurchaseType;
 use Database\Factories\PurchaseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -43,8 +44,12 @@ class Purchase extends Model
             return false;
         }
 
+        if ($this->is_recurring) {
+            return true;
+        }
+
         if (! $this->installments_total) {
-            return $this->is_recurring;
+            return $monthsDiff === 0;
         }
 
         return $monthsDiff < $this->installments_total;
@@ -60,5 +65,22 @@ class Purchase extends Model
                     + ($month - $this->start_date->month);
 
         return $monthsDiff + 1;
+    }
+
+    public function getStatusAttribute(): string
+    {
+        $status = $this->attributes['status'] ?? null;
+
+        if ($status === PurchaseStatus::Paga->value) {
+            return PurchaseStatus::Paga->value;
+        }
+
+        $paymentDay = $this->payment_day ?? $this->start_date->day;
+
+        if (now()->day > $paymentDay) {
+            return PurchaseStatus::Atrasada->value;
+        }
+
+        return PurchaseStatus::Aberta->value;
     }
 }
