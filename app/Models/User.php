@@ -29,6 +29,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Card::class);
     }
 
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(Purchase::class);
+    }
+
     /**
      * Get the attributes that should be cast.
      *
