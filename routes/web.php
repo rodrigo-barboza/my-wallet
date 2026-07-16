@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PurchaseController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -37,4 +38,6 @@ Route::middleware('auth')->group(function () {
     Route::put('cards/{card}', [CardController::class, 'update'])->name('cards.update');
     Route::delete('cards/{card}', [CardController::class, 'destroy'])->name('cards.destroy');
     Route::post('cards/bulk-destroy', [CardController::class, 'bulkDestroy'])->name('cards.bulk-destroy');
+
+    Route::resource('purchases', PurchaseController::class)->except(['create', 'edit']);
 });

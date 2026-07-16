@@ -17,5 +17,10 @@ return [
         'cards.update',
         'cards.destroy',
         'cards.bulk-destroy',
+        'purchases.index',
+        'purchases.store',
+        'purchases.show',
+        'purchases.update',
+        'purchases.destroy',
     ],
 ];
