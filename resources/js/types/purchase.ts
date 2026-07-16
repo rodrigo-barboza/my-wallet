@@ -12,6 +12,7 @@ export interface Purchase {
     installments_total: number | null;
     start_date: string;
     notes: string | null;
+    status: string;
     created_at: string;
     updated_at: string;
     card?: Card;
