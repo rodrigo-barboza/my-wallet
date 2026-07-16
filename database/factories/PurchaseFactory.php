@@ -24,6 +24,7 @@ class PurchaseFactory extends Factory
             'installments_total' => null,
             'start_date' => fake()->dateTimeThisYear(),
             'notes' => null,
+            'status' => 'aberta',
         ];
     }
 
