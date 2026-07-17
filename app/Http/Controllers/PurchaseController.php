@@ -125,6 +125,7 @@ final readonly class PurchaseController
                 'name' => $card->name,
                 'total' => $items->sum('amount'),
                 'dates' => ['closing' => $card->closing_day, 'due' => $card->due_day],
+                'status' => $items->first()->status,
                 'items' => $items->values(),
             ];
         })->values();
@@ -134,6 +135,7 @@ final readonly class PurchaseController
                 'name' => $purchase->name,
                 'total' => $purchase->amount,
                 'dates' => [$purchase->payment_day],
+                'status' => $purchase->status,
                 'items' => [$purchase],
             ];
         });
