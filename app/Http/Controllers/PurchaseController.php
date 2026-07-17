@@ -199,8 +199,13 @@ final readonly class PurchaseController
 
     private function resolveIndividualStatus(Purchase $purchase, int $paymentDay, int $month, int $year, Carbon $now): string
     {
-        if ($purchase->status === 'paga') {
-            return 'paga';
+        if ($purchase->paid_at) {
+            $paidMonth = (int) $purchase->paid_at->month;
+            $paidYear = (int) $purchase->paid_at->year;
+
+            if ($month === $paidMonth && $year === $paidYear) {
+                return 'paga';
+            }
         }
 
         if ($year < $now->year || ($year === $now->year && $month < $now->month)) {

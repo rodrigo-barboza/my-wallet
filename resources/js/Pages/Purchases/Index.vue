@@ -81,7 +81,7 @@ function nextMonth(): void {
 
         <Card>
             <CardHeader class="pb-2">
-                <CardTitle class="text-base">Total do Mês</CardTitle>
+                <CardTitle class="text-sm font-semibold text-muted-foreground">Total do Mês</CardTitle>
             </CardHeader>
             <CardContent class="space-y-4">
                 <div class="text-3xl font-bold">{{ formatCurrency(totalAmount) }}</div>
@@ -94,10 +94,10 @@ function nextMonth(): void {
                     </div>
                     <div class="flex items-center justify-between text-sm">
                         <span class="text-muted-foreground">
-                            <span class="font-medium text-green-600">{{ formatCurrency(paidAmount) }}</span> pago
+                            <span class="font-semibold text-green-600">{{ formatCurrency(paidAmount) }}</span> pago
                         </span>
                         <span class="text-muted-foreground">
-                            <span class="font-medium text-destructive">{{ formatCurrency(pendingAmount) }}</span> falta
+                            <span class="font-semibold text-destructive">{{ formatCurrency(pendingAmount) }}</span> falta
                         </span>
                     </div>
                 </div>
