@@ -133,7 +133,7 @@ function unmarkAsPaid(): void {
                 </div>
 
                 <Button
-                    v-if="purchase?.status === 'aberta' || purchase?.status === 'atrasada'"
+                    v-if="purchase?.status !== 'paga'"
                     variant="outline"
                     class="w-full cursor-pointer"
                     @click="markAsPaid"
