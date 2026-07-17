@@ -81,6 +81,26 @@ final readonly class PurchaseController
         return to_route('purchases.index');
     }
 
+    public function markAsPaid(Purchase $purchase): RedirectResponse
+    {
+        Gate::authorize('update', $purchase);
+
+        if ($purchase->card_id) {
+            $invoice = Invoice::where('card_id', $purchase->card_id)
+                ->where('month', $purchase->start_date->month)
+                ->where('year', $purchase->start_date->year)
+                ->first();
+
+            if ($invoice) {
+                $invoice->update(['status' => 'paga']);
+            }
+        } else {
+            $purchase->update(['status' => 'paga']);
+        }
+
+        return back();
+    }
+
     private function ensureInvoiceExists(Purchase $purchase): void
     {
         if (! $purchase->card_id) {

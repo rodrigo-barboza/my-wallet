@@ -2,6 +2,7 @@
 
 use App\Enums\PurchaseType;
 use App\Models\Card;
+use App\Models\Invoice;
 use App\Models\Purchase;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -10,6 +11,7 @@ use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\assertDatabaseMissing;
 use function Pest\Laravel\delete;
 use function Pest\Laravel\get;
+use function Pest\Laravel\patch;
 use function Pest\Laravel\post;
 use function Pest\Laravel\put;
 
@@ -250,4 +252,59 @@ it('groups credit card purchases correctly', function () {
     $response = get(route('purchases.index', ['month' => 7, 'year' => 2024]));
 
     $response->assertSuccessful();
+});
+
+it('marks individual purchase as paid', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $purchase = Purchase::factory()->create([
+        'user_id' => $user->id,
+        'status' => 'aberta',
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase))->assertRedirect();
+
+    assertDatabaseHas(Purchase::class, [
+        'id' => $purchase->id,
+        'status' => 'paga',
+    ]);
+});
+
+it('marks card purchase invoice as paid', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+    $card = Card::factory()->create(['user_id' => $user->id]);
+
+    $purchase = Purchase::factory()->forCard($card)->create([
+        'user_id' => $user->id,
+        'start_date' => '2024-07-01',
+    ]);
+
+    Invoice::factory()->create([
+        'user_id' => $user->id,
+        'card_id' => $card->id,
+        'month' => 7,
+        'year' => 2024,
+        'status' => 'fechada',
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase))->assertRedirect();
+
+    assertDatabaseHas(Invoice::class, [
+        'card_id' => $card->id,
+        'month' => 7,
+        'year' => 2024,
+        'status' => 'paga',
+    ]);
+});
+
+it('user cannot mark other users purchase as paid', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $this->actingAs($user);
+
+    $purchase = Purchase::factory()->create(['user_id' => $otherUser->id]);
+
+    patch(route('purchases.mark-as-paid', $purchase))->assertStatus(403);
 });

@@ -8,7 +8,9 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Card as CardComponent, CardContent } from '@/components/ui/card';
-import { CreditCard } from '@lucide/vue';
+import { CreditCard, Check } from '@lucide/vue';
+import { router } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
 import StatusBadge from '@/Components/StatusBadge.vue';
 
 const props = defineProps<{
@@ -42,6 +44,16 @@ const typeLabels: Record<string, string> = {
     financing: 'Financiamento',
     person: 'Pagamento para pessoa',
 };
+
+function markAsPaid(): void {
+    if (!props.purchaseSummary?.items[0]) return;
+    router.patch(route('purchases.mark-as-paid', props.purchaseSummary.items[0].id), {}, {
+        onSuccess: () => {
+            emit('update:open', false);
+            router.get(route('purchases.index'));
+        },
+    });
+}
 </script>
 
 <template>
@@ -92,6 +104,16 @@ const typeLabels: Record<string, string> = {
                     <span class="text-sm font-medium text-muted-foreground">Total</span>
                     <span class="text-lg font-bold">{{ formatCurrency(purchaseSummary.total) }}</span>
                 </div>
+
+                <Button
+                    v-if="purchaseSummary?.status === 'aberta' || purchaseSummary?.status === 'atrasada'"
+                    variant="outline"
+                    class="w-full"
+                    @click="markAsPaid"
+                >
+                    <Check class="mr-2 size-4" />
+                    Marcar como pago
+                </Button>
             </div>
         </DialogContent>
     </Dialog>

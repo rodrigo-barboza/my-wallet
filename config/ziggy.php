@@ -22,6 +22,7 @@ return [
         'purchases.show',
         'purchases.update',
         'purchases.destroy',
+        'purchases.mark-as-paid',
         'invoices.mark-as-paid',
     ],
 ];

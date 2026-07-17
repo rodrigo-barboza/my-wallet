@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
     Route::post('cards/bulk-destroy', [CardController::class, 'bulkDestroy'])->name('cards.bulk-destroy');
 
     Route::resource('purchases', PurchaseController::class)->except(['create', 'edit']);
+    Route::patch('/purchases/{purchase}/mark-as-paid', [PurchaseController::class, 'markAsPaid'])->name('purchases.mark-as-paid');
 
     Route::patch('/invoices/{invoice}/mark-as-paid', [InvoiceController::class, 'markAsPaid'])->name('invoices.mark-as-paid');
 });
