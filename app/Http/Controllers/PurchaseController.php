@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\PurchaseRequest;
 use App\Models\Invoice;
 use App\Models\Purchase;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -24,7 +25,7 @@ final readonly class PurchaseController
             ->get()
             ->filter(fn ($p) => $p->isActiveInMonth($year, $month));
 
-        $summary = $this->buildSummary($purchases);
+        $summary = $this->buildSummary($purchases, $month, $year);
 
         $cards = auth()->user()->cards()->latest()->get();
 
@@ -111,35 +112,63 @@ final readonly class PurchaseController
         );
     }
 
-    private function buildSummary($purchases): array
+    private function buildSummary($purchases, int $month, int $year): array
     {
+        $now = now();
+
         $cardPurchases = $purchases->filter(fn ($p) => $p->card_id !== null);
         $individualPurchases = $purchases->filter(fn ($p) => $p->card_id === null);
 
         $grouped = $cardPurchases->groupBy('card_id');
 
-        $summary = $grouped->map(function ($items) {
+        $summary = $grouped->map(function ($items) use ($month, $year) {
             $card = $items->first()->card;
+            $invoice = Invoice::where('card_id', $card->id)
+                ->where('month', $month)
+                ->where('year', $year)
+                ->first();
+
+            $status = $invoice?->status ?? 'aberta';
 
             return [
                 'name' => $card->name,
                 'total' => $items->sum('amount'),
                 'dates' => ['closing' => $card->closing_day, 'due' => $card->due_day],
-                'status' => $items->first()->status,
+                'status' => $status,
                 'items' => $items->values(),
             ];
         })->values();
 
-        $individualPurchases->each(function ($purchase) use (&$summary) {
+        $individualPurchases->each(function ($purchase) use (&$summary, $month, $year, $now) {
+            $paymentDay = $purchase->payment_day ?? $purchase->start_date->day;
+            $status = $this->resolveIndividualStatus($purchase, $paymentDay, $month, $year, $now);
+
             $summary[] = [
                 'name' => $purchase->name,
                 'total' => $purchase->amount,
-                'dates' => [$purchase->payment_day],
-                'status' => $purchase->status,
+                'dates' => [$paymentDay],
+                'status' => $status,
                 'items' => [$purchase],
             ];
         });
 
         return $summary->all();
+    }
+
+    private function resolveIndividualStatus(Purchase $purchase, int $paymentDay, int $month, int $year, Carbon $now): string
+    {
+        if ($purchase->status === 'paga') {
+            return 'paga';
+        }
+
+        if ($year < $now->year || ($year === $now->year && $month < $now->month)) {
+            return 'atrasada';
+        }
+
+        if ($year === $now->year && $month === $now->month) {
+            return $now->day > $paymentDay ? 'atrasada' : 'aberta';
+        }
+
+        return 'aberta';
     }
 }
