@@ -25,6 +25,7 @@ class Purchase extends Model
         'is_recurring' => 'boolean',
         'amount' => 'decimal:2',
         'start_date' => 'date',
+        'paid_at' => 'datetime',
     ];
 
     public function name(): Attribute
