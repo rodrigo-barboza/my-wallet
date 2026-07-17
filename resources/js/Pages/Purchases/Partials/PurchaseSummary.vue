@@ -52,28 +52,21 @@ function toTitleCase(str: string): string {
 
 <template>
     <div class="space-y-3">
-        <div v-if="items.length === 0" class="py-8 text-center text-muted-foreground">
+        <div v-if="items.length === 0" class="text-center text-muted-foreground">
             Nenhuma compra neste mês
         </div>
 
         <template v-for="(item, index) in items" :key="item.name ?? `individual-${index}`">
             <!-- Card purchase (grouped by card) -->
-            <CardComponent
-                v-if="item.items[0].card_id"
+            <CardComponent v-if="item.items[0].card_id"
                 class="relative cursor-pointer overflow-hidden transition-colors hover:bg-muted/30"
-                @click="openCardDetails(item)"
-            >
-                <div
-                    class="absolute inset-x-0 top-0 h-2"
-                    :style="{ backgroundColor: item.items[0].card?.color ?? '#6b7280' }"
-                />
+                @click="openCardDetails(item)">
+                <div class="absolute inset-x-0 top-0 h-2"
+                    :style="{ backgroundColor: item.items[0].card?.color ?? '#6b7280' }" />
                 <CardHeader class="pb-2">
                     <CardTitle class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <CreditCard
-                                class="size-5"
-                                :style="{ color: item.items[0].card?.color ?? '#6b7280' }"
-                            />
+                            <CreditCard class="size-5" :style="{ color: item.items[0].card?.color ?? '#6b7280' }" />
                             {{ item.name }}
                         </div>
                         <StatusBadge v-if="item.status" :status="item.status" />
@@ -90,28 +83,23 @@ function toTitleCase(str: string): string {
             </CardComponent>
 
             <!-- Individual purchase -->
-            <CardComponent
-                v-else
-                class="cursor-pointer transition-colors hover:bg-muted/30"
-                @click="openIndividualDetails(item)"
-            >
-                <CardContent class="flex items-center justify-between p-4">
-                    <div class="flex items-center gap-3">
-                        <component
-                            :is="typeIcons[item.items[0].type] ?? ShoppingCart"
-                            class="size-5 text-muted-foreground"
-                        />
-                        <div>
-                            <div class="font-medium">
-                                {{ item.name ? toTitleCase(item.name) : 'Sem nome' }}
-                            </div>
-                            <div class="text-sm text-muted-foreground">
-                                Dia {{ item.dates[0] }}
-                            </div>
+            <CardComponent v-else class="cursor-pointer transition-colors hover:bg-muted/30"
+                @click="openIndividualDetails(item)">
+                <CardHeader class="pb-2">
+                    <CardTitle class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <component :is="typeIcons[item.items[0].type] ?? ShoppingCart"
+                                class="size-5 text-muted-foreground" />
+                            {{ item.name ? toTitleCase(item.name) : 'Sem nome' }}
                         </div>
-                    </div>
-                    <div class="flex items-center gap-3">
                         <StatusBadge v-if="item.status" :status="item.status" />
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-muted-foreground">
+                            Dia {{ item.dates[0] }}
+                        </span>
                         <span class="font-semibold">{{ formatCurrency(item.total) }}</span>
                     </div>
                 </CardContent>
@@ -119,13 +107,7 @@ function toTitleCase(str: string): string {
         </template>
     </div>
 
-    <PurchaseDetailsModal
-        v-model:open="showDetailsModal"
-        :purchase="selectedPurchase"
-    />
+    <PurchaseDetailsModal v-model:open="showDetailsModal" :purchase="selectedPurchase" />
 
-    <CardPurchaseDetailsModal
-        v-model:open="showCardDetailsModal"
-        :purchase-summary="selectedCardPurchase"
-    />
+    <CardPurchaseDetailsModal v-model:open="showCardDetailsModal" :purchase-summary="selectedCardPurchase" />
 </template>
