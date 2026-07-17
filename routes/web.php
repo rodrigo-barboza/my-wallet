@@ -43,6 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('purchases', PurchaseController::class)->except(['create', 'edit']);
     Route::patch('/purchases/{purchase}/mark-as-paid', [PurchaseController::class, 'markAsPaid'])->name('purchases.mark-as-paid');
     Route::patch('/purchases/{purchase}/unmark-as-paid', [PurchaseController::class, 'unmarkAsPaid'])->name('purchases.unmark-as-paid');
+    Route::post('/purchases/reorder', [PurchaseController::class, 'reorder'])->name('purchases.reorder');
 
     Route::patch('/invoices/{invoice}/mark-as-paid', [InvoiceController::class, 'markAsPaid'])->name('invoices.mark-as-paid');
     Route::patch('/invoices/{invoice}/unmark-as-paid', [InvoiceController::class, 'unmarkAsPaid'])->name('invoices.unmark-as-paid');

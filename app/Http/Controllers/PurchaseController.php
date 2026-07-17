@@ -47,7 +47,9 @@ final readonly class PurchaseController
 
         $this->ensureInvoiceExists($purchase);
 
-        return to_route('purchases.index')->with('flash', ['message' => 'Compra criada com sucesso!', 'type' => 'success']);
+        Inertia::flash('toast', ['message' => 'Compra criada com sucesso!', 'type' => 'success']);
+
+        return to_route('purchases.index');
     }
 
     public function show(Purchase $purchase): Response
@@ -69,7 +71,9 @@ final readonly class PurchaseController
 
         $this->ensureInvoiceExists($purchase);
 
-        return to_route('purchases.index')->with('flash', ['message' => 'Compra atualizada com sucesso!', 'type' => 'success']);
+        Inertia::flash('toast', ['message' => 'Compra atualizada com sucesso!', 'type' => 'success']);
+
+        return to_route('purchases.index');
     }
 
     public function destroy(Purchase $purchase): RedirectResponse
@@ -78,7 +82,9 @@ final readonly class PurchaseController
 
         $purchase->delete();
 
-        return to_route('purchases.index')->with('flash', ['message' => 'Compra excluída com sucesso!', 'type' => 'success']);
+        Inertia::flash('toast', ['message' => 'Compra excluída com sucesso!', 'type' => 'success']);
+
+        return to_route('purchases.index');
     }
 
     public function markAsPaid(Purchase $purchase): RedirectResponse
@@ -98,7 +104,9 @@ final readonly class PurchaseController
             $purchase->update(['status' => 'paga', 'paid_at' => now()]);
         }
 
-        return to_route('purchases.index')->with('flash', ['message' => 'Marcado como pago!', 'type' => 'success']);
+        Inertia::flash('toast', ['message' => 'Marcado como pago!', 'type' => 'success']);
+
+        return to_route('purchases.index');
     }
 
     public function unmarkAsPaid(Purchase $purchase): RedirectResponse
@@ -118,7 +126,23 @@ final readonly class PurchaseController
             $purchase->update(['status' => 'aberta', 'paid_at' => null]);
         }
 
-        return to_route('purchases.index')->with('flash', ['message' => 'Pagamento desmarcado!', 'type' => 'success']);
+        Inertia::flash('toast', ['message' => 'Pagamento desmarcado!', 'type' => 'success']);
+
+        return to_route('purchases.index');
+    }
+
+    public function reorder(): RedirectResponse
+    {
+        $data = request()->validate([
+            'order' => ['required', 'array'],
+            'order.*' => ['required', 'string'],
+        ]);
+
+        auth()->user()->update(['purchase_order' => $data['order']]);
+
+        Inertia::flash('toast', ['message' => 'Ordem salva!', 'type' => 'success']);
+
+        return back();
     }
 
     private function ensureInvoiceExists(Purchase $purchase): void

@@ -24,6 +24,7 @@ return [
         'purchases.destroy',
         'purchases.mark-as-paid',
         'purchases.unmark-as-paid',
+        'purchases.reorder',
         'invoices.mark-as-paid',
         'invoices.unmark-as-paid',
     ],
