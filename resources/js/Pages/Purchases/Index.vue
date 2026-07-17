@@ -79,32 +79,30 @@ function nextMonth(): void {
             </Button>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Card>
-                <CardHeader class="pb-2">
-                    <CardTitle class="text-sm font-medium text-muted-foreground">Total do Mês</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div class="text-2xl font-bold">{{ formatCurrency(totalAmount) }}</div>
-                </CardContent>
-            </Card>
-            <Card class="border-green-200 bg-green-50/50">
-                <CardHeader class="pb-2">
-                    <CardTitle class="text-sm font-medium text-green-700">Pago</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div class="text-2xl font-bold text-green-700">{{ formatCurrency(paidAmount) }}</div>
-                </CardContent>
-            </Card>
-            <Card class="border-red-200 bg-red-50/50">
-                <CardHeader class="pb-2">
-                    <CardTitle class="text-sm font-medium text-red-700">Falta</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div class="text-2xl font-bold text-red-700">{{ formatCurrency(pendingAmount) }}</div>
-                </CardContent>
-            </Card>
-        </div>
+        <Card>
+            <CardHeader class="pb-2">
+                <CardTitle class="text-base">Total do Mês</CardTitle>
+            </CardHeader>
+            <CardContent class="space-y-4">
+                <div class="text-3xl font-bold">{{ formatCurrency(totalAmount) }}</div>
+                <div class="space-y-2">
+                    <div class="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                            class="h-full rounded-full bg-green-500 transition-all"
+                            :style="{ width: totalAmount > 0 ? `${(paidAmount / totalAmount) * 100}%` : '0%' }"
+                        />
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-muted-foreground">
+                            <span class="font-medium text-green-600">{{ formatCurrency(paidAmount) }}</span> pago
+                        </span>
+                        <span class="text-muted-foreground">
+                            <span class="font-medium text-destructive">{{ formatCurrency(pendingAmount) }}</span> falta
+                        </span>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
 
         <PurchaseSummary :items="summary" />
 
