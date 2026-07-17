@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Purchase, PurchaseSummaryItem } from '@/types/purchase';
+import type { PurchaseSummaryItem } from '@/types/purchase';
 import {
     Dialog,
     DialogContent,
@@ -8,9 +8,9 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Card as CardComponent, CardContent } from '@/components/ui/card';
-import { CreditCard, Check } from '@lucide/vue';
-import { router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
+import { CreditCard, Check, Undo2 } from '@lucide/vue';
+import { router } from '@inertiajs/vue3';
 import StatusBadge from '@/Components/StatusBadge.vue';
 
 const props = defineProps<{
@@ -33,6 +33,16 @@ function formatDate(value: string): string {
     return new Date(value + 'T00:00:00').toLocaleDateString('pt-BR');
 }
 
+function formatDateTime(value: string): string {
+    return new Date(value).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
 function formatDateRange(closing: number, due: number): string {
     return `Fech: ${closing} / Venc: ${due}`;
 }
@@ -45,13 +55,21 @@ const typeLabels: Record<string, string> = {
     person: 'Pagamento para pessoa',
 };
 
+function close(): void {
+    emit('update:open', false);
+}
+
 function markAsPaid(): void {
     if (!props.purchaseSummary?.items[0]) return;
     router.patch(route('purchases.mark-as-paid', props.purchaseSummary.items[0].id), {}, {
-        onSuccess: () => {
-            emit('update:open', false);
-            router.get(route('purchases.index'));
-        },
+        onSuccess: close,
+    });
+}
+
+function unmarkAsPaid(): void {
+    if (!props.purchaseSummary?.items[0]) return;
+    router.patch(route('purchases.unmark-as-paid', props.purchaseSummary.items[0].id), {}, {
+        onSuccess: close,
     });
 }
 </script>
@@ -105,14 +123,28 @@ function markAsPaid(): void {
                     <span class="text-lg font-bold">{{ formatCurrency(purchaseSummary.total) }}</span>
                 </div>
 
+                <div v-if="purchaseSummary.paid_at" class="text-sm text-muted-foreground">
+                    Pago em {{ formatDateTime(purchaseSummary.paid_at) }}
+                </div>
+
                 <Button
                     v-if="purchaseSummary?.status === 'aberta' || purchaseSummary?.status === 'atrasada'"
                     variant="outline"
-                    class="w-full"
+                    class="w-full cursor-pointer"
                     @click="markAsPaid"
                 >
                     <Check class="mr-2 size-4" />
                     Marcar como pago
+                </Button>
+
+                <Button
+                    v-if="purchaseSummary?.status === 'paga'"
+                    variant="outline"
+                    class="w-full cursor-pointer"
+                    @click="unmarkAsPaid"
+                >
+                    <Undo2 class="mr-2 size-4" />
+                    Desmarcar pagamento
                 </Button>
             </div>
         </DialogContent>

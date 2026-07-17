@@ -14,8 +14,17 @@ final readonly class InvoiceController
     {
         Gate::authorize('update', $invoice);
 
-        $invoice->update(['status' => 'paga']);
+        $invoice->update(['status' => 'paga', 'paid_at' => now()]);
 
-        return back();
+        return to_route('purchases.index')->with('flash', ['message' => 'Fatura marcada como paga!', 'type' => 'success']);
+    }
+
+    public function unmarkAsPaid(Invoice $invoice): RedirectResponse
+    {
+        Gate::authorize('update', $invoice);
+
+        $invoice->update(['status' => 'fechada', 'paid_at' => null]);
+
+        return to_route('purchases.index')->with('flash', ['message' => 'Pagamento desmarcado!', 'type' => 'success']);
     }
 }

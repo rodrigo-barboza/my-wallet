@@ -47,7 +47,7 @@ final readonly class PurchaseController
 
         $this->ensureInvoiceExists($purchase);
 
-        return to_route('purchases.index');
+        return to_route('purchases.index')->with('flash', ['message' => 'Compra criada com sucesso!', 'type' => 'success']);
     }
 
     public function show(Purchase $purchase): Response
@@ -69,7 +69,7 @@ final readonly class PurchaseController
 
         $this->ensureInvoiceExists($purchase);
 
-        return to_route('purchases.index');
+        return to_route('purchases.index')->with('flash', ['message' => 'Compra atualizada com sucesso!', 'type' => 'success']);
     }
 
     public function destroy(Purchase $purchase): RedirectResponse
@@ -78,7 +78,7 @@ final readonly class PurchaseController
 
         $purchase->delete();
 
-        return to_route('purchases.index');
+        return to_route('purchases.index')->with('flash', ['message' => 'Compra excluída com sucesso!', 'type' => 'success']);
     }
 
     public function markAsPaid(Purchase $purchase): RedirectResponse
@@ -92,13 +92,33 @@ final readonly class PurchaseController
                 ->first();
 
             if ($invoice) {
-                $invoice->update(['status' => 'paga']);
+                $invoice->update(['status' => 'paga', 'paid_at' => now()]);
             }
         } else {
-            $purchase->update(['status' => 'paga']);
+            $purchase->update(['status' => 'paga', 'paid_at' => now()]);
         }
 
-        return back();
+        return to_route('purchases.index')->with('flash', ['message' => 'Marcado como pago!', 'type' => 'success']);
+    }
+
+    public function unmarkAsPaid(Purchase $purchase): RedirectResponse
+    {
+        Gate::authorize('update', $purchase);
+
+        if ($purchase->card_id) {
+            $invoice = Invoice::where('card_id', $purchase->card_id)
+                ->where('month', $purchase->start_date->month)
+                ->where('year', $purchase->start_date->year)
+                ->first();
+
+            if ($invoice) {
+                $invoice->update(['status' => 'fechada', 'paid_at' => null]);
+            }
+        } else {
+            $purchase->update(['status' => 'aberta', 'paid_at' => null]);
+        }
+
+        return to_route('purchases.index')->with('flash', ['message' => 'Pagamento desmarcado!', 'type' => 'success']);
     }
 
     private function ensureInvoiceExists(Purchase $purchase): void
@@ -155,6 +175,7 @@ final readonly class PurchaseController
                 'total' => $items->sum('amount'),
                 'dates' => ['closing' => $card->closing_day, 'due' => $card->due_day],
                 'status' => $status,
+                'paid_at' => $invoice?->paid_at?->toISOString(),
                 'items' => $items->values(),
             ];
         })->values();
@@ -168,6 +189,7 @@ final readonly class PurchaseController
                 'total' => $purchase->amount,
                 'dates' => [$paymentDay],
                 'status' => $status,
+                'paid_at' => $purchase->paid_at?->toISOString(),
                 'items' => [$purchase],
             ];
         });

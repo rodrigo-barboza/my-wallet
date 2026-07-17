@@ -13,6 +13,7 @@ export interface Purchase {
     start_date: string;
     notes: string | null;
     status: string;
+    paid_at: string | null;
     created_at: string;
     updated_at: string;
     card?: Card;
@@ -23,6 +24,7 @@ export interface PurchaseSummaryItem {
     total: number;
     dates: number[] | { closing: number; due: number };
     status?: string;
+    paid_at?: string | null;
     items: Purchase[];
 }
 

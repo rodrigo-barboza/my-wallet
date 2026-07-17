@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['user_id', 'card_id', 'month', 'year', 'status', 'closing_date', 'due_date'])]
+#[Fillable(['user_id', 'card_id', 'month', 'year', 'status', 'closing_date', 'due_date', 'paid_at'])]
 class Invoice extends Model
 {
     /** @use HasFactory<InvoiceFactory> */
@@ -23,6 +23,7 @@ class Invoice extends Model
         'status' => InvoiceStatus::class,
         'closing_date' => 'date',
         'due_date' => 'date',
+        'paid_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

@@ -23,6 +23,8 @@ return [
         'purchases.update',
         'purchases.destroy',
         'purchases.mark-as-paid',
+        'purchases.unmark-as-paid',
         'invoices.mark-as-paid',
+        'invoices.unmark-as-paid',
     ],
 ];

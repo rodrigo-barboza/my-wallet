@@ -8,11 +8,13 @@ use App\Enums\PurchaseStatus;
 use App\Enums\PurchaseType;
 use Database\Factories\PurchaseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
-#[Fillable(['user_id', 'name', 'type', 'payment_day', 'is_recurring', 'card_id', 'amount', 'installments_total', 'start_date', 'notes', 'status'])]
+#[Fillable(['user_id', 'name', 'type', 'payment_day', 'is_recurring', 'card_id', 'amount', 'installments_total', 'start_date', 'notes', 'status', 'paid_at'])]
 class Purchase extends Model
 {
     /** @use HasFactory<PurchaseFactory> */
@@ -24,6 +26,13 @@ class Purchase extends Model
         'amount' => 'decimal:2',
         'start_date' => 'date',
     ];
+
+    public function name(): Attribute
+    {
+        return Attribute::make(
+            get: fn (string $name) => Str::title($name),
+        );
+    }
 
     public function user(): BelongsTo
     {

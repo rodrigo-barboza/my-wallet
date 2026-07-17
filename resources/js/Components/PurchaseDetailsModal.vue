@@ -8,7 +8,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Trash2, Check } from '@lucide/vue';
+import { Trash2, Check, Undo2 } from '@lucide/vue';
 import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
@@ -44,23 +44,38 @@ function formatDate(value: string): string {
     return new Date(value + 'T00:00:00').toLocaleDateString('pt-BR');
 }
 
+function formatDateTime(value: string): string {
+    return new Date(value).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
+function close(): void {
+    emit('update:open', false);
+}
+
 function deletePurchase(): void {
     if (!props.purchase) return;
     router.delete(route('purchases.destroy', props.purchase.id), {
-        onSuccess: () => {
-            emit('update:open', false);
-            router.get(route('purchases.index'));
-        },
+        onSuccess: close,
     });
 }
 
 function markAsPaid(): void {
     if (!props.purchase) return;
     router.patch(route('purchases.mark-as-paid', props.purchase.id), {}, {
-        onSuccess: () => {
-            emit('update:open', false);
-            router.get(route('purchases.index'));
-        },
+        onSuccess: close,
+    });
+}
+
+function unmarkAsPaid(): void {
+    if (!props.purchase) return;
+    router.patch(route('purchases.unmark-as-paid', props.purchase.id), {}, {
+        onSuccess: close,
     });
 }
 </script>
@@ -106,6 +121,10 @@ function markAsPaid(): void {
                         <div class="text-muted-foreground">Recorrente</div>
                         <div class="font-medium">{{ purchase.is_recurring ? 'Sim' : 'Não' }}</div>
                     </div>
+                    <div v-if="purchase.paid_at">
+                        <div class="text-muted-foreground">Pago em</div>
+                        <div class="font-medium">{{ formatDateTime(purchase.paid_at) }}</div>
+                    </div>
                 </div>
 
                 <div v-if="purchase.notes">
@@ -116,14 +135,24 @@ function markAsPaid(): void {
                 <Button
                     v-if="purchase?.status === 'aberta' || purchase?.status === 'atrasada'"
                     variant="outline"
-                    class="w-full"
+                    class="w-full cursor-pointer"
                     @click="markAsPaid"
                 >
                     <Check class="mr-2 size-4" />
                     Marcar como pago
                 </Button>
 
-                <Button variant="destructive" class="w-full" @click="showDeleteDialog = true">
+                <Button
+                    v-if="purchase?.status === 'paga'"
+                    variant="outline"
+                    class="w-full cursor-pointer"
+                    @click="unmarkAsPaid"
+                >
+                    <Undo2 class="mr-2 size-4" />
+                    Desmarcar pagamento
+                </Button>
+
+                <Button variant="destructive" class="w-full cursor-pointer" @click="showDeleteDialog = true">
                     <Trash2 class="mr-2 size-4" />
                     Excluir
                 </Button>

@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { Purchase, PurchaseSummaryItem } from '@/types/purchase';
+import type { Card as CardType } from '@/types/card';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, Plus } from '@lucide/vue';
 import PurchaseSummary from './Partials/PurchaseSummary.vue';
+import PurchaseFormModal from '@/Components/PurchaseFormModal.vue';
 
 defineOptions({ layout: AppLayout });
 
@@ -15,7 +17,10 @@ const props = defineProps<{
     summary: PurchaseSummaryItem[];
     month: number;
     year: number;
+    cards: CardType[];
 }>();
+
+const showFormModal = ref(false);
 
 const monthNames = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -24,7 +29,7 @@ const monthNames = [
 
 const currentMonthName = computed(() => monthNames[props.month - 1]);
 
-const totalAmount = computed(() => props.summary.reduce((sum, item) => sum + item.total, 0));
+const totalAmount = computed(() => props.summary.reduce((sum, item) => sum + parseFloat(String(item.total)), 0));
 
 function formatCurrency(value: number): string {
     return new Intl.NumberFormat('pt-BR', {
@@ -50,7 +55,7 @@ function nextMonth(): void {
     <div class="w-full space-y-6">
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold">Compras</h2>
-            <Button @click="router.get(route('purchases.store'))">
+            <Button @click="showFormModal = true">
                 <Plus class="mr-2 size-4" />
                 Nova compra
             </Button>
@@ -78,5 +83,10 @@ function nextMonth(): void {
         </Card>
 
         <PurchaseSummary :items="summary" />
+
+        <PurchaseFormModal
+            v-model:open="showFormModal"
+            :cards="cards"
+        />
     </div>
 </template>

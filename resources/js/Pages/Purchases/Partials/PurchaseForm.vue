@@ -138,7 +138,7 @@ function submit(): void {
                 v-model="form.installments_total"
                 type="number"
                 min="1"
-                placeholder="Deixe vazio para recorrente"
+                placeholder="Deixe vazio para à vista"
             />
             <p v-if="form.errors.installments_total" class="text-sm text-destructive">{{ form.errors.installments_total }}</p>
         </div>

@@ -26,7 +26,7 @@ final readonly class CardController
     {
         auth()->user()->cards()->create($request->validated());
 
-        return to_route('cards.index');
+        return to_route('cards.index')->with('flash', ['message' => 'Cartão criado com sucesso!', 'type' => 'success']);
     }
 
     public function update(CardRequest $request, Card $card): RedirectResponse
@@ -35,7 +35,7 @@ final readonly class CardController
 
         $card->update($request->validated());
 
-        return to_route('cards.index');
+        return to_route('cards.index')->with('flash', ['message' => 'Cartão atualizado com sucesso!', 'type' => 'success']);
     }
 
     public function destroy(Card $card): RedirectResponse
@@ -44,7 +44,7 @@ final readonly class CardController
 
         $card->delete();
 
-        return to_route('cards.index');
+        return to_route('cards.index')->with('flash', ['message' => 'Cartão excluído com sucesso!', 'type' => 'success']);
     }
 
     public function bulkDestroy(): RedirectResponse
@@ -57,6 +57,6 @@ final readonly class CardController
 
         $cards->each->delete();
 
-        return to_route('cards.index');
+        return to_route('cards.index')->with('flash', ['message' => 'Cartões excluídos com sucesso!', 'type' => 'success']);
     }
 }
