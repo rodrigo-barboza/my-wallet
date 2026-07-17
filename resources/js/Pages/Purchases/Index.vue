@@ -80,25 +80,20 @@ function nextMonth(): void {
         </div>
 
         <Card>
-            <CardHeader class="pb-2">
-                <CardTitle class="text-base">Total do Mês</CardTitle>
-            </CardHeader>
-            <CardContent class="space-y-4">
-                <div class="text-3xl font-bold">{{ formatCurrency(totalAmount) }}</div>
-                <div class="space-y-2">
-                    <div class="h-2.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                            class="h-full rounded-full bg-green-500 transition-all"
-                            :style="{ width: totalAmount > 0 ? `${(paidAmount / totalAmount) * 100}%` : '0%' }"
-                        />
+            <CardContent class="flex flex-wrap items-center justify-between gap-4 p-5">
+                <div>
+                    <div class="text-sm text-muted-foreground">Total do Mês</div>
+                    <div class="text-2xl font-bold">{{ formatCurrency(totalAmount) }}</div>
+                </div>
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="text-right">
+                        <div class="text-sm text-muted-foreground">Pago</div>
+                        <div class="text-lg font-semibold text-green-600">{{ formatCurrency(paidAmount) }}</div>
                     </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted-foreground">
-                            <span class="font-medium text-green-600">{{ formatCurrency(paidAmount) }}</span> pago
-                        </span>
-                        <span class="text-muted-foreground">
-                            <span class="font-medium text-destructive">{{ formatCurrency(pendingAmount) }}</span> falta
-                        </span>
+                    <div class="h-8 w-px bg-border" />
+                    <div class="text-right">
+                        <div class="text-sm text-muted-foreground">Falta</div>
+                        <div class="text-lg font-semibold text-destructive">{{ formatCurrency(pendingAmount) }}</div>
                     </div>
                 </div>
             </CardContent>
