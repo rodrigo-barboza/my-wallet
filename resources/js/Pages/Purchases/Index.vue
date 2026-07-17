@@ -31,6 +31,12 @@ const currentMonthName = computed(() => monthNames[props.month - 1]);
 
 const totalAmount = computed(() => props.summary.reduce((sum, item) => sum + parseFloat(String(item.total)), 0));
 
+const paidAmount = computed(() => props.summary
+    .filter((item) => item.status === 'paga')
+    .reduce((sum, item) => sum + parseFloat(String(item.total)), 0));
+
+const pendingAmount = computed(() => totalAmount.value - paidAmount.value);
+
 function formatCurrency(value: number): string {
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -73,14 +79,32 @@ function nextMonth(): void {
             </Button>
         </div>
 
-        <Card>
-            <CardHeader>
-                <CardTitle>Total do Mês</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div class="text-3xl font-bold">{{ formatCurrency(totalAmount) }}</div>
-            </CardContent>
-        </Card>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Card>
+                <CardHeader class="pb-2">
+                    <CardTitle class="text-sm font-medium text-muted-foreground">Total do Mês</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="text-2xl font-bold">{{ formatCurrency(totalAmount) }}</div>
+                </CardContent>
+            </Card>
+            <Card class="border-green-200 bg-green-50/50">
+                <CardHeader class="pb-2">
+                    <CardTitle class="text-sm font-medium text-green-700">Pago</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="text-2xl font-bold text-green-700">{{ formatCurrency(paidAmount) }}</div>
+                </CardContent>
+            </Card>
+            <Card class="border-red-200 bg-red-50/50">
+                <CardHeader class="pb-2">
+                    <CardTitle class="text-sm font-medium text-red-700">Falta</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="text-2xl font-bold text-red-700">{{ formatCurrency(pendingAmount) }}</div>
+                </CardContent>
+            </Card>
+        </div>
 
         <PurchaseSummary :items="summary" />
 
