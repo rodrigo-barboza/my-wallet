@@ -80,20 +80,37 @@ function nextMonth(): void {
         </div>
 
         <Card>
-            <CardContent class="flex flex-wrap items-center justify-between gap-4 p-5">
-                <div>
-                    <div class="text-sm text-muted-foreground">Total do Mês</div>
-                    <div class="text-2xl font-bold">{{ formatCurrency(totalAmount) }}</div>
-                </div>
-                <div class="flex flex-wrap items-center gap-4">
-                    <div class="text-right">
-                        <div class="text-sm text-muted-foreground">Pago</div>
-                        <div class="text-lg font-semibold text-green-600">{{ formatCurrency(paidAmount) }}</div>
+            <CardContent class="flex flex-col items-center gap-4 p-6">
+                <div class="relative size-28">
+                    <svg class="size-28 -rotate-90" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="52" fill="none" stroke="hsl(var(--muted))" stroke-width="10" />
+                        <circle
+                            cx="60" cy="60" r="52"
+                            fill="none"
+                            stroke="hsl(142, 71%, 45%)"
+                            stroke-width="10"
+                            stroke-linecap="round"
+                            stroke-dasharray="326.73"
+                            :stroke-dashoffset="totalAmount > 0 ? 326.73 - (326.73 * paidAmount / totalAmount) : 326.73"
+                        />
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="text-lg font-bold">
+                                {{ totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0 }}%
+                            </div>
+                        </div>
                     </div>
-                    <div class="h-8 w-px bg-border" />
-                    <div class="text-right">
-                        <div class="text-sm text-muted-foreground">Falta</div>
-                        <div class="text-lg font-semibold text-destructive">{{ formatCurrency(pendingAmount) }}</div>
+                </div>
+                <div class="text-2xl font-bold">{{ formatCurrency(totalAmount) }}</div>
+                <div class="flex items-center gap-6 text-sm">
+                    <div class="text-center">
+                        <div class="font-medium text-green-600">{{ formatCurrency(paidAmount) }}</div>
+                        <div class="text-muted-foreground">Pago</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="font-medium text-destructive">{{ formatCurrency(pendingAmount) }}</div>
+                        <div class="text-muted-foreground">Falta</div>
                     </div>
                 </div>
             </CardContent>
