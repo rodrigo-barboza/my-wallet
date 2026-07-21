@@ -77,11 +77,10 @@ function submit(): void {
                     <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="subscription">Assinatura</SelectItem>
                     <SelectItem value="credit_card">Compra no cartão</SelectItem>
                     <SelectItem value="bill">Conta mensal</SelectItem>
                     <SelectItem value="financing">Financiamento</SelectItem>
-                    <SelectItem value="person">Pagamento para pessoa</SelectItem>
+                    <SelectItem value="others">Outros</SelectItem>
                 </SelectContent>
             </Select>
             <p v-if="form.errors.type" class="text-sm text-destructive">{{ form.errors.type }}</p>

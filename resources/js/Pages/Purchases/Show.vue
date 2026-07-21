@@ -17,11 +17,10 @@ const props = defineProps<{
 const showDeleteDialog = ref(false);
 
 const typeLabels: Record<string, string> = {
-    subscription: 'Assinatura',
     credit_card: 'Compra no cartão',
     bill: 'Conta mensal',
     financing: 'Financiamento',
-    person: 'Pagamento para pessoa',
+    others: 'Outros',
 };
 
 function formatCurrency(value: number): string {

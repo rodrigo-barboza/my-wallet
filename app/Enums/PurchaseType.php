@@ -6,9 +6,8 @@ namespace App\Enums;
 
 enum PurchaseType: string
 {
-    case Subscription = 'subscription';
     case CreditCard = 'credit_card';
     case Bill = 'bill';
     case Financing = 'financing';
-    case Person = 'person';
+    case Others = 'others';
 }

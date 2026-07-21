@@ -48,11 +48,10 @@ function formatDateRange(closing: number, due: number): string {
 }
 
 const typeLabels: Record<string, string> = {
-    subscription: 'Assinatura',
     credit_card: 'Compra no cartão',
     bill: 'Conta mensal',
     financing: 'Financiamento',
-    person: 'Pagamento para pessoa',
+    others: 'Outros',
 };
 
 function close(): void {

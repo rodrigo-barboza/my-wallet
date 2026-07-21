@@ -34,7 +34,7 @@ it('user can create purchase', function () {
 
     $data = [
         'name' => 'Netflix',
-        'type' => PurchaseType::Subscription->value,
+        'type' => PurchaseType::Bill->value,
         'payment_day' => 15,
         'is_recurring' => true,
         'amount' => 39.90,
@@ -46,7 +46,7 @@ it('user can create purchase', function () {
     assertDatabaseHas(Purchase::class, [
         'user_id' => $user->id,
         'name' => 'Netflix',
-        'type' => PurchaseType::Subscription->value,
+        'type' => PurchaseType::Bill->value,
     ]);
 });
 

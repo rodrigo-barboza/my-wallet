@@ -3,7 +3,7 @@ import { ref, watch } from 'vue';
 import type { Purchase, PurchaseSummaryItem } from '@/types/purchase';
 import { useSortable } from '@vueuse/integrations/useSortable';
 import { Card as CardComponent, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreditCard, ShoppingCart, Calendar, FileText, Banknote, User } from '@lucide/vue';
+import { CreditCard, ShoppingCart, Calendar, Banknote } from '@lucide/vue';
 import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue';
 import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
@@ -45,11 +45,10 @@ useSortable(el, list, {
 });
 
 const typeIcons: Record<string, typeof CreditCard> = {
-    subscription: FileText,
     credit_card: CreditCard,
     bill: Calendar,
     financing: Banknote,
-    person: User,
+    others: ShoppingCart,
 };
 
 function openIndividualDetails(item: PurchaseSummaryItem): void {
