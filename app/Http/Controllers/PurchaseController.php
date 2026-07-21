@@ -8,6 +8,7 @@ use App\Http\Requests\PurchaseRequest;
 use App\Models\Invoice;
 use App\Models\Purchase;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -131,7 +132,7 @@ final readonly class PurchaseController
         return to_route('purchases.index');
     }
 
-    public function reorder(): RedirectResponse
+    public function reorder(): JsonResponse
     {
         $data = request()->validate([
             'order' => ['required', 'array'],
@@ -140,10 +141,7 @@ final readonly class PurchaseController
 
         auth()->user()->update(['purchase_order' => $data['order']]);
 
-        return to_route('purchases.index', [
-            'month' => (int) request()->input('month', now()->month),
-            'year' => (int) request()->input('year', now()->year),
-        ]);
+        return response()->json(['message' => 'ok']);
     }
 
     private function ensureInvoiceExists(Purchase $purchase): void
