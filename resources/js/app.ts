@@ -3,6 +3,7 @@ import { createApp, DefineComponent, h } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
 import { ZiggyVue } from 'ziggy-js'
+import { LUCIDE_CONTEXT } from '@lucide/vue'
 
 createInertiaApp({
     resolve: (name) => {
@@ -17,6 +18,7 @@ createInertiaApp({
                 ...(props.initialPage.props as { ziggy?: Record<string, unknown> }).ziggy,
                 location: new URL((props.initialPage.props as { ziggy?: { location: string } }).ziggy?.location ?? window.location.href),
             })
+            .provide(LUCIDE_CONTEXT, {})
             .mount(el)
     },
 })
