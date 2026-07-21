@@ -66,7 +66,11 @@ const typeColors: Record<string, string> = {
 };
 
 function openIndividualDetails(item: PurchaseSummaryItem): void {
-    selectedPurchase.value = { ...item.items[0], status: item.status ?? 'aberta' };
+    selectedPurchase.value = {
+        ...item.items[0],
+        status: item.status ?? 'aberta',
+        paid_at: item.paid_at,
+    };
     showDetailsModal.value = true;
 }
 

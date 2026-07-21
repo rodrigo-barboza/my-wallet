@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 #[Fillable(['user_id', 'name', 'type', 'payment_day', 'is_recurring', 'card_id', 'amount', 'installments_total', 'start_date', 'notes', 'status', 'paid_at'])]
@@ -43,6 +44,11 @@ class Purchase extends Model
     public function card(): BelongsTo
     {
         return $this->belongsTo(Card::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(PurchasePayment::class);
     }
 
     public function isActiveInMonth(int $year, int $month): bool

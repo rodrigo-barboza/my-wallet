@@ -265,9 +265,10 @@ it('marks individual purchase as paid', function () {
 
     patch(route('purchases.mark-as-paid', $purchase))->assertRedirect();
 
-    assertDatabaseHas(Purchase::class, [
-        'id' => $purchase->id,
-        'status' => 'paga',
+    assertDatabaseHas('purchase_payments', [
+        'purchase_id' => $purchase->id,
+        'month' => now()->month,
+        'year' => now()->year,
     ]);
 });
 
@@ -307,4 +308,120 @@ it('user cannot mark other users purchase as paid', function () {
     $purchase = Purchase::factory()->create(['user_id' => $otherUser->id]);
 
     patch(route('purchases.mark-as-paid', $purchase))->assertStatus(403);
+});
+
+it('marks individual purchase as paid in specific month', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $purchase = Purchase::factory()->create([
+        'user_id' => $user->id,
+        'status' => 'aberta',
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase), [
+        'month' => 6,
+        'year' => 2024,
+    ])->assertRedirect();
+
+    assertDatabaseHas('purchase_payments', [
+        'purchase_id' => $purchase->id,
+        'month' => 6,
+        'year' => 2024,
+    ]);
+});
+
+it('marks individual purchase as paid in different months creating separate records', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $purchase = Purchase::factory()->create([
+        'user_id' => $user->id,
+        'status' => 'aberta',
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase), [
+        'month' => 6,
+        'year' => 2024,
+    ])->assertRedirect();
+
+    patch(route('purchases.mark-as-paid', $purchase), [
+        'month' => 7,
+        'year' => 2024,
+    ])->assertRedirect();
+
+    assertDatabaseHas('purchase_payments', [
+        'purchase_id' => $purchase->id,
+        'month' => 6,
+        'year' => 2024,
+    ]);
+
+    assertDatabaseHas('purchase_payments', [
+        'purchase_id' => $purchase->id,
+        'month' => 7,
+        'year' => 2024,
+    ]);
+});
+
+it('unmarks individual purchase as paid', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $purchase = Purchase::factory()->create([
+        'user_id' => $user->id,
+        'status' => 'aberta',
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase), [
+        'month' => 6,
+        'year' => 2024,
+    ]);
+
+    patch(route('purchases.unmark-as-paid', $purchase), [
+        'month' => 6,
+        'year' => 2024,
+    ])->assertRedirect();
+
+    assertDatabaseMissing('purchase_payments', [
+        'purchase_id' => $purchase->id,
+        'month' => 6,
+        'year' => 2024,
+    ]);
+});
+
+it('unmark only removes payment for the specified month', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $purchase = Purchase::factory()->create([
+        'user_id' => $user->id,
+        'status' => 'aberta',
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase), [
+        'month' => 6,
+        'year' => 2024,
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase), [
+        'month' => 7,
+        'year' => 2024,
+    ]);
+
+    patch(route('purchases.unmark-as-paid', $purchase), [
+        'month' => 6,
+        'year' => 2024,
+    ])->assertRedirect();
+
+    assertDatabaseMissing('purchase_payments', [
+        'purchase_id' => $purchase->id,
+        'month' => 6,
+        'year' => 2024,
+    ]);
+
+    assertDatabaseHas('purchase_payments', [
+        'purchase_id' => $purchase->id,
+        'month' => 7,
+        'year' => 2024,
+    ]);
 });

@@ -22,7 +22,7 @@ final readonly class PurchaseController
         $year = (int) request()->input('year', now()->year);
 
         $purchases = Purchase::where('user_id', auth()->id())
-            ->with('card')
+            ->with(['card', 'payments'])
             ->get()
             ->filter(fn ($p) => $p->isActiveInMonth($year, $month));
 
@@ -94,7 +94,6 @@ final readonly class PurchaseController
 
         $month = (int) request()->input('month', now()->month);
         $year = (int) request()->input('year', now()->year);
-        $paidAt = Carbon::create($year, $month, 1, 12, 0, 0);
 
         if ($purchase->card_id) {
             $invoice = Invoice::where('card_id', $purchase->card_id)
@@ -103,10 +102,13 @@ final readonly class PurchaseController
                 ->first();
 
             if ($invoice) {
-                $invoice->update(['status' => 'paga', 'paid_at' => $paidAt]);
+                $invoice->update(['status' => 'paga', 'paid_at' => now()]);
             }
         } else {
-            $purchase->update(['status' => 'paga', 'paid_at' => $paidAt]);
+            $purchase->payments()->updateOrCreate(
+                ['month' => $month, 'year' => $year],
+                ['paid_at' => now()],
+            );
         }
 
         Inertia::flash('toast', ['message' => 'Marcado como pago!', 'type' => 'success']);
@@ -131,7 +133,7 @@ final readonly class PurchaseController
                 $invoice->update(['status' => 'fechada', 'paid_at' => null]);
             }
         } else {
-            $purchase->update(['status' => 'aberta', 'paid_at' => null]);
+            $purchase->payments()->where('month', $month)->where('year', $year)->delete();
         }
 
         Inertia::flash('toast', ['message' => 'Pagamento desmarcado!', 'type' => 'success']);
@@ -213,13 +215,14 @@ final readonly class PurchaseController
         $individualPurchases->each(function ($purchase) use (&$summary, $month, $year, $now) {
             $paymentDay = $purchase->payment_day ?? $purchase->start_date->day;
             $status = $this->resolveIndividualStatus($purchase, $paymentDay, $month, $year, $now);
+            $payment = $purchase->payments->firstWhere('month', $month) ?? $purchase->payments->firstWhere('year', $year);
 
             $summary[] = [
                 'name' => $purchase->name,
                 'total' => $purchase->amount,
                 'dates' => [$paymentDay],
                 'status' => $status,
-                'paid_at' => $purchase->paid_at?->toISOString(),
+                'paid_at' => $payment?->paid_at?->toISOString(),
                 'items' => [$purchase],
             ];
         });
@@ -256,13 +259,8 @@ final readonly class PurchaseController
 
     private function resolveIndividualStatus(Purchase $purchase, int $paymentDay, int $month, int $year, Carbon $now): string
     {
-        if ($purchase->paid_at) {
-            $paidMonth = (int) $purchase->paid_at->month;
-            $paidYear = (int) $purchase->paid_at->year;
-
-            if ($month === $paidMonth && $year === $paidYear) {
-                return 'paga';
-            }
+        if ($purchase->payments->firstWhere('month', $month)) {
+            return 'paga';
         }
 
         if ($year < $now->year || ($year === $now->year && $month < $now->month)) {
