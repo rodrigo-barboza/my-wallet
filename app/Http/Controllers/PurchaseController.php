@@ -92,6 +92,10 @@ final readonly class PurchaseController
     {
         Gate::authorize('update', $purchase);
 
+        $month = (int) request()->input('month', now()->month);
+        $year = (int) request()->input('year', now()->year);
+        $paidAt = Carbon::create($year, $month, 1, 12, 0, 0);
+
         if ($purchase->card_id) {
             $invoice = Invoice::where('card_id', $purchase->card_id)
                 ->where('month', $purchase->start_date->month)
@@ -99,20 +103,23 @@ final readonly class PurchaseController
                 ->first();
 
             if ($invoice) {
-                $invoice->update(['status' => 'paga', 'paid_at' => now()]);
+                $invoice->update(['status' => 'paga', 'paid_at' => $paidAt]);
             }
         } else {
-            $purchase->update(['status' => 'paga', 'paid_at' => now()]);
+            $purchase->update(['status' => 'paga', 'paid_at' => $paidAt]);
         }
 
         Inertia::flash('toast', ['message' => 'Marcado como pago!', 'type' => 'success']);
 
-        return to_route('purchases.index');
+        return to_route('purchases.index', ['month' => $month, 'year' => $year]);
     }
 
     public function unmarkAsPaid(Purchase $purchase): RedirectResponse
     {
         Gate::authorize('update', $purchase);
+
+        $month = (int) request()->input('month', now()->month);
+        $year = (int) request()->input('year', now()->year);
 
         if ($purchase->card_id) {
             $invoice = Invoice::where('card_id', $purchase->card_id)
@@ -129,7 +136,7 @@ final readonly class PurchaseController
 
         Inertia::flash('toast', ['message' => 'Pagamento desmarcado!', 'type' => 'success']);
 
-        return to_route('purchases.index');
+        return to_route('purchases.index', ['month' => $month, 'year' => $year]);
     }
 
     public function reorder(): JsonResponse

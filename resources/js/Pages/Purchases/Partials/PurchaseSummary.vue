@@ -10,6 +10,8 @@ import StatusBadge from '@/Components/StatusBadge.vue';
 
 const props = defineProps<{
     items: PurchaseSummaryItem[];
+    month: number;
+    year: number;
 }>();
 
 const emit = defineEmits<{
@@ -152,7 +154,7 @@ function toTitleCase(str: string): string {
         </template>
     </div>
 
-    <PurchaseDetailsModal v-model:open="showDetailsModal" :purchase="selectedPurchase" />
+    <PurchaseDetailsModal v-model:open="showDetailsModal" :purchase="selectedPurchase" :month="month" :year="year" />
 
     <CardPurchaseDetailsModal v-model:open="showCardDetailsModal" :purchase-summary="selectedCardPurchase" />
 </template>

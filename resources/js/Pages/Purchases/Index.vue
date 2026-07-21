@@ -119,7 +119,7 @@ async function handleReorder(order: string[]): Promise<void> {
             </CardContent>
         </Card>
 
-        <PurchaseSummary :items="summary" @reorder="handleReorder" />
+        <PurchaseSummary :items="summary" :month="month" :year="year" @reorder="handleReorder" />
 
         <PurchaseFormModal
             v-model:open="showFormModal"

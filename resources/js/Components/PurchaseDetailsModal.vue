@@ -17,6 +17,8 @@ import StatusBadge from '@/Components/StatusBadge.vue';
 const props = defineProps<{
     open: boolean;
     purchase?: Purchase;
+    month: number;
+    year: number;
 }>();
 
 const emit = defineEmits<{
@@ -66,14 +68,20 @@ function deletePurchase(): void {
 
 function markAsPaid(): void {
     if (!props.purchase) return;
-    router.patch(route('purchases.mark-as-paid', props.purchase.id), {}, {
+    router.patch(route('purchases.mark-as-paid', props.purchase.id), {
+        month: props.month,
+        year: props.year,
+    }, {
         onSuccess: close,
     });
 }
 
 function unmarkAsPaid(): void {
     if (!props.purchase) return;
-    router.patch(route('purchases.unmark-as-paid', props.purchase.id), {}, {
+    router.patch(route('purchases.unmark-as-paid', props.purchase.id), {
+        month: props.month,
+        year: props.year,
+    }, {
         onSuccess: close,
     });
 }
