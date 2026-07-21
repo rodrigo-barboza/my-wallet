@@ -38,7 +38,13 @@ function getItemKey(item: PurchaseSummaryItem): string {
 
 useSortable(el, list, {
     animation: 200,
-    onEnd: () => {
+    onUpdate: (e) => {
+        const { oldIndex, newIndex } = e;
+        if (oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) return;
+
+        const item = list.value.splice(oldIndex, 1)[0];
+        list.value.splice(newIndex, 0, item);
+
         const order = list.value.map(getItemKey);
         emit('reorder', order);
     },
