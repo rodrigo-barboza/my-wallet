@@ -194,7 +194,34 @@ final readonly class PurchaseController
             ];
         });
 
+        $order = auth()->user()->purchase_order ?? [];
+
+        if (! empty($order)) {
+            $positions = array_flip($order);
+
+            $sorted = $summary->sortBy(fn ($item) => $this->itemOrderKey($item, $positions));
+
+            return $sorted->values()->all();
+        }
+
         return $summary->all();
+    }
+
+    private function itemOrderKey(array $item, array $positions): int
+    {
+        $firstItem = $item['items'][0] ?? null;
+
+        if ($firstItem === null) {
+            return PHP_INT_MAX;
+        }
+
+        if (isset($firstItem->card_id)) {
+            $key = 'card_'.$firstItem->card_id;
+        } else {
+            $key = 'purchase_'.$firstItem->id;
+        }
+
+        return $positions[$key] ?? PHP_INT_MAX;
     }
 
     private function resolveIndividualStatus(Purchase $purchase, int $paymentDay, int $month, int $year, Carbon $now): string
