@@ -1,20 +1,48 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import type { Purchase, PurchaseSummaryItem } from '@/types/purchase';
+import { useSortable } from '@vueuse/integrations/useSortable';
 import { Card as CardComponent, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, ShoppingCart, Calendar, FileText, Banknote, User } from '@lucide/vue';
 import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue';
 import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 
-defineProps<{
+const props = defineProps<{
     items: PurchaseSummaryItem[];
+}>();
+
+const emit = defineEmits<{
+    reorder: [order: string[]];
 }>();
 
 const selectedPurchase = ref<Purchase | undefined>();
 const showDetailsModal = ref(false);
 const selectedCardPurchase = ref<PurchaseSummaryItem | undefined>();
 const showCardDetailsModal = ref(false);
+
+const list = ref([...props.items]);
+watch(() => props.items, (newItems) => {
+    list.value = [...newItems];
+});
+
+const el = ref<HTMLElement | null>(null);
+
+function getItemKey(item: PurchaseSummaryItem): string {
+    const first = item.items[0];
+    if (first?.card_id) {
+        return `card_${first.card_id}`;
+    }
+    return `purchase_${first?.id}`;
+}
+
+useSortable(el, list, {
+    animation: 200,
+    onEnd: () => {
+        const order = list.value.map(getItemKey);
+        emit('reorder', order);
+    },
+});
 
 const typeIcons: Record<string, typeof CreditCard> = {
     subscription: FileText,
@@ -51,15 +79,15 @@ function toTitleCase(str: string): string {
 </script>
 
 <template>
-    <div class="space-y-3">
-        <div v-if="items.length === 0" class="text-center text-muted-foreground">
+    <div ref="el" class="space-y-3">
+        <div v-if="list.length === 0" class="text-center text-muted-foreground">
             Nenhuma compra neste mês
         </div>
 
-        <template v-for="(item, index) in items" :key="item.name ?? `individual-${index}`">
+        <template v-for="(item, index) in list" :key="getItemKey(item)">
             <!-- Card purchase (grouped by card) -->
             <CardComponent v-if="item.items[0].card_id"
-                class="relative cursor-pointer overflow-hidden transition-colors hover:bg-muted/30"
+                class="relative cursor-grab active:cursor-grabbing overflow-hidden transition-colors hover:bg-muted/30"
                 @click="openCardDetails(item)">
                 <div class="absolute inset-x-0 top-0 h-2"
                     :style="{ backgroundColor: item.items[0].card?.color ?? '#6b7280' }" />
@@ -83,7 +111,7 @@ function toTitleCase(str: string): string {
             </CardComponent>
 
             <!-- Individual purchase -->
-            <CardComponent v-else class="cursor-pointer transition-colors hover:bg-muted/30"
+            <CardComponent v-else class="cursor-grab active:cursor-grabbing transition-colors hover:bg-muted/30"
                 @click="openIndividualDetails(item)">
                 <CardHeader class="pb-2">
                     <CardTitle class="flex items-center justify-between">

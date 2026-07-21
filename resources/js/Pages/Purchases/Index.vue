@@ -55,6 +55,10 @@ function nextMonth(): void {
     const newYear = props.month === 12 ? props.year + 1 : props.year;
     router.get(route('purchases.index', { month: newMonth, year: newYear }));
 }
+
+function handleReorder(order: string[]): void {
+    router.post(route('purchases.reorder'), { order });
+}
 </script>
 
 <template>
@@ -104,7 +108,7 @@ function nextMonth(): void {
             </CardContent>
         </Card>
 
-        <PurchaseSummary :items="summary" />
+        <PurchaseSummary :items="summary" @reorder="handleReorder" />
 
         <PurchaseFormModal
             v-model:open="showFormModal"
