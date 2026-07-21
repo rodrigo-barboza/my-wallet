@@ -51,6 +51,12 @@ const typeIcons: Record<string, typeof CreditCard> = {
     others: ShoppingCart,
 };
 
+const typeColors: Record<string, string> = {
+    bill: '#a8a29e',
+    financing: '#78716c',
+    others: '#57534e',
+};
+
 function openIndividualDetails(item: PurchaseSummaryItem): void {
     selectedPurchase.value = item.items[0];
     showDetailsModal.value = true;
@@ -69,11 +75,11 @@ function formatCurrency(value: number): string {
 }
 
 function formatDateRange(closing: number, due: number): string {
-    return `Fech: ${closing} / Venc: ${due}`;
+    return `Fechamento: ${closing} / Vencimento: ${due}`;
 }
 
 function toTitleCase(str: string): string {
-    return str.replace(/\b\w/g, (char) => char.toUpperCase());
+    return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 </script>
 
@@ -87,8 +93,9 @@ function toTitleCase(str: string): string {
             <!-- Card purchase (grouped by card) -->
             <CardComponent v-if="item.items[0].card_id"
                 class="relative cursor-grab active:cursor-grabbing overflow-hidden transition-colors hover:bg-muted/30"
+                :style="{ borderRadius: '0 var(--radius) var(--radius) 0' }"
                 @click="openCardDetails(item)">
-                <div class="absolute inset-x-0 top-0 h-2"
+                <div class="absolute inset-y-0 left-0 w-1"
                     :style="{ backgroundColor: item.items[0].card?.color ?? '#6b7280' }" />
                 <CardHeader class="pb-2">
                     <CardTitle class="flex items-center justify-between">
@@ -110,13 +117,18 @@ function toTitleCase(str: string): string {
             </CardComponent>
 
             <!-- Individual purchase -->
-            <CardComponent v-else class="cursor-grab active:cursor-grabbing transition-colors hover:bg-muted/30"
+            <CardComponent v-else
+                class="relative cursor-grab active:cursor-grabbing overflow-hidden transition-colors hover:bg-muted/30"
+                :style="{ borderRadius: '0 var(--radius) var(--radius) 0' }"
                 @click="openIndividualDetails(item)">
+                <div class="absolute inset-y-0 left-0 w-1"
+                    :style="{ backgroundColor: typeColors[item.items[0].type] ?? '#6b7280' }" />
                 <CardHeader class="pb-2">
                     <CardTitle class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <component :is="typeIcons[item.items[0].type] ?? ShoppingCart"
-                                class="size-5 text-muted-foreground" />
+                                class="size-5"
+                                :style="{ color: typeColors[item.items[0].type] ?? '#6b7280' }" />
                             {{ item.name ? toTitleCase(item.name) : 'Sem nome' }}
                         </div>
                         <StatusBadge v-if="item.status" :status="item.status" />
