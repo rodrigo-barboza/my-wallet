@@ -57,7 +57,10 @@ function nextMonth(): void {
 }
 
 function handleReorder(order: string[]): void {
-    router.post(route('purchases.reorder'), { order });
+    router.post(route('purchases.reorder'), { order }, {
+        preserveState: true,
+        preserveScroll: true,
+    });
 }
 </script>
 

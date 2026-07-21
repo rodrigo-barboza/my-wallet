@@ -140,9 +140,10 @@ final readonly class PurchaseController
 
         auth()->user()->update(['purchase_order' => $data['order']]);
 
-        Inertia::flash('toast', ['message' => 'Ordem salva!', 'type' => 'success']);
-
-        return back();
+        return to_route('purchases.index', [
+            'month' => (int) request()->input('month', now()->month),
+            'year' => (int) request()->input('year', now()->year),
+        ]);
     }
 
     private function ensureInvoiceExists(Purchase $purchase): void
