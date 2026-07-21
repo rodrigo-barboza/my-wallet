@@ -81,8 +81,8 @@ function toggleSort(key: SortKey): void {
     }
 }
 
-function sortIndicator(key: SortKey): string {
-    if (sortKey.value !== key) return '';
+function sortIcon(key: SortKey): string {
+    if (sortKey.value !== key) return ' ⇅';
     return sortDir.value === 'asc' ? ' ▲' : ' ▼';
 }
 
@@ -144,26 +144,30 @@ function toTitleCase(str: string): string {
         <Table>
             <TableHeader>
                 <TableRow>
+                    <TableHead class="w-10">#</TableHead>
                     <TableHead class="w-10" />
                     <TableHead class="cursor-pointer select-none" @click="toggleSort('name')">
-                        Nome<span class="text-muted-foreground">{{ sortIndicator('name') }}</span>
+                        Nome<span class="text-muted-foreground">{{ sortIcon('name') }}</span>
                     </TableHead>
                     <TableHead class="hidden sm:table-cell">Datas</TableHead>
                     <TableHead class="cursor-pointer select-none" @click="toggleSort('status')">
-                        Status<span class="text-muted-foreground">{{ sortIndicator('status') }}</span>
+                        Status<span class="text-muted-foreground">{{ sortIcon('status') }}</span>
                     </TableHead>
                     <TableHead class="cursor-pointer select-none text-right" @click="toggleSort('amount')">
-                        Valor<span class="text-muted-foreground">{{ sortIndicator('amount') }}</span>
+                        Valor<span class="text-muted-foreground">{{ sortIcon('amount') }}</span>
                     </TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 <TableRow
-                    v-for="item in sortedItems"
+                    v-for="(item, index) in sortedItems"
                     :key="isCardGroup(item) ? `card_${item.items[0].card_id}` : `purchase_${item.items[0].id}`"
                     class="cursor-pointer"
                     @click="handleRowClick(item)"
                 >
+                    <TableCell class="py-2.5 text-muted-foreground text-xs tabular-nums">
+                        {{ index + 1 }}
+                    </TableCell>
                     <TableCell class="py-2.5">
                         <component
                             :is="getIcon(item)"
@@ -185,7 +189,7 @@ function toTitleCase(str: string): string {
                     </TableCell>
                 </TableRow>
                 <TableRow v-if="sortedItems.length === 0">
-                    <TableCell colspan="5" class="h-24 text-center text-muted-foreground">
+                    <TableCell colspan="6" class="h-24 text-center text-muted-foreground">
                         Nenhuma compra neste mês
                     </TableCell>
                 </TableRow>

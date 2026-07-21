@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { Purchase, PurchaseSummaryItem } from '@/types/purchase';
 import type { Card as CardType } from '@/types/card';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -29,7 +29,9 @@ const props = defineProps<{
     cards: CardType[];
 }>();
 
-const viewMode = ref<'card' | 'table'>('card');
+const storedViewMode = localStorage.getItem('purchases_view_mode') as 'card' | 'table' | null;
+const viewMode = ref<'card' | 'table'>(storedViewMode ?? 'card');
+watch(viewMode, (mode) => localStorage.setItem('purchases_view_mode', mode));
 
 const showFormModal = ref(false);
 
@@ -52,6 +54,8 @@ const paidAmount = computed(() => props.summary
     .reduce((sum, item) => sum + parseFloat(String(item.total)), 0));
 
 const pendingAmount = computed(() => totalAmount.value - paidAmount.value);
+
+const hasOverdue = computed(() => props.summary.some((item) => item.status === 'atrasada'));
 
 function formatCurrency(value: number): string {
     return new Intl.NumberFormat('pt-BR', {
@@ -167,7 +171,7 @@ async function handleReorder(order: string[]): Promise<void> {
                         </span>
                         <span class="text-muted-foreground">
                             <template v-if="pendingAmount > 0">
-                                <span class="font-semibold text-destructive">{{ formatCurrency(pendingAmount) }}</span> falta
+                                <span class="font-semibold" :class="hasOverdue ? 'text-destructive' : 'text-amber-500'">Faltam {{ formatCurrency(pendingAmount) }}</span>
                             </template>
                             <span v-else class="font-semibold text-green-600">Tudo pago</span>
                         </span>

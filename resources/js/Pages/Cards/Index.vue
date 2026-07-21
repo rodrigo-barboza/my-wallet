@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import type { Card } from '@/types/card';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -18,7 +18,9 @@ const props = defineProps<{
     cards: Card[];
 }>();
 
-const viewMode = ref<'grid' | 'table'>('table');
+const storedViewMode = localStorage.getItem('cards_view_mode') as 'grid' | 'table' | null;
+const viewMode = ref<'grid' | 'table'>(storedViewMode ?? 'table');
+watch(viewMode, (mode) => localStorage.setItem('cards_view_mode', mode));
 const showModal = ref<boolean>(false);
 const editingCard = ref<Card | null>(null);
 

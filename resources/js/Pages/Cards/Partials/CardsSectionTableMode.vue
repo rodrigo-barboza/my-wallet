@@ -19,6 +19,36 @@ const emit = defineEmits<{
 
 const selectedIds = ref<number[]>([]);
 
+const sortKey = ref<'name' | null>(null);
+const sortDir = ref<'asc' | 'desc'>('asc');
+
+const sortedCards = computed(() => {
+    if (!sortKey.value) return props.cards;
+
+    return [...props.cards].sort((a, b) => {
+        const cmp = a.name.localeCompare(b.name);
+        return sortDir.value === 'asc' ? cmp : -cmp;
+    });
+});
+
+function toggleSort(field: 'name'): void {
+    if (sortKey.value === field) {
+        if (sortDir.value === 'asc') {
+            sortDir.value = 'desc';
+        } else {
+            sortKey.value = null;
+        }
+    } else {
+        sortKey.value = field;
+        sortDir.value = 'asc';
+    }
+}
+
+function sortIcon(field: 'name'): string {
+    if (sortKey.value !== field) return ' ⇅';
+    return sortDir.value === 'asc' ? ' ▲' : ' ▼';
+}
+
 const allSelected = computed((): boolean =>
     selectedIds.value.length === props.cards.length && props.cards.length > 0
 );
@@ -69,8 +99,11 @@ function handleBulkDelete(): void {
                     <TableHead class="w-12">
                         <Checkbox :checked="allSelected" @update:checked="toggleSelectAll" />
                     </TableHead>
+                    <TableHead class="w-8 text-xs text-muted-foreground">#</TableHead>
                     <TableHead>Cor</TableHead>
-                    <TableHead>Nome</TableHead>
+                    <TableHead class="cursor-pointer select-none" @click="toggleSort('name')">
+                        Nome<span class="text-muted-foreground">{{ sortIcon('name') }}</span>
+                    </TableHead>
                     <TableHead>Fechamento</TableHead>
                     <TableHead>Vencimento</TableHead>
                     <TableHead>Notificações</TableHead>
@@ -78,9 +111,12 @@ function handleBulkDelete(): void {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                <TableRow v-for="card in cards" :key="card.id">
+                <TableRow v-for="(card, index) in sortedCards" :key="card.id">
                     <TableCell>
                         <Checkbox :checked="selectedIds.includes(card.id)" @update:checked="toggleSelect(card.id)" />
+                    </TableCell>
+                    <TableCell class="text-xs text-muted-foreground tabular-nums">
+                        {{ index + 1 }}
                     </TableCell>
                     <TableCell>
                         <div class="flex items-center gap-2">
