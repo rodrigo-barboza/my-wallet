@@ -79,7 +79,9 @@ class Purchase extends Model
 
     public function getStatusAttribute(): string
     {
-        if ($this->paid_at && now()->format('Y-m') === $this->paid_at->format('Y-m')) {
+        $status = $this->attributes['status'] ?? null;
+
+        if ($status === PurchaseStatus::Paga->value) {
             return PurchaseStatus::Paga->value;
         }
 
