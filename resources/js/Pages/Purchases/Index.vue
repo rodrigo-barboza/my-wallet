@@ -6,9 +6,18 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, Plus } from '@lucide/vue';
+import { ChevronLeft, ChevronRight, LayoutList, Table as TableIcon, Plus } from '@lucide/vue';
 import PurchaseSummary from './Partials/PurchaseSummary.vue';
+import PurchasesTableMode from './Partials/PurchasesTableMode.vue';
 import PurchaseFormModal from '@/Components/PurchaseFormModal.vue';
+import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue';
+import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 defineOptions({ layout: AppLayout });
 
@@ -20,7 +29,14 @@ const props = defineProps<{
     cards: CardType[];
 }>();
 
+const viewMode = ref<'card' | 'table'>('card');
+
 const showFormModal = ref(false);
+
+const selectedPurchase = ref<Purchase | undefined>();
+const showDetailsModal = ref(false);
+const selectedCardPurchase = ref<PurchaseSummaryItem | undefined>();
+const showCardDetailsModal = ref(false);
 
 const monthNames = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -42,6 +58,20 @@ function formatCurrency(value: number): string {
         style: 'currency',
         currency: 'BRL',
     }).format(value);
+}
+
+function onTableSelect(item: PurchaseSummaryItem): void {
+    selectedPurchase.value = {
+        ...item.items[0],
+        status: item.status ?? 'aberta',
+        paid_at: item.paid_at,
+    };
+    showDetailsModal.value = true;
+}
+
+function onTableCardSelect(item: PurchaseSummaryItem): void {
+    selectedCardPurchase.value = item;
+    showCardDetailsModal.value = true;
 }
 
 function previousMonth(): void {
@@ -76,10 +106,34 @@ async function handleReorder(order: string[]): Promise<void> {
     <div class="w-full space-y-6">
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold">Compras</h2>
-            <Button @click="showFormModal = true">
-                <Plus class="mr-2 size-4" />
-                Nova compra
-            </Button>
+            <div class="flex items-center gap-2">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <Button variant="outline" size="icon"
+                                :class="{ 'bg-primary text-primary-foreground': viewMode === 'card' }"
+                                @click="viewMode = 'card'">
+                                <LayoutList class="size-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Visualização em cards</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <Button variant="outline" size="icon"
+                                :class="{ 'bg-primary text-primary-foreground': viewMode === 'table' }"
+                                @click="viewMode = 'table'">
+                                <TableIcon class="size-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Visualização em tabela</TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+                <Button @click="showFormModal = true">
+                    <Plus class="mr-2 size-4" />
+                    Nova compra
+                </Button>
+            </div>
         </div>
 
         <div class="flex items-center justify-center gap-4">
@@ -112,14 +166,36 @@ async function handleReorder(order: string[]): Promise<void> {
                             <span class="font-semibold text-green-600">{{ formatCurrency(paidAmount) }}</span> pago
                         </span>
                         <span class="text-muted-foreground">
-                            <span class="font-semibold text-destructive">{{ formatCurrency(pendingAmount) }}</span> falta
+                            <template v-if="pendingAmount > 0">
+                                <span class="font-semibold text-destructive">{{ formatCurrency(pendingAmount) }}</span> falta
+                            </template>
+                            <span v-else class="font-semibold text-green-600">Tudo pago</span>
                         </span>
                     </div>
                 </div>
             </CardContent>
         </Card>
 
-        <PurchaseSummary :items="summary" :month="month" :year="year" @reorder="handleReorder" />
+        <PurchaseSummary
+            v-if="viewMode === 'card'"
+            :items="summary"
+            :month="month"
+            :year="year"
+            @reorder="handleReorder"
+        />
+
+        <PurchasesTableMode
+            v-else
+            :items="summary"
+            :month="month"
+            :year="year"
+            @select="onTableSelect"
+            @card-select="onTableCardSelect"
+        />
+
+        <PurchaseDetailsModal v-model:open="showDetailsModal" :purchase="selectedPurchase" :month="month" :year="year" />
+
+        <CardPurchaseDetailsModal v-model:open="showCardDetailsModal" :purchase-summary="selectedCardPurchase" />
 
         <PurchaseFormModal
             v-model:open="showFormModal"
