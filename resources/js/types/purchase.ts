@@ -5,7 +5,7 @@ export interface Purchase {
     user_id: number;
     card_id: number | null;
     name: string;
-    type: 'subscription' | 'credit_card' | 'bill' | 'financing' | 'person';
+    type: 'credit_card' | 'bill' | 'financing' | 'others';
     payment_day: number | null;
     is_recurring: boolean;
     amount: number;
