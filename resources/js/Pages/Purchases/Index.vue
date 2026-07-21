@@ -56,23 +56,19 @@ function nextMonth(): void {
     router.get(route('purchases.index', { month: newMonth, year: newYear }));
 }
 
-function getCookie(name: string): string {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(';').shift() ?? '';
-    return '';
-}
-
-async function handleReorder(order: string[]): void {
-    await fetch(route('purchases.reorder'), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-XSRF-TOKEN': decodeURIComponent(getCookie('XSRF-TOKEN')),
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify({ order }),
-    });
+async function handleReorder(order: string[]): Promise<void> {
+    try {
+        await fetch(route('purchases.reorder'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ order }),
+        });
+    } catch {
+        // Silently fail — não afeta a UI
+    }
 }
 </script>
 
