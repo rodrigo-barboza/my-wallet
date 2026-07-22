@@ -20,7 +20,7 @@ const statusConfig: Record<string, { label: string; class: string }> = {
         class: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
     },
     parcialmente_paga: {
-        label: 'Parcial',
+        label: 'Parcialmente Paga',
         class: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300',
     },
     atrasada: {
