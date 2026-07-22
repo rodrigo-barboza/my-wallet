@@ -17,6 +17,7 @@ export interface Purchase {
     created_at: string;
     updated_at: string;
     card?: Card;
+    notify_due?: boolean;
 }
 
 export interface PurchaseSummaryItem {
@@ -39,4 +40,6 @@ export interface PurchaseFormData {
     installments_total: number | null;
     start_date: string;
     notes: string | null;
+    mark_as_paid?: boolean;
+    notify_due?: boolean;
 }

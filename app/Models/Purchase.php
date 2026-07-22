@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
-#[Fillable(['user_id', 'name', 'type', 'payment_day', 'is_recurring', 'card_id', 'amount', 'installments_total', 'start_date', 'notes', 'status', 'paid_at'])]
+#[Fillable(['user_id', 'name', 'type', 'payment_day', 'is_recurring', 'card_id', 'amount', 'installments_total', 'start_date', 'notes', 'notify_due', 'status', 'paid_at'])]
 class Purchase extends Model
 {
     /** @use HasFactory<PurchaseFactory> */
@@ -24,6 +24,7 @@ class Purchase extends Model
     protected $casts = [
         'type' => PurchaseType::class,
         'is_recurring' => 'boolean',
+        'notify_due' => 'boolean',
         'amount' => 'decimal:2',
         'start_date' => 'date',
         'paid_at' => 'datetime',

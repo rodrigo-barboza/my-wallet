@@ -26,6 +26,7 @@ class PurchaseRequest extends FormRequest
             'installments_total' => ['nullable', 'integer', 'min:1'],
             'start_date' => ['required', 'date'],
             'notes' => ['nullable', 'string'],
+            'notify_due' => ['nullable', 'boolean'],
         ];
     }
 
