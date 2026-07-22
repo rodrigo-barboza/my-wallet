@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import type { Purchase, PurchaseSummaryItem } from '@/types/purchase';
-import { useSortable } from '@vueuse/integrations/useSortable';
+import type { Purchase, PurchaseSummaryItem } from '@/types/purchase';import { useSortable } from '@vueuse/integrations/useSortable';
 import { Card as CardComponent, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreditCard, ShoppingCart, Calendar, Banknote } from '@lucide/vue';
+import { CreditCard, ShoppingCart, Calendar, Banknote, Bell } from '@lucide/vue';
 import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue';
 import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const props = defineProps<{
     items: PurchaseSummaryItem[];
@@ -16,6 +16,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     reorder: [order: string[]];
+    editPurchase: [purchase: Purchase];
 }>();
 
 const selectedPurchase = ref<Purchase | undefined>();
@@ -79,6 +80,10 @@ function openCardDetails(item: PurchaseSummaryItem): void {
     showCardDetailsModal.value = true;
 }
 
+function onEditPurchase(purchase: Purchase): void {
+    emit('editPurchase', purchase);
+}
+
 function formatCurrency(value: number): string {
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -125,6 +130,9 @@ function toTitleCase(str: string): string {
                         </span>
                         <span class="font-semibold">{{ formatCurrency(item.total) }}</span>
                     </div>
+                    <div v-if="item.paid_amount && item.paid_amount < item.total" class="mt-1 text-xs text-muted-foreground">
+                        Pago {{ formatCurrency(item.paid_amount) }} de {{ formatCurrency(item.total) }}
+                    </div>
                 </CardContent>
             </CardComponent>
 
@@ -142,6 +150,16 @@ function toTitleCase(str: string): string {
                                 class="size-5"
                                 :style="{ color: typeColors[item.items[0].type] ?? '#6b7280' }" />
                             {{ item.name ? toTitleCase(item.name) : 'Sem nome' }}
+                            <TooltipProvider v-if="item.items[0].notify_due">
+                                <Tooltip>
+                                    <TooltipTrigger as-child>
+                                        <Bell class="size-3.5 text-amber-500" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Notificação de vencimento ativa</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
                         <StatusBadge v-if="item.status" :status="item.status" />
                     </CardTitle>
@@ -158,7 +176,7 @@ function toTitleCase(str: string): string {
         </template>
     </div>
 
-    <PurchaseDetailsModal v-model:open="showDetailsModal" :purchase="selectedPurchase" :month="month" :year="year" />
+    <PurchaseDetailsModal v-model:open="showDetailsModal" :purchase="selectedPurchase" :month="month" :year="year" @edit="onEditPurchase" />
 
-    <CardPurchaseDetailsModal v-model:open="showCardDetailsModal" :purchase-summary="selectedCardPurchase" />
+    <CardPurchaseDetailsModal v-model:open="showCardDetailsModal" :purchase-summary="selectedCardPurchase" :month="month" :year="year" />
 </template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import type { PurchaseSummaryItem } from '@/types/purchase';
 import {
     Table,
@@ -9,8 +10,9 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { CreditCard, ShoppingCart, Calendar, Banknote } from '@lucide/vue';
+import { CreditCard, ShoppingCart, Calendar, Banknote, Bell, FileText } from '@lucide/vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const props = defineProps<{
     items: PurchaseSummaryItem[];
@@ -25,8 +27,22 @@ const emit = defineEmits<{
 
 type SortKey = 'name' | 'status' | 'amount';
 
-const sortKey = ref<SortKey | null>(null);
-const sortDir = ref<'asc' | 'desc'>('asc');
+const page = usePage();
+const initialPrefs = (page.props.preferences as Record<string, any>) ?? {};
+const storedSort = initialPrefs.purchases_table_sort ?? null;
+const sortKey = ref<SortKey | null>(storedSort?.key ?? null);
+const sortDir = ref<'asc' | 'desc'>(storedSort?.dir ?? 'asc');
+
+watch([sortKey, sortDir], ([key, dir]) => {
+    fetch(route('preferences.update'), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            key: 'purchases_table_sort',
+            value: key ? { key, dir } : null,
+        }),
+    });
+}, { deep: true });
 
 const typeIcons: Record<string, typeof CreditCard> = {
     credit_card: CreditCard,
@@ -43,9 +59,10 @@ const typeColors: Record<string, string> = {
 
 const statusOrder: Record<string, number> = {
     paga: 0,
-    aberta: 1,
-    atrasada: 2,
+    parcialmente_paga: 1,
+    aberta: 2,
     fechada: 3,
+    atrasada: 4,
 };
 
 const sortedItems = computed(() => {
@@ -176,7 +193,19 @@ function toTitleCase(str: string): string {
                         />
                     </TableCell>
                     <TableCell class="py-2.5 font-medium">
-                        {{ getName(item) }}
+                        <div class="flex items-center gap-1.5">
+                            {{ getName(item) }}
+                            <TooltipProvider v-if="item.items[0]?.notify_due">
+                                <Tooltip>
+                                    <TooltipTrigger as-child>
+                                        <Bell class="size-3.5 text-amber-500 shrink-0" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Notificação de vencimento ativa</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                     </TableCell>
                     <TableCell class="py-2.5 text-muted-foreground hidden sm:table-cell">
                         {{ getDates(item) }}
@@ -185,7 +214,14 @@ function toTitleCase(str: string): string {
                         <StatusBadge :status="item.status ?? 'aberta'" />
                     </TableCell>
                     <TableCell class="py-2.5 text-right font-medium">
-                        {{ formatCurrency(item.total) }}
+                        <template v-if="item.paid_amount && item.paid_amount < item.total">
+                            {{ formatCurrency(item.paid_amount) }}
+                            <span class="text-xs text-muted-foreground"> / </span>
+                            {{ formatCurrency(item.total) }}
+                        </template>
+                        <template v-else>
+                            {{ formatCurrency(item.total) }}
+                        </template>
                     </TableCell>
                 </TableRow>
                 <TableRow v-if="sortedItems.length === 0">
