@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import type { Card } from '@/types/card';
 import { Button } from '@/components/ui/button';
 import Checkbox from '@/Components/Checkbox.vue';
@@ -19,8 +20,22 @@ const emit = defineEmits<{
 
 const selectedIds = ref<number[]>([]);
 
-const sortKey = ref<'name' | null>(null);
-const sortDir = ref<'asc' | 'desc'>('asc');
+const page = usePage();
+const initialPrefs = (page.props.preferences as Record<string, any>) ?? {};
+const storedSort = initialPrefs.cards_table_sort ?? null;
+const sortKey = ref<'name' | null>(storedSort?.key ?? null);
+const sortDir = ref<'asc' | 'desc'>(storedSort?.dir ?? 'asc');
+
+watch([sortKey, sortDir], ([key, dir]) => {
+    fetch(route('preferences.update'), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            key: 'cards_table_sort',
+            value: key ? { key, dir } : null,
+        }),
+    });
+}, { deep: true });
 
 const sortedCards = computed(() => {
     if (!sortKey.value) return props.cards;
