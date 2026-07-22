@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue';
 import type { PurchaseSummaryItem } from '@/types/purchase';
 import {
     Dialog,
@@ -8,6 +9,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Card as CardComponent, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Check, Undo2 } from '@lucide/vue';
 import { router } from '@inertiajs/vue3';
@@ -21,6 +23,14 @@ const props = defineProps<{
 const emit = defineEmits<{
     'update:open': [value: boolean];
 }>();
+
+const paymentAmount = ref<number>(0);
+
+const remainingAmount = computed(() => {
+    const total = props.purchaseSummary?.total ?? 0;
+    const paid = props.purchaseSummary?.paid_amount ?? 0;
+    return Math.max(0, total - paid);
+});
 
 function formatCurrency(value: number): string {
     return new Intl.NumberFormat('pt-BR', {
@@ -58,9 +68,15 @@ function close(): void {
     emit('update:open', false);
 }
 
+function openPaymentForm(): void {
+    paymentAmount.value = remainingAmount.value;
+}
+
 function markAsPaid(): void {
     if (!props.purchaseSummary?.items[0]) return;
-    router.patch(route('purchases.mark-as-paid', props.purchaseSummary.items[0].id), {}, {
+    router.patch(route('purchases.mark-as-paid', props.purchaseSummary.items[0].id), {
+        amount: paymentAmount.value,
+    }, {
         onSuccess: close,
     });
 }
@@ -70,6 +86,18 @@ function unmarkAsPaid(): void {
     router.patch(route('purchases.unmark-as-paid', props.purchaseSummary.items[0].id), {}, {
         onSuccess: close,
     });
+}
+
+function isFullyPaid(): boolean {
+    return props.purchaseSummary?.status === 'paga';
+}
+
+function isPartiallyPaid(): boolean {
+    return props.purchaseSummary?.status === 'parcialmente_paga';
+}
+
+function hasPayment(): boolean {
+    return isFullyPaid() || isPartiallyPaid();
 }
 </script>
 
@@ -122,22 +150,36 @@ function unmarkAsPaid(): void {
                     <span class="text-lg font-bold">{{ formatCurrency(purchaseSummary.total) }}</span>
                 </div>
 
-                <div v-if="purchaseSummary.paid_at" class="text-sm text-muted-foreground">
-                    Pago em {{ formatDateTime(purchaseSummary.paid_at) }}
+                <div v-if="isPartiallyPaid() && purchaseSummary.paid_amount" class="text-sm text-muted-foreground">
+                    Pago {{ formatCurrency(purchaseSummary.paid_amount) }} de {{ formatCurrency(purchaseSummary.total) }}
                 </div>
 
-                <Button
-                    v-if="purchaseSummary?.status !== 'paga'"
-                    variant="outline"
-                    class="w-full cursor-pointer"
-                    @click="markAsPaid"
-                >
-                    <Check class="mr-2 size-4" />
-                    Marcar como pago
-                </Button>
+                <div v-if="isFullyPaid() && purchaseSummary.paid_at" class="text-sm text-muted-foreground">
+                    Pago {{ formatCurrency(purchaseSummary.total) }} em {{ formatDateTime(purchaseSummary.paid_at) }}
+                </div>
+
+                <template v-if="!isFullyPaid()">
+                    <div class="flex items-center gap-2">
+                        <Input
+                            v-model.number="paymentAmount"
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            :max="remainingAmount"
+                        />
+                        <Button class="cursor-pointer" @click="markAsPaid">
+                            <Check class="mr-2 size-4" />
+                            Pagar
+                        </Button>
+                    </div>
+
+                    <div v-if="paymentAmount !== remainingAmount" class="text-xs text-muted-foreground">
+                        Valor restante: {{ formatCurrency(remainingAmount) }}
+                    </div>
+                </template>
 
                 <Button
-                    v-if="purchaseSummary?.status === 'paga'"
+                    v-if="hasPayment()"
                     variant="outline"
                     class="w-full cursor-pointer"
                     @click="unmarkAsPaid"

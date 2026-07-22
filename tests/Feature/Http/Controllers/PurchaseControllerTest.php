@@ -280,6 +280,7 @@ it('marks card purchase invoice as paid', function () {
     $purchase = Purchase::factory()->forCard($card)->create([
         'user_id' => $user->id,
         'start_date' => '2024-07-01',
+        'amount' => 500,
     ]);
 
     Invoice::factory()->create([
@@ -290,7 +291,9 @@ it('marks card purchase invoice as paid', function () {
         'status' => 'fechada',
     ]);
 
-    patch(route('purchases.mark-as-paid', $purchase))->assertRedirect();
+    patch(route('purchases.mark-as-paid', $purchase), [
+        'amount' => 500,
+    ])->assertRedirect();
 
     assertDatabaseHas(Invoice::class, [
         'card_id' => $card->id,

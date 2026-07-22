@@ -42,7 +42,7 @@ it('falls back to start_date->day when payment_day is null', function () {
 
 it('returns aberta status as default when status attribute is missing', function () {
     $purchase = Purchase::factory()->create([
-        'payment_day' => now()->addDays(10)->day,
+        'payment_day' => 25,
         'start_date' => now()->subMonth(),
     ]);
 

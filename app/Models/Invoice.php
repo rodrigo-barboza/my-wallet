@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['user_id', 'card_id', 'month', 'year', 'status', 'closing_date', 'due_date', 'paid_at'])]
+#[Fillable(['user_id', 'card_id', 'month', 'year', 'status', 'closing_date', 'due_date', 'paid_at', 'paid_amount'])]
 class Invoice extends Model
 {
     /** @use HasFactory<InvoiceFactory> */
@@ -20,6 +20,7 @@ class Invoice extends Model
     protected $casts = [
         'month' => 'integer',
         'year' => 'integer',
+        'paid_amount' => 'decimal:2',
         'status' => InvoiceStatus::class,
         'closing_date' => 'date',
         'due_date' => 'date',
@@ -42,6 +43,10 @@ class Invoice extends Model
 
         if ($status === InvoiceStatus::Paga->value) {
             return InvoiceStatus::Paga->value;
+        }
+
+        if ($status === InvoiceStatus::ParcialmentePaga->value) {
+            return InvoiceStatus::ParcialmentePaga->value;
         }
 
         if (now()->gte($this->due_date)) {

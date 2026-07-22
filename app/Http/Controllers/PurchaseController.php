@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\InvoiceStatus;
 use App\Http\Requests\PurchaseRequest;
 use App\Models\Invoice;
 use App\Models\Purchase;
@@ -102,7 +103,26 @@ final readonly class PurchaseController
                 ->first();
 
             if ($invoice) {
-                $invoice->update(['status' => 'paga', 'paid_at' => now()]);
+                $amount = (float) request()->input('amount');
+                $total = (float) Purchase::where('card_id', $purchase->card_id)
+                    ->where('user_id', $purchase->user_id)
+                    ->whereYear('start_date', $purchase->start_date->year)
+                    ->whereMonth('start_date', $purchase->start_date->month)
+                    ->sum('amount');
+
+                if ($amount >= $total) {
+                    $invoice->update([
+                        'paid_amount' => $amount,
+                        'status' => InvoiceStatus::Paga,
+                        'paid_at' => now(),
+                    ]);
+                } elseif ($amount > 0) {
+                    $invoice->update([
+                        'paid_amount' => $amount,
+                        'status' => InvoiceStatus::ParcialmentePaga,
+                        'paid_at' => null,
+                    ]);
+                }
             }
         } else {
             $purchase->payments()->updateOrCreate(
@@ -130,7 +150,11 @@ final readonly class PurchaseController
                 ->first();
 
             if ($invoice) {
-                $invoice->update(['status' => 'fechada', 'paid_at' => null]);
+                $invoice->update([
+                    'paid_amount' => null,
+                    'paid_at' => null,
+                    'status' => InvoiceStatus::Aberta,
+                ]);
             }
         } else {
             $purchase->payments()->where('month', $month)->where('year', $year)->delete();
@@ -201,6 +225,7 @@ final readonly class PurchaseController
                 ->first();
 
             $status = $invoice?->status ?? 'aberta';
+            $paidAmount = $invoice?->paid_amount;
 
             return [
                 'name' => $card->name,
@@ -208,6 +233,7 @@ final readonly class PurchaseController
                 'dates' => ['closing' => $card->closing_day, 'due' => $card->due_day],
                 'status' => $status,
                 'paid_at' => $invoice?->paid_at?->toISOString(),
+                'paid_amount' => $paidAmount !== null ? (float) $paidAmount : null,
                 'items' => $items->values(),
             ];
         })->values();
