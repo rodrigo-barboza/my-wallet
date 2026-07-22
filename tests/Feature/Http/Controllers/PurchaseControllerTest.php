@@ -293,6 +293,8 @@ it('partially pays card purchase invoice', function () {
 
     patch(route('purchases.mark-as-paid', $purchase), [
         'amount' => 200,
+        'month' => 7,
+        'year' => 2024,
     ])->assertRedirect();
 
     assertDatabaseHas(Invoice::class, [
@@ -323,8 +325,8 @@ it('accumulates partial payments on card purchase invoice', function () {
         'status' => 'fechada',
     ]);
 
-    patch(route('purchases.mark-as-paid', $purchase), ['amount' => 200]);
-    patch(route('purchases.mark-as-paid', $purchase), ['amount' => 150]);
+    patch(route('purchases.mark-as-paid', $purchase), ['amount' => 200, 'month' => 7, 'year' => 2024]);
+    patch(route('purchases.mark-as-paid', $purchase), ['amount' => 150, 'month' => 7, 'year' => 2024]);
 
     assertDatabaseHas(Invoice::class, [
         'card_id' => $card->id,
@@ -354,8 +356,8 @@ it('marks invoice as fully paid when accumulated amount reaches total', function
         'status' => 'fechada',
     ]);
 
-    patch(route('purchases.mark-as-paid', $purchase), ['amount' => 200]);
-    patch(route('purchases.mark-as-paid', $purchase), ['amount' => 300]);
+    patch(route('purchases.mark-as-paid', $purchase), ['amount' => 200, 'month' => 7, 'year' => 2024]);
+    patch(route('purchases.mark-as-paid', $purchase), ['amount' => 300, 'month' => 7, 'year' => 2024]);
 
     assertDatabaseHas(Invoice::class, [
         'card_id' => $card->id,
@@ -387,6 +389,8 @@ it('marks card purchase invoice as paid', function () {
 
     patch(route('purchases.mark-as-paid', $purchase), [
         'amount' => 500,
+        'month' => 7,
+        'year' => 2024,
     ])->assertRedirect();
 
     assertDatabaseHas(Invoice::class, [
