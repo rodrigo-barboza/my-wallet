@@ -47,7 +47,10 @@ const monthNames = [
 
 const currentMonthName = computed(() => monthNames[props.month - 1]);
 
-const totalAmount = computed(() => props.summary.reduce((sum, item) => sum + parseFloat(String(item.total)), 0));
+const totalAmount = computed(() => props.summary.reduce((sum, item) => {
+    const original = parseFloat(String(item.total)) + parseFloat(String(item.paid_amount ?? 0));
+    return sum + original;
+}, 0));
 
 const paidAmount = computed(() => props.summary.reduce((sum, item) => {
     if (item.paid_amount) {

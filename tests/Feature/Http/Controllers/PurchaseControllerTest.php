@@ -272,6 +272,100 @@ it('marks individual purchase as paid', function () {
     ]);
 });
 
+it('partially pays card purchase invoice', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+    $card = Card::factory()->create(['user_id' => $user->id]);
+
+    $purchase = Purchase::factory()->forCard($card)->create([
+        'user_id' => $user->id,
+        'start_date' => '2024-07-01',
+        'amount' => 500,
+    ]);
+
+    Invoice::factory()->create([
+        'user_id' => $user->id,
+        'card_id' => $card->id,
+        'month' => 7,
+        'year' => 2024,
+        'status' => 'fechada',
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase), [
+        'amount' => 200,
+    ])->assertRedirect();
+
+    assertDatabaseHas(Invoice::class, [
+        'card_id' => $card->id,
+        'month' => 7,
+        'year' => 2024,
+        'status' => 'parcialmente_paga',
+        'paid_amount' => 200,
+    ]);
+});
+
+it('accumulates partial payments on card purchase invoice', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+    $card = Card::factory()->create(['user_id' => $user->id]);
+
+    $purchase = Purchase::factory()->forCard($card)->create([
+        'user_id' => $user->id,
+        'start_date' => '2024-07-01',
+        'amount' => 500,
+    ]);
+
+    Invoice::factory()->create([
+        'user_id' => $user->id,
+        'card_id' => $card->id,
+        'month' => 7,
+        'year' => 2024,
+        'status' => 'fechada',
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase), ['amount' => 200]);
+    patch(route('purchases.mark-as-paid', $purchase), ['amount' => 150]);
+
+    assertDatabaseHas(Invoice::class, [
+        'card_id' => $card->id,
+        'month' => 7,
+        'year' => 2024,
+        'status' => 'parcialmente_paga',
+        'paid_amount' => 350,
+    ]);
+});
+
+it('marks invoice as fully paid when accumulated amount reaches total', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+    $card = Card::factory()->create(['user_id' => $user->id]);
+
+    $purchase = Purchase::factory()->forCard($card)->create([
+        'user_id' => $user->id,
+        'start_date' => '2024-07-01',
+        'amount' => 500,
+    ]);
+
+    Invoice::factory()->create([
+        'user_id' => $user->id,
+        'card_id' => $card->id,
+        'month' => 7,
+        'year' => 2024,
+        'status' => 'fechada',
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase), ['amount' => 200]);
+    patch(route('purchases.mark-as-paid', $purchase), ['amount' => 300]);
+
+    assertDatabaseHas(Invoice::class, [
+        'card_id' => $card->id,
+        'month' => 7,
+        'year' => 2024,
+        'status' => 'paga',
+        'paid_amount' => 500,
+    ]);
+});
+
 it('marks card purchase invoice as paid', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
