@@ -49,9 +49,15 @@ const currentMonthName = computed(() => monthNames[props.month - 1]);
 
 const totalAmount = computed(() => props.summary.reduce((sum, item) => sum + parseFloat(String(item.total)), 0));
 
-const paidAmount = computed(() => props.summary
-    .filter((item) => item.status === 'paga')
-    .reduce((sum, item) => sum + parseFloat(String(item.total)), 0));
+const paidAmount = computed(() => props.summary.reduce((sum, item) => {
+    if (item.paid_amount) {
+        return sum + parseFloat(String(item.paid_amount));
+    }
+    if (item.status === 'paga') {
+        return sum + parseFloat(String(item.total));
+    }
+    return sum;
+}, 0));
 
 const pendingAmount = computed(() => totalAmount.value - paidAmount.value);
 

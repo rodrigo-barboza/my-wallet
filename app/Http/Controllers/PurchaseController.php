@@ -110,15 +110,17 @@ final readonly class PurchaseController
                     ->whereMonth('start_date', $purchase->start_date->month)
                     ->sum('amount');
 
-                if ($amount >= $total) {
+                $newPaidAmount = ($invoice->paid_amount ?? 0) + $amount;
+
+                if ($newPaidAmount >= $total) {
                     $invoice->update([
-                        'paid_amount' => $amount,
+                        'paid_amount' => $newPaidAmount,
                         'status' => InvoiceStatus::Paga,
                         'paid_at' => now(),
                     ]);
-                } elseif ($amount > 0) {
+                } elseif ($newPaidAmount > 0) {
                     $invoice->update([
-                        'paid_amount' => $amount,
+                        'paid_amount' => $newPaidAmount,
                         'status' => InvoiceStatus::ParcialmentePaga,
                         'paid_at' => null,
                     ]);
@@ -226,10 +228,12 @@ final readonly class PurchaseController
 
             $status = $invoice?->status ?? 'aberta';
             $paidAmount = $invoice?->paid_amount;
+            $originalTotal = (float) $items->sum('amount');
+            $displayTotal = $paidAmount !== null ? max(0, $originalTotal - (float) $paidAmount) : $originalTotal;
 
             return [
                 'name' => $card->name,
-                'total' => $items->sum('amount'),
+                'total' => $displayTotal,
                 'dates' => ['closing' => $card->closing_day, 'due' => $card->due_day],
                 'status' => $status,
                 'paid_at' => $invoice?->paid_at?->toISOString(),

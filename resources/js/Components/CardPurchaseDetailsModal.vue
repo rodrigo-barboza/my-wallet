@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { PurchaseSummaryItem } from '@/types/purchase';
 import {
     Dialog,
@@ -9,11 +9,11 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Card as CardComponent, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Check, Undo2 } from '@lucide/vue';
 import { router } from '@inertiajs/vue3';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import CurrencyInput from '@/Components/CurrencyInput.vue';
 
 const props = defineProps<{
     open: boolean;
@@ -26,11 +26,15 @@ const emit = defineEmits<{
 
 const paymentAmount = ref<number>(0);
 
-const remainingAmount = computed(() => {
+const originalTotal = computed(() => {
     const total = props.purchaseSummary?.total ?? 0;
     const paid = props.purchaseSummary?.paid_amount ?? 0;
-    return Math.max(0, total - paid);
+    return total + paid;
 });
+
+watch(() => props.purchaseSummary, (summary) => {
+    paymentAmount.value = summary?.total ?? 0;
+}, { immediate: true });
 
 function formatCurrency(value: number): string {
     return new Intl.NumberFormat('pt-BR', {
@@ -66,10 +70,6 @@ const typeLabels: Record<string, string> = {
 
 function close(): void {
     emit('update:open', false);
-}
-
-function openPaymentForm(): void {
-    paymentAmount.value = remainingAmount.value;
 }
 
 function markAsPaid(): void {
@@ -151,30 +151,20 @@ function hasPayment(): boolean {
                 </div>
 
                 <div v-if="isPartiallyPaid() && purchaseSummary.paid_amount" class="text-sm text-muted-foreground">
-                    Pago {{ formatCurrency(purchaseSummary.paid_amount) }} de {{ formatCurrency(purchaseSummary.total) }}
+                    Pago {{ formatCurrency(purchaseSummary.paid_amount) }} de {{ formatCurrency(originalTotal) }}
                 </div>
 
                 <div v-if="isFullyPaid() && purchaseSummary.paid_at" class="text-sm text-muted-foreground">
-                    Pago {{ formatCurrency(purchaseSummary.total) }} em {{ formatDateTime(purchaseSummary.paid_at) }}
+                    Pago {{ formatCurrency(purchaseSummary.paid_amount ?? 0) }} em {{ formatDateTime(purchaseSummary.paid_at) }}
                 </div>
 
                 <template v-if="!isFullyPaid()">
                     <div class="flex items-center gap-2">
-                        <Input
-                            v-model.number="paymentAmount"
-                            type="number"
-                            step="0.01"
-                            min="0.01"
-                            :max="remainingAmount"
-                        />
+                        <CurrencyInput v-model="paymentAmount" class="flex-1" />
                         <Button class="cursor-pointer" @click="markAsPaid">
                             <Check class="mr-2 size-4" />
                             Pagar
                         </Button>
-                    </div>
-
-                    <div v-if="paymentAmount !== remainingAmount" class="text-xs text-muted-foreground">
-                        Valor restante: {{ formatCurrency(remainingAmount) }}
                     </div>
                 </template>
 
