@@ -37,6 +37,7 @@ const showFormModal = ref(false);
 
 const selectedPurchase = ref<Purchase | undefined>();
 const showDetailsModal = ref(false);
+const editingPurchase = ref<Purchase | undefined>();
 const selectedCardPurchase = ref<PurchaseSummaryItem | undefined>();
 const showCardDetailsModal = ref(false);
 
@@ -48,16 +49,16 @@ const monthNames = [
 const currentMonthName = computed(() => monthNames[props.month - 1]);
 
 const totalAmount = computed(() => props.summary.reduce((sum, item) => {
-    const original = parseFloat(String(item.total)) + parseFloat(String(item.paid_amount ?? 0));
-    return sum + original;
+    return sum + parseFloat(String(item.total));
 }, 0));
 
 const paidAmount = computed(() => props.summary.reduce((sum, item) => {
+    const total = parseFloat(String(item.total));
     if (item.paid_amount) {
-        return sum + parseFloat(String(item.paid_amount));
+        return sum + Math.min(parseFloat(String(item.paid_amount)), total);
     }
     if (item.status === 'paga') {
-        return sum + parseFloat(String(item.total));
+        return sum + total;
     }
     return sum;
 }, 0));
@@ -85,6 +86,16 @@ function onTableSelect(item: PurchaseSummaryItem): void {
 function onTableCardSelect(item: PurchaseSummaryItem): void {
     selectedCardPurchase.value = item;
     showCardDetailsModal.value = true;
+}
+
+function onEditPurchase(purchase: Purchase): void {
+    editingPurchase.value = purchase;
+    showFormModal.value = true;
+}
+
+function onCloseForm(open: boolean): void {
+    showFormModal.value = open;
+    if (!open) editingPurchase.value = undefined;
 }
 
 function previousMonth(): void {
@@ -195,6 +206,7 @@ async function handleReorder(order: string[]): Promise<void> {
             :month="month"
             :year="year"
             @reorder="handleReorder"
+            @edit-purchase="onEditPurchase"
         />
 
         <PurchasesTableMode
@@ -206,13 +218,16 @@ async function handleReorder(order: string[]): Promise<void> {
             @card-select="onTableCardSelect"
         />
 
-        <PurchaseDetailsModal v-model:open="showDetailsModal" :purchase="selectedPurchase" :month="month" :year="year" />
+        <PurchaseDetailsModal v-model:open="showDetailsModal" :purchase="selectedPurchase" :month="month" :year="year"
+            @edit="onEditPurchase" />
 
-        <CardPurchaseDetailsModal v-model:open="showCardDetailsModal" :purchase-summary="selectedCardPurchase" />
+        <CardPurchaseDetailsModal v-model:open="showCardDetailsModal" :purchase-summary="selectedCardPurchase" :month="month" :year="year" />
 
         <PurchaseFormModal
-            v-model:open="showFormModal"
+            :open="showFormModal"
+            :purchase="editingPurchase"
             :cards="cards"
+            @update:open="onCloseForm"
         />
     </div>
 </template>
