@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\PreferencesController;
 use App\Http\Controllers\PurchaseController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -47,4 +48,6 @@ Route::middleware('auth')->group(function () {
 
     Route::patch('/invoices/{invoice}/mark-as-paid', [InvoiceController::class, 'markAsPaid'])->name('invoices.mark-as-paid');
     Route::patch('/invoices/{invoice}/unmark-as-paid', [InvoiceController::class, 'unmarkAsPaid'])->name('invoices.unmark-as-paid');
+
+    Route::patch('/preferences', [PreferencesController::class, 'update'])->name('preferences.update');
 });

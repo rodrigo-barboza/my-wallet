@@ -27,5 +27,6 @@ return [
         'purchases.reorder',
         'invoices.mark-as-paid',
         'invoices.unmark-as-paid',
+        'preferences.update',
     ],
 ];
