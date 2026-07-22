@@ -14,6 +14,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import Toggle from '@/Components/Toggle.vue';
+import Checkbox from '@/Components/Checkbox.vue';
+import CurrencyInput from '@/Components/CurrencyInput.vue';
 
 const props = defineProps<{
     purchase?: Purchase;
@@ -32,17 +34,25 @@ const form = useForm<PurchaseFormData>({
     card_id: props.purchase?.card_id ?? null,
     amount: props.purchase?.amount ?? 0,
     installments_total: props.purchase?.installments_total ?? null,
-    start_date: props.purchase?.start_date ?? new Date().toISOString().split('T')[0],
+    start_date: props.purchase?.start_date
+        ? (props.purchase.start_date.includes('T') ? props.purchase.start_date.split('T')[0] : props.purchase.start_date.split(' ')[0])
+        : new Date().toISOString().split('T')[0],
     notes: props.purchase?.notes ?? '',
+    mark_as_paid: false,
+    notify_due: false,
 });
 
 const isCreditCard = computed(() => form.type === 'credit_card');
+const showNotifyDue = computed(() => form.type === 'bill' || form.type === 'financing');
 
 watch(() => form.type, (newType) => {
     if (newType === 'credit_card') {
         form.payment_day = null;
     } else {
         form.card_id = null;
+    }
+    if (newType === 'bill' || newType === 'financing') {
+        if (!props.purchase) form.notify_due = true;
     }
 });
 
@@ -73,7 +83,7 @@ function submit(): void {
         <div class="space-y-2">
             <Label for="type">Tipo</Label>
             <Select v-model="form.type">
-                <SelectTrigger>
+                <SelectTrigger class="w-full">
                     <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -89,7 +99,7 @@ function submit(): void {
         <div v-if="isCreditCard" class="space-y-2">
             <Label for="card_id">Cartão</Label>
             <Select v-model="form.card_id">
-                <SelectTrigger>
+                <SelectTrigger class="w-full">
                     <SelectValue placeholder="Selecione o cartão" />
                 </SelectTrigger>
                 <SelectContent>
@@ -109,7 +119,7 @@ function submit(): void {
 
         <div class="space-y-2">
             <Label for="amount">Valor</Label>
-            <Input id="amount" v-model="form.amount" type="number" step="0.01" min="0.01" />
+            <CurrencyInput id="amount" v-model="form.amount" />
             <p v-if="form.errors.amount" class="text-sm text-destructive">{{ form.errors.amount }}</p>
         </div>
 
@@ -142,9 +152,25 @@ function submit(): void {
             <p v-if="form.errors.installments_total" class="text-sm text-destructive">{{ form.errors.installments_total }}</p>
         </div>
 
+        <div v-if="showNotifyDue" class="flex items-center justify-between">
+            <Label>Notificar vencimento</Label>
+            <Toggle
+                :checked="form.notify_due"
+                @update:checked="form.notify_due = $event"
+            />
+        </div>
+
         <div class="space-y-2">
             <Label for="notes">Observações</Label>
             <Input id="notes" v-model="form.notes" placeholder="Opcional" />
+        </div>
+
+        <div v-if="!isCreditCard && !form.is_recurring" class="flex items-center gap-2">
+            <Checkbox
+                :checked="form.mark_as_paid"
+                @update:checked="form.mark_as_paid = $event"
+            />
+            <Label class="cursor-pointer" @click="form.mark_as_paid = !form.mark_as_paid">Marcar como pago</Label>
         </div>
 
         <Button type="submit" class="w-full" :disabled="form.processing">
