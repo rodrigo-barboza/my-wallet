@@ -49,6 +49,14 @@ final readonly class PurchaseController
 
         $this->ensureInvoiceExists($purchase);
 
+        if ($request->boolean('mark_as_paid') && ! $purchase->card_id && ! $purchase->is_recurring) {
+            $purchase->payments()->create([
+                'month' => $purchase->start_date->month,
+                'year' => $purchase->start_date->year,
+                'paid_at' => now(),
+            ]);
+        }
+
         Inertia::flash('toast', ['message' => 'Compra criada com sucesso!', 'type' => 'success']);
 
         return to_route('purchases.index');
@@ -97,34 +105,51 @@ final readonly class PurchaseController
         $year = (int) request()->input('year', now()->year);
 
         if ($purchase->card_id) {
-            $invoice = Invoice::where('card_id', $purchase->card_id)
-                ->where('month', $purchase->start_date->month)
-                ->where('year', $purchase->start_date->year)
-                ->first();
+            $card = $purchase->card;
+            $invoiceDate = Carbon::create($year, $month, 1);
+            $closingDate = $invoiceDate->copy()->day($card->closing_day);
+            $dueDate = $invoiceDate->copy()->day($card->due_day);
 
-            if ($invoice) {
-                $amount = (float) request()->input('amount');
-                $total = (float) Purchase::where('card_id', $purchase->card_id)
-                    ->where('user_id', $purchase->user_id)
-                    ->whereYear('start_date', $purchase->start_date->year)
-                    ->whereMonth('start_date', $purchase->start_date->month)
-                    ->sum('amount');
+            if ($card->closing_day > $card->due_day) {
+                $dueDate->addMonth();
+            }
 
-                $newPaidAmount = ($invoice->paid_amount ?? 0) + $amount;
+            $invoice = Invoice::firstOrCreate(
+                [
+                    'user_id' => $purchase->user_id,
+                    'card_id' => $purchase->card_id,
+                    'month' => $month,
+                    'year' => $year,
+                ],
+                [
+                    'status' => InvoiceStatus::Aberta->value,
+                    'closing_date' => $closingDate,
+                    'due_date' => $dueDate,
+                ],
+            );
 
-                if ($newPaidAmount >= $total) {
-                    $invoice->update([
-                        'paid_amount' => $newPaidAmount,
-                        'status' => InvoiceStatus::Paga,
-                        'paid_at' => now(),
-                    ]);
-                } elseif ($newPaidAmount > 0) {
-                    $invoice->update([
-                        'paid_amount' => $newPaidAmount,
-                        'status' => InvoiceStatus::ParcialmentePaga,
-                        'paid_at' => null,
-                    ]);
-                }
+            $amount = (float) request()->input('amount');
+            $purchasesInMonth = Purchase::where('card_id', $purchase->card_id)
+                ->where('user_id', $purchase->user_id)
+                ->get()
+                ->filter(fn ($p) => $p->isActiveInMonth($year, $month));
+
+            $total = (float) $purchasesInMonth->sum('amount');
+
+            $newPaidAmount = ($invoice->paid_amount ?? 0) + $amount;
+
+            if ($newPaidAmount >= $total) {
+                $invoice->update([
+                    'paid_amount' => $newPaidAmount,
+                    'status' => InvoiceStatus::Paga,
+                    'paid_at' => now(),
+                ]);
+            } elseif ($newPaidAmount > 0) {
+                $invoice->update([
+                    'paid_amount' => $newPaidAmount,
+                    'status' => InvoiceStatus::ParcialmentePaga,
+                    'paid_at' => null,
+                ]);
             }
         } else {
             $purchase->payments()->updateOrCreate(
@@ -147,8 +172,8 @@ final readonly class PurchaseController
 
         if ($purchase->card_id) {
             $invoice = Invoice::where('card_id', $purchase->card_id)
-                ->where('month', $purchase->start_date->month)
-                ->where('year', $purchase->start_date->year)
+                ->where('month', $month)
+                ->where('year', $year)
                 ->first();
 
             if ($invoice) {
@@ -195,19 +220,27 @@ final readonly class PurchaseController
             $dueDate->addMonth();
         }
 
-        Invoice::updateOrCreate(
-            [
+        $invoice = Invoice::where('card_id', $purchase->card_id)
+            ->where('month', $startDate->month)
+            ->where('year', $startDate->year)
+            ->first();
+
+        if ($invoice) {
+            $invoice->update([
+                'closing_date' => $closingDate,
+                'due_date' => $dueDate,
+            ]);
+        } else {
+            Invoice::create([
                 'user_id' => $purchase->user_id,
                 'card_id' => $purchase->card_id,
                 'month' => $startDate->month,
                 'year' => $startDate->year,
-            ],
-            [
                 'closing_date' => $closingDate,
                 'due_date' => $dueDate,
                 'status' => now()->gte($closingDate) ? 'fechada' : 'aberta',
-            ]
-        );
+            ]);
+        }
     }
 
     private function buildSummary($purchases, int $month, int $year): array
@@ -226,14 +259,18 @@ final readonly class PurchaseController
                 ->where('year', $year)
                 ->first();
 
-            $status = $invoice?->status ?? 'aberta';
             $paidAmount = $invoice?->paid_amount;
             $originalTotal = (float) $items->sum('amount');
-            $displayTotal = $paidAmount !== null ? max(0, $originalTotal - (float) $paidAmount) : $originalTotal;
+
+            $status = match (true) {
+                $paidAmount !== null && (float) $paidAmount >= $originalTotal => 'paga',
+                $paidAmount !== null && (float) $paidAmount > 0 => 'parcialmente_paga',
+                default => $invoice?->status ?? 'aberta',
+            };
 
             return [
                 'name' => $card->name,
-                'total' => $displayTotal,
+                'total' => $originalTotal,
                 'dates' => ['closing' => $card->closing_day, 'due' => $card->due_day],
                 'status' => $status,
                 'paid_at' => $invoice?->paid_at?->toISOString(),
