@@ -23,6 +23,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     'update:open': [value: boolean];
+    edit: [purchase: Purchase];
 }>();
 
 const showDeleteDialog = ref(false);
@@ -42,7 +43,8 @@ function formatCurrency(value: number): string {
 }
 
 function formatDate(value: string): string {
-    return new Date(value + 'T00:00:00').toLocaleDateString('pt-BR');
+    const date = value.includes('T') ? value : value.split(' ')[0] + 'T00:00:00';
+    return new Date(date).toLocaleDateString('pt-BR');
 }
 
 function formatDateTime(value: string): string {
@@ -139,6 +141,7 @@ function unmarkAsPaid(): void {
                     <div class="text-sm font-medium">{{ purchase.notes }}</div>
                 </div>
 
+                <div class="space-y-1">
                 <Button
                     v-if="purchase?.status !== 'paga'"
                     variant="outline"
@@ -159,11 +162,21 @@ function unmarkAsPaid(): void {
                     Desmarcar pagamento
                 </Button>
 
+                <Button
+                    v-if="!purchase.card_id"
+                    variant="outline"
+                    class="w-full cursor-pointer"
+                    @click="emit('edit', purchase); close()"
+                >
+                    Editar
+                </Button>
+
                 <Button variant="destructive" class="w-full cursor-pointer" @click="showDeleteDialog = true">
                     <Trash2 class="mr-2 size-4" />
                     Excluir
                 </Button>
             </div>
+        </div>
         </DialogContent>
     </Dialog>
 
