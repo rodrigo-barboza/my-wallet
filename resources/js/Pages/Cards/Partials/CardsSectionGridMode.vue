@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Card } from '@/types/card';
+import { router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card as CardComponent, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard } from '@lucide/vue';
@@ -13,11 +14,15 @@ const emit = defineEmits<{
     edit: [card: Card];
     delete: [card: Card];
 }>();
+
+function goToCard(card: Card): void {
+    router.visit(route('cards.purchases', { card: card.id }));
+}
 </script>
 
 <template>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <CardComponent v-for="card in cards" :key="card.id" class="relative overflow-hidden">
+        <CardComponent v-for="card in cards" :key="card.id" class="relative overflow-hidden cursor-pointer transition-colors hover:bg-muted/30" @click="goToCard(card)">
             <div class="absolute inset-x-0 top-0 h-2" :style="{ backgroundColor: card.color }" />
             <CardHeader>
                 <CardTitle class="flex items-center gap-2">
@@ -70,8 +75,8 @@ const emit = defineEmits<{
                     </div>
                 </div>
                 <div class="mt-4 flex gap-2">
-                    <Button variant="outline" size="sm" @click="emit('edit', card)">Editar</Button>
-                    <Button variant="ghost" size="sm" @click="emit('delete', card)">Excluir</Button>
+                    <Button variant="outline" size="sm" @click.stop="emit('edit', card)">Editar</Button>
+                    <Button variant="ghost" size="sm" @click.stop="emit('delete', card)">Excluir</Button>
                 </div>
             </CardContent>
         </CardComponent>

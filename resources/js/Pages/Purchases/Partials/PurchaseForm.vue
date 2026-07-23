@@ -20,6 +20,7 @@ import CurrencyInput from '@/Components/CurrencyInput.vue';
 const props = defineProps<{
     purchase?: Purchase;
     cards: Card[];
+    defaultCardId?: number | null;
 }>();
 
 const emit = defineEmits<{
@@ -28,10 +29,10 @@ const emit = defineEmits<{
 
 const form = useForm<PurchaseFormData>({
     name: props.purchase?.name ?? '',
-    type: props.purchase?.type ?? '',
+    type: props.purchase?.type ?? (props.defaultCardId ? 'credit_card' : ''),
     payment_day: props.purchase?.payment_day ?? 15,
     is_recurring: props.purchase?.is_recurring ?? false,
-    card_id: props.purchase?.card_id ?? null,
+    card_id: props.purchase?.card_id ?? props.defaultCardId ?? null,
     amount: props.purchase?.amount ?? 0,
     installments_total: props.purchase?.installments_total ?? null,
     start_date: props.purchase?.start_date
@@ -44,6 +45,20 @@ const form = useForm<PurchaseFormData>({
 
 const isCreditCard = computed(() => form.type === 'credit_card');
 const showNotifyDue = computed(() => form.type === 'bill' || form.type === 'financing');
+
+const installmentValue = computed(() => {
+    if (!isCreditCard.value || !form.installments_total || form.installments_total <= 0 || !form.amount) {
+        return null;
+    }
+    return form.amount / form.installments_total;
+});
+
+function formatCurrency(value: number): string {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    }).format(value);
+}
 
 watch(() => form.type, (newType) => {
     if (newType === 'credit_card') {
@@ -121,6 +136,9 @@ function submit(): void {
             <Label for="amount">Valor</Label>
             <CurrencyInput id="amount" v-model="form.amount" />
             <p v-if="form.errors.amount" class="text-sm text-destructive">{{ form.errors.amount }}</p>
+            <p v-if="installmentValue !== null" class="text-sm text-muted-foreground">
+                Parcela: <span class="font-medium">{{ formatCurrency(installmentValue) }}</span> ({{ form.installments_total }}x)
+            </p>
         </div>
 
         <div class="space-y-2">

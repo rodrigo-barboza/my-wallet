@@ -178,5 +178,5 @@ function toTitleCase(str: string): string {
 
     <PurchaseDetailsModal v-model:open="showDetailsModal" :purchase="selectedPurchase" :month="month" :year="year" @edit="onEditPurchase" />
 
-    <CardPurchaseDetailsModal v-model:open="showCardDetailsModal" :purchase-summary="selectedCardPurchase" :month="month" :year="year" />
+    <CardPurchaseDetailsModal v-model:open="showCardDetailsModal" :purchase-summary="selectedCardPurchase" :month="month" :year="year" context="purchases" />
 </template>

@@ -11,7 +11,7 @@ use App\Http\Controllers\PreferencesController;
 use App\Http\Controllers\PurchaseController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn() => to_route('dashboard'))->name('home');
+Route::get('/', fn () => to_route('dashboard'))->name('home');
 
 Route::middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('login');
@@ -37,6 +37,7 @@ Route::middleware('auth')->group(function () {
     Route::put('cards/{card}', [CardController::class, 'update'])->name('cards.update');
     Route::delete('cards/{card}', [CardController::class, 'destroy'])->name('cards.destroy');
     Route::post('cards/bulk-destroy', [CardController::class, 'bulkDestroy'])->name('cards.bulk-destroy');
+    Route::get('/cards/{card}/purchases', [CardController::class, 'purchases'])->name('cards.purchases');
 
     Route::resource('purchases', PurchaseController::class)->except(['create', 'edit']);
     Route::patch('/purchases/{purchase}/mark-as-paid', [PurchaseController::class, 'markAsPaid'])->name('purchases.mark-as-paid');

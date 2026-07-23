@@ -6,9 +6,10 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, LayoutList, Table as TableIcon, Plus } from '@lucide/vue';
+import { ChevronLeft, ChevronRight, LayoutList, Table as TableIcon, Plus, Receipt } from '@lucide/vue';
 import PurchaseSummary from './Partials/PurchaseSummary.vue';
 import PurchasesTableMode from './Partials/PurchasesTableMode.vue';
+import PaymentHistory from './Partials/PaymentHistory.vue';
 import PurchaseFormModal from '@/Components/PurchaseFormModal.vue';
 import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue';
 import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue';
@@ -19,11 +20,21 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+interface PaymentHistoryItem {
+    id: number;
+    name: string;
+    amount: number;
+    paid_at: string;
+    type: string;
+    partial?: boolean;
+}
+
 defineOptions({ layout: AppLayout });
 
 const props = defineProps<{
     purchases: Purchase[];
     summary: PurchaseSummaryItem[];
+    paymentHistory: PaymentHistoryItem[];
     month: number;
     year: number;
     cards: CardType[];
@@ -32,6 +43,8 @@ const props = defineProps<{
 const storedViewMode = localStorage.getItem('purchases_view_mode') as 'card' | 'table' | null;
 const viewMode = ref<'card' | 'table'>(storedViewMode ?? 'card');
 watch(viewMode, (mode) => localStorage.setItem('purchases_view_mode', mode));
+
+const activeTab = ref<'compras' | 'pagamentos'>('compras');
 
 const showFormModal = ref(false);
 
@@ -63,7 +76,10 @@ const paidAmount = computed(() => props.summary.reduce((sum, item) => {
     return sum;
 }, 0));
 
-const pendingAmount = computed(() => totalAmount.value - paidAmount.value);
+const pendingAmount = computed(() => {
+    const pending = totalAmount.value - paidAmount.value;
+    return Math.abs(pending) < 0.01 ? 0 : pending;
+});
 
 const hasOverdue = computed(() => props.summary.some((item) => item.status === 'atrasada'));
 
@@ -131,28 +147,30 @@ async function handleReorder(order: string[]): Promise<void> {
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold">Compras</h2>
             <div class="flex items-center gap-2">
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger as-child>
-                            <Button variant="outline" size="icon"
-                                :class="{ 'bg-primary text-primary-foreground': viewMode === 'card' }"
-                                @click="viewMode = 'card'">
-                                <LayoutList class="size-4" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Visualização em cards</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger as-child>
-                            <Button variant="outline" size="icon"
-                                :class="{ 'bg-primary text-primary-foreground': viewMode === 'table' }"
-                                @click="viewMode = 'table'">
-                                <TableIcon class="size-4" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Visualização em tabela</TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
+                <template v-if="activeTab === 'compras'">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <Button variant="outline" size="icon"
+                                    :class="{ 'bg-primary text-primary-foreground': viewMode === 'card' }"
+                                    @click="viewMode = 'card'">
+                                    <LayoutList class="size-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Visualização em cards</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <Button variant="outline" size="icon"
+                                    :class="{ 'bg-primary text-primary-foreground': viewMode === 'table' }"
+                                    @click="viewMode = 'table'">
+                                    <TableIcon class="size-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Visualização em tabela</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </template>
                 <Button @click="showFormModal = true">
                     <Plus class="mr-2 size-4" />
                     Nova compra
@@ -170,6 +188,26 @@ async function handleReorder(order: string[]): Promise<void> {
             <Button variant="outline" size="icon" @click="nextMonth">
                 <ChevronRight class="size-4" />
             </Button>
+        </div>
+
+        <div class="flex justify-center">
+            <div class="flex items-center gap-1 rounded-lg bg-muted p-1">
+                <button
+                    class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer"
+                    :class="activeTab === 'compras' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                    @click="activeTab = 'compras'"
+                >
+                    Visão geral
+                </button>
+                <button
+                    class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
+                    :class="activeTab === 'pagamentos' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                    @click="activeTab = 'pagamentos'"
+                >
+                    <Receipt class="size-3.5" />
+                    Pagamentos
+                </button>
+            </div>
         </div>
 
         <Card>
@@ -200,28 +238,35 @@ async function handleReorder(order: string[]): Promise<void> {
             </CardContent>
         </Card>
 
-        <PurchaseSummary
-            v-if="viewMode === 'card'"
-            :items="summary"
-            :month="month"
-            :year="year"
-            @reorder="handleReorder"
-            @edit-purchase="onEditPurchase"
-        />
+        <template v-if="activeTab === 'compras'">
+            <PurchaseSummary
+                v-if="viewMode === 'card'"
+                :items="summary"
+                :month="month"
+                :year="year"
+                @reorder="handleReorder"
+                @edit-purchase="onEditPurchase"
+            />
 
-        <PurchasesTableMode
+            <PurchasesTableMode
+                v-else
+                :items="summary"
+                :month="month"
+                :year="year"
+                @select="onTableSelect"
+                @card-select="onTableCardSelect"
+            />
+        </template>
+
+        <PaymentHistory
             v-else
-            :items="summary"
-            :month="month"
-            :year="year"
-            @select="onTableSelect"
-            @card-select="onTableCardSelect"
+            :items="paymentHistory"
         />
 
         <PurchaseDetailsModal v-model:open="showDetailsModal" :purchase="selectedPurchase" :month="month" :year="year"
             @edit="onEditPurchase" />
 
-        <CardPurchaseDetailsModal v-model:open="showCardDetailsModal" :purchase-summary="selectedCardPurchase" :month="month" :year="year" />
+        <CardPurchaseDetailsModal v-model:open="showCardDetailsModal" :purchase-summary="selectedCardPurchase" :month="month" :year="year" context="purchases" />
 
         <PurchaseFormModal
             :open="showFormModal"

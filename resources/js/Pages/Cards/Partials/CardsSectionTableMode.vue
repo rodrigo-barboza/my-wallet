@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { usePage, router } from '@inertiajs/vue3';
 import type { Card } from '@/types/card';
 import { Button } from '@/components/ui/button';
 import Checkbox from '@/Components/Checkbox.vue';
@@ -126,7 +126,7 @@ function handleBulkDelete(): void {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                <TableRow v-for="(card, index) in sortedCards" :key="card.id">
+                <TableRow v-for="(card, index) in sortedCards" :key="card.id" class="cursor-pointer" @click="router.visit(route('cards.purchases', { card: card.id }))">
                     <TableCell>
                         <Checkbox :checked="selectedIds.includes(card.id)" @update:checked="toggleSelect(card.id)" />
                     </TableCell>
@@ -175,8 +175,8 @@ function handleBulkDelete(): void {
                         </TooltipProvider>
                     </TableCell>
                     <TableCell class="text-right">
-                        <Button variant="ghost" size="sm" @click="emit('edit', card)">Editar</Button>
-                        <Button variant="ghost" size="sm" @click="emit('delete', card)">Excluir</Button>
+                        <Button variant="ghost" size="sm" @click.stop="emit('edit', card)">Editar</Button>
+                        <Button variant="ghost" size="sm" @click.stop="emit('delete', card)">Excluir</Button>
                     </TableCell>
                 </TableRow>
             </TableBody>

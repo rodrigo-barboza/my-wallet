@@ -7,7 +7,9 @@ namespace App\Http\Controllers;
 use App\Enums\InvoiceStatus;
 use App\Http\Requests\PurchaseRequest;
 use App\Models\Invoice;
+use App\Models\InvoicePayment;
 use App\Models\Purchase;
+use App\Models\PurchasePayment;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -31,9 +33,63 @@ final readonly class PurchaseController
 
         $cards = auth()->user()->cards()->latest()->get();
 
+        $individualPayments = PurchasePayment::where('month', $month)
+            ->where('year', $year)
+            ->whereHas('purchase', fn ($q) => $q->where('user_id', auth()->id()))
+            ->with('purchase:id,name,amount,installments_total,type')
+            ->get()
+            ->map(fn ($payment) => [
+                'id' => $payment->id,
+                'name' => $payment->purchase->name,
+                'amount' => $payment->purchase->type === 'credit_card' && $payment->purchase->installments_total
+                    ? (float) $payment->purchase->amount / $payment->purchase->installments_total
+                    : (float) $payment->purchase->amount,
+                'paid_at' => $payment->paid_at->toISOString(),
+                'type' => $payment->purchase->type,
+            ]);
+
+        $cardPayments = InvoicePayment::whereHas('invoice', function ($q) use ($month, $year) {
+            $q->where('month', $month)
+                ->where('year', $year)
+                ->where('user_id', auth()->id());
+        })
+            ->with('invoice:id,card_id,month,year,paid_amount,status,paid_at', 'invoice.card:id,name')
+            ->orderBy('paid_at')
+            ->get()
+            ->groupBy('invoice_id')
+            ->flatMap(function ($payments) {
+                $invoice = $payments->first()->invoice;
+                $purchasesInMonth = Purchase::where('card_id', $invoice->card_id)
+                    ->where('user_id', auth()->id())
+                    ->get()
+                    ->filter(fn ($p) => $p->isActiveInMonth($invoice->year, $invoice->month));
+                $total = (float) $purchasesInMonth->sum(fn ($p) => $p->installments_total ? ($p->amount / $p->installments_total) : $p->amount);
+
+                $runningTotal = 0.0;
+
+                return $payments->map(function ($payment) use ($invoice, &$runningTotal, $total) {
+                    $runningTotal += (float) $payment->amount;
+                    $isPartial = $runningTotal < $total - 0.01;
+
+                    return [
+                        'id' => $payment->id,
+                        'name' => $invoice->card->name,
+                        'amount' => (float) $payment->amount,
+                        'paid_at' => $payment->paid_at->toISOString(),
+                        'type' => 'credit_card',
+                        'partial' => $isPartial,
+                    ];
+                });
+            });
+
+        $paymentHistory = $individualPayments->concat($cardPayments)
+            ->sortByDesc('paid_at')
+            ->values();
+
         return Inertia::render('Purchases/Index', [
             'purchases' => $purchases->values(),
             'summary' => $summary,
+            'paymentHistory' => $paymentHistory,
             'month' => $month,
             'year' => $year,
             'cards' => $cards,
@@ -59,7 +115,7 @@ final readonly class PurchaseController
 
         Inertia::flash('toast', ['message' => 'Compra criada com sucesso!', 'type' => 'success']);
 
-        return to_route('purchases.index');
+        return $this->redirectToPurchase($purchase);
     }
 
     public function show(Purchase $purchase): Response
@@ -83,18 +139,32 @@ final readonly class PurchaseController
 
         Inertia::flash('toast', ['message' => 'Compra atualizada com sucesso!', 'type' => 'success']);
 
-        return to_route('purchases.index');
+        return $this->redirectToPurchase($purchase);
     }
 
     public function destroy(Purchase $purchase): RedirectResponse
     {
         Gate::authorize('delete', $purchase);
 
+        $cardId = $purchase->card_id;
+        $startDate = $purchase->start_date;
+
         $purchase->delete();
 
         Inertia::flash('toast', ['message' => 'Compra excluída com sucesso!', 'type' => 'success']);
 
-        return to_route('purchases.index');
+        $month = (int) request()->input('month', $startDate->month);
+        $year = (int) request()->input('year', $startDate->year);
+
+        if ($cardId) {
+            return to_route('cards.purchases', [
+                'card' => $cardId,
+                'month' => $month,
+                'year' => $year,
+            ]);
+        }
+
+        return to_route('purchases.index', ['month' => $month, 'year' => $year]);
     }
 
     public function markAsPaid(Purchase $purchase): RedirectResponse
@@ -134,15 +204,20 @@ final readonly class PurchaseController
                 ->get()
                 ->filter(fn ($p) => $p->isActiveInMonth($year, $month));
 
-            $total = (float) $purchasesInMonth->sum('amount');
+            $total = (float) $purchasesInMonth->sum(fn ($p) => $p->installments_total ? ($p->amount / $p->installments_total) : $p->amount);
 
-            $newPaidAmount = ($invoice->paid_amount ?? 0) + $amount;
+            $invoice->payments()->create([
+                'amount' => $amount,
+                'paid_at' => now(),
+            ]);
 
-            if ($newPaidAmount >= $total) {
+            $newPaidAmount = (float) $invoice->payments()->sum('amount');
+
+            if ($newPaidAmount >= $total - 0.01) {
                 $invoice->update([
                     'paid_amount' => $newPaidAmount,
                     'status' => InvoiceStatus::Paga,
-                    'paid_at' => now(),
+                    'paid_at' => $invoice->payments()->latest('paid_at')->first()->paid_at,
                 ]);
             } elseif ($newPaidAmount > 0) {
                 $invoice->update([
@@ -159,6 +234,18 @@ final readonly class PurchaseController
         }
 
         Inertia::flash('toast', ['message' => 'Marcado como pago!', 'type' => 'success']);
+
+        if (request()->input('redirect') === 'purchases') {
+            return to_route('purchases.index', ['month' => $month, 'year' => $year]);
+        }
+
+        if ($purchase->card_id) {
+            return to_route('cards.purchases', [
+                'card' => $purchase->card_id,
+                'month' => $month,
+                'year' => $year,
+            ]);
+        }
 
         return to_route('purchases.index', ['month' => $month, 'year' => $year]);
     }
@@ -177,6 +264,7 @@ final readonly class PurchaseController
                 ->first();
 
             if ($invoice) {
+                $invoice->payments()->delete();
                 $invoice->update([
                     'paid_amount' => null,
                     'paid_at' => null,
@@ -188,6 +276,18 @@ final readonly class PurchaseController
         }
 
         Inertia::flash('toast', ['message' => 'Pagamento desmarcado!', 'type' => 'success']);
+
+        if (request()->input('redirect') === 'purchases') {
+            return to_route('purchases.index', ['month' => $month, 'year' => $year]);
+        }
+
+        if ($purchase->card_id) {
+            return to_route('cards.purchases', [
+                'card' => $purchase->card_id,
+                'month' => $month,
+                'year' => $year,
+            ]);
+        }
 
         return to_route('purchases.index', ['month' => $month, 'year' => $year]);
     }
@@ -260,10 +360,10 @@ final readonly class PurchaseController
                 ->first();
 
             $paidAmount = $invoice?->paid_amount;
-            $originalTotal = (float) $items->sum('amount');
+            $originalTotal = (float) $items->sum(fn ($p) => $p->installments_total ? ($p->amount / $p->installments_total) : $p->amount);
 
             $status = match (true) {
-                $paidAmount !== null && (float) $paidAmount >= $originalTotal => 'paga',
+                $paidAmount !== null && (float) $paidAmount >= $originalTotal - 0.01 => 'paga',
                 $paidAmount !== null && (float) $paidAmount > 0 => 'parcialmente_paga',
                 default => $invoice?->status ?? 'aberta',
             };
@@ -322,6 +422,22 @@ final readonly class PurchaseController
         }
 
         return $positions[$key] ?? PHP_INT_MAX;
+    }
+
+    private function redirectToPurchase(Purchase $purchase): RedirectResponse
+    {
+        $month = (int) request()->input('month', $purchase->start_date->month);
+        $year = (int) request()->input('year', $purchase->start_date->year);
+
+        if ($purchase->card_id) {
+            return to_route('cards.purchases', [
+                'card' => $purchase->card_id,
+                'month' => $month,
+                'year' => $year,
+            ]);
+        }
+
+        return to_route('purchases.index', ['month' => $month, 'year' => $year]);
     }
 
     private function resolveIndividualStatus(Purchase $purchase, int $paymentDay, int $month, int $year, Carbon $now): string

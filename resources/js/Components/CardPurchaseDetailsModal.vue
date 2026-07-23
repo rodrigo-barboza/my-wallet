@@ -8,28 +8,23 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Card as CardComponent, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CreditCard, Undo2, Trash2, Pencil } from '@lucide/vue';
-import { router, usePage } from '@inertiajs/vue3';
+import { CreditCard, Undo2, ExternalLink } from '@lucide/vue';
+import { router } from '@inertiajs/vue3';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import CurrencyInput from '@/Components/CurrencyInput.vue';
-import PurchaseFormModal from '@/Components/PurchaseFormModal.vue';
-import ConfirmDialog from '@/Components/ConfirmDialog.vue';
-import type { Card } from '@/types/card';
 
 const props = defineProps<{
     open: boolean;
     purchaseSummary?: PurchaseSummaryItem;
     month: number;
     year: number;
+    context?: 'purchases' | 'card';
 }>();
 
 const emit = defineEmits<{
     'update:open': [value: boolean];
 }>();
-
-const cards = computed<Card[]>(() => (usePage().props.cards as Card[]) ?? []);
 
 const paymentAmount = ref<number>(0);
 
@@ -37,52 +32,23 @@ const originalTotal = computed(() => {
     return props.purchaseSummary?.total ?? 0;
 });
 
+const itemCount = computed(() => {
+    return props.purchaseSummary?.items.length ?? 0;
+});
+
+const cardId = computed(() => {
+    return props.purchaseSummary?.items[0]?.card_id;
+});
+
 watch(() => props.purchaseSummary, (summary) => {
     paymentAmount.value = Math.max(0, (summary?.total ?? 0) - (summary?.paid_amount ?? 0));
 }, { immediate: true });
-
-const showEditModal = ref(false);
-const editingPurchase = ref<Purchase | undefined>();
-
-const showDeleteDialog = ref(false);
-const deletingPurchase = ref<Purchase | undefined>();
-
-function openEdit(purchase: Purchase): void {
-    editingPurchase.value = purchase;
-    showEditModal.value = true;
-}
-
-function closeEdit(): void {
-    showEditModal.value = false;
-    editingPurchase.value = undefined;
-}
-
-function confirmDelete(purchase: Purchase): void {
-    deletingPurchase.value = purchase;
-    showDeleteDialog.value = true;
-}
-
-function deletePurchase(): void {
-    if (!deletingPurchase.value) return;
-    router.delete(route('purchases.destroy', deletingPurchase.value.id), {
-        onSuccess: () => {
-            showDeleteDialog.value = false;
-            deletingPurchase.value = undefined;
-            emit('update:open', false);
-        },
-    });
-}
 
 function formatCurrency(value: number): string {
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
     }).format(value);
-}
-
-function formatDate(value: string): string {
-    const date = value.includes('T') ? value : value.split(' ')[0] + 'T00:00:00';
-    return new Date(date).toLocaleDateString('pt-BR');
 }
 
 function formatDateTime(value: string): string {
@@ -99,15 +65,17 @@ function formatDateRange(closing: number, due: number): string {
     return `Fech: ${closing} / Venc: ${due}`;
 }
 
-const typeLabels: Record<string, string> = {
-    credit_card: 'Compra no cartão',
-    bill: 'Conta mensal',
-    financing: 'Financiamento',
-    others: 'Outros',
-};
-
 function close(): void {
     emit('update:open', false);
+}
+
+function navigateToCardPurchases(): void {
+    if (!cardId.value) return;
+    router.visit(route('cards.purchases', {
+        card: cardId.value,
+        month: props.month,
+        year: props.year,
+    }));
 }
 
 function markAsPaid(): void {
@@ -116,6 +84,7 @@ function markAsPaid(): void {
         amount: paymentAmount.value,
         month: props.month,
         year: props.year,
+        redirect: props.context ?? 'purchases',
     }, {
         onSuccess: close,
     });
@@ -126,6 +95,7 @@ function unmarkAsPaid(): void {
     router.patch(route('purchases.unmark-as-paid', props.purchaseSummary.items[0].id), {
         month: props.month,
         year: props.year,
+        redirect: props.context ?? 'purchases',
     }, {
         onSuccess: close,
     });
@@ -164,42 +134,16 @@ function hasPayment(): boolean {
                 </DialogDescription>
             </DialogHeader>
 
-            <div v-if="purchaseSummary" class="space-y-3">
-                <CardComponent
-                    v-for="purchase in purchaseSummary.items"
-                    :key="purchase.id"
-                >
-                    <CardContent class="p-4">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="min-w-0 flex-1">
-                                <div class="font-medium truncate">{{ purchase.name }}</div>
-                                <div class="text-sm text-muted-foreground">
-                                    {{ typeLabels[purchase.type] ?? purchase.type }}
-                                    <span v-if="purchase.installments_total">
-                                        · {{ purchase.installments_total }}x
-                                    </span>
-                                </div>
-                                <div v-if="purchase.notes" class="mt-0.5 text-xs text-muted-foreground truncate">
-                                    {{ purchase.notes }}
-                                </div>
-                            </div>
-                            <div class="text-right shrink-0">
-                                <div class="font-semibold">{{ formatCurrency(purchase.amount) }}</div>
-                                <div class="text-sm text-muted-foreground">
-                                    {{ formatDate(purchase.start_date) }}
-                                </div>
-                                <div class="mt-1 flex items-center justify-end gap-1">
-                                    <Button variant="ghost" size="icon" class="size-7 cursor-pointer" @click="openEdit(purchase)">
-                                        <Pencil class="size-3.5" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" class="size-7 text-destructive cursor-pointer" @click="confirmDelete(purchase)">
-                                        <Trash2 class="size-3.5" />
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </CardComponent>
+            <div v-if="purchaseSummary" class="space-y-4">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-muted-foreground">
+                        {{ itemCount }} {{ itemCount === 1 ? 'compra' : 'compras' }} nesta fatura
+                    </span>
+                    <Button variant="outline" size="sm" class="cursor-pointer" @click="navigateToCardPurchases">
+                        Ver detalhes da fatura
+                        <ExternalLink class="ml-1 size-3.5" />
+                    </Button>
+                </div>
 
                 <div class="flex items-center justify-between border-t pt-3">
                     <span class="text-sm font-medium text-muted-foreground">Total</span>
@@ -235,20 +179,4 @@ function hasPayment(): boolean {
             </div>
         </DialogContent>
     </Dialog>
-
-    <PurchaseFormModal
-        v-if="editingPurchase"
-        v-model:open="showEditModal"
-        :purchase="editingPurchase"
-        :cards="cards"
-        @update:open="closeEdit"
-    />
-
-    <ConfirmDialog
-        v-model:open="showDeleteDialog"
-        title="Excluir compra"
-        description="Tem certeza que deseja excluir esta compra? Esta ação não pode ser desfeita."
-        confirm-text="Excluir"
-        @confirm="deletePurchase"
-    />
 </template>

@@ -17,6 +17,7 @@ return [
         'cards.update',
         'cards.destroy',
         'cards.bulk-destroy',
+        'cards.purchases',
         'purchases.index',
         'purchases.store',
         'purchases.show',

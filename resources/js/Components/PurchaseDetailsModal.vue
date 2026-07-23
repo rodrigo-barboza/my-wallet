@@ -73,6 +73,7 @@ function markAsPaid(): void {
     router.patch(route('purchases.mark-as-paid', props.purchase.id), {
         month: props.month,
         year: props.year,
+        redirect: 'purchases',
     }, {
         onSuccess: close,
     });
@@ -83,6 +84,7 @@ function unmarkAsPaid(): void {
     router.patch(route('purchases.unmark-as-paid', props.purchase.id), {
         month: props.month,
         year: props.year,
+        redirect: 'purchases',
     }, {
         onSuccess: close,
     });

@@ -14,6 +14,7 @@ const props = defineProps<{
     open: boolean;
     purchase?: Purchase;
     cards: Card[];
+    defaultCardId?: number | null;
 }>();
 
 const emit = defineEmits<{
@@ -33,6 +34,7 @@ const emit = defineEmits<{
             <PurchaseForm
                 :purchase="purchase"
                 :cards="cards"
+                :default-card-id="defaultCardId"
                 @success="emit('update:open', false)"
             />
         </DialogContent>
