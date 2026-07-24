@@ -3,7 +3,7 @@ import { Link, router } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'vue-sonner'
-import { Menu, LayoutDashboard, ShoppingCart, CreditCard, LogOut } from '@lucide/vue'
+import { Menu, LayoutDashboard, Banknote, ShoppingCart, CreditCard, LogOut } from '@lucide/vue'
 import {
     Sheet,
     SheetContent,
@@ -48,6 +48,11 @@ function isActive(name: string): boolean {
                         :class="isActive('dashboard') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
                         Dashboard
                     </Link>
+                    <Link :href="route('incomes.index')"
+                        class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
+                        :class="isActive('incomes*') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
+                        Entradas
+                    </Link>
                     <Link :href="route('purchases.index')"
                         class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
                         :class="isActive('purchases*') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
@@ -85,6 +90,14 @@ function isActive(name: string): boolean {
                                     :class="isActive('dashboard') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
                                     <LayoutDashboard class="size-4" />
                                     Dashboard
+                                </Link>
+                            </SheetClose>
+                            <SheetClose as-child>
+                                <Link :href="route('incomes.index')"
+                                    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors"
+                                    :class="isActive('incomes*') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
+                                    <Banknote class="size-4" />
+                                    Entradas
                                 </Link>
                             </SheetClose>
                             <SheetClose as-child>

@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\InvoiceStatus;
 use App\Http\Requests\PurchaseRequest;
+use App\Models\IncomeMonth;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use App\Models\Purchase;
@@ -86,10 +87,16 @@ final readonly class PurchaseController
             ->sortByDesc('paid_at')
             ->values();
 
+        $incomeTotal = (float) IncomeMonth::where('month', $month)
+            ->where('year', $year)
+            ->whereHas('income', fn ($q) => $q->where('user_id', auth()->id()))
+            ->sum('amount');
+
         return Inertia::render('Purchases/Index', [
             'purchases' => $purchases->values(),
             'summary' => $summary,
             'paymentHistory' => $paymentHistory,
+            'incomeTotal' => $incomeTotal,
             'month' => $month,
             'year' => $year,
             'cards' => $cards,

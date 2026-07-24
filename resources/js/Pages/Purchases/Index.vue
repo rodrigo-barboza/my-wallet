@@ -35,6 +35,7 @@ const props = defineProps<{
     purchases: Purchase[];
     summary: PurchaseSummaryItem[];
     paymentHistory: PaymentHistoryItem[];
+    incomeTotal: number;
     month: number;
     year: number;
     cards: CardType[];
@@ -82,6 +83,8 @@ const pendingAmount = computed(() => {
 });
 
 const hasOverdue = computed(() => props.summary.some((item) => item.status === 'atrasada'));
+
+const balance = computed(() => props.incomeTotal - totalAmount.value);
 
 function formatCurrency(value: number): string {
     return new Intl.NumberFormat('pt-BR', {
@@ -210,33 +213,57 @@ async function handleReorder(order: string[]): Promise<void> {
             </div>
         </div>
 
-        <Card>
-            <CardHeader class="pb-2">
-                <CardTitle class="text-sm font-semibold text-muted-foreground">Total do Mês</CardTitle>
-            </CardHeader>
-            <CardContent class="space-y-4">
-                <div class="text-3xl font-bold">{{ formatCurrency(totalAmount) }}</div>
-                <div class="space-y-2">
-                    <div class="h-2.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                            class="h-full rounded-full bg-green-500 transition-all"
-                            :style="{ width: totalAmount > 0 ? `${(paidAmount / totalAmount) * 100}%` : '0%' }"
-                        />
+        <div class="grid gap-6 sm:grid-cols-2">
+            <Card>
+                <CardHeader class="pb-2">
+                    <CardTitle class="text-sm font-semibold text-muted-foreground">Total do Mês</CardTitle>
+                </CardHeader>
+                <CardContent class="space-y-4">
+                    <div class="text-3xl font-bold">{{ formatCurrency(totalAmount) }}</div>
+                    <div class="space-y-2">
+                        <div class="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                            <div
+                                class="h-full rounded-full bg-green-500 transition-all"
+                                :style="{ width: totalAmount > 0 ? `${(paidAmount / totalAmount) * 100}%` : '0%' }"
+                            />
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-muted-foreground">
+                                <span class="font-semibold text-green-600">{{ formatCurrency(paidAmount) }}</span> pago
+                            </span>
+                            <span class="text-muted-foreground">
+                                <template v-if="pendingAmount > 0">
+                                    <span class="font-semibold" :class="hasOverdue ? 'text-destructive' : 'text-amber-500'">Faltam {{ formatCurrency(pendingAmount) }}</span>
+                                </template>
+                                <span v-else class="font-semibold text-green-600">Tudo pago</span>
+                            </span>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader class="pb-2">
+                    <CardTitle class="text-sm font-semibold text-muted-foreground">Receitas vs Gastos</CardTitle>
+                </CardHeader>
+                <CardContent class="space-y-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-muted-foreground">Total de entradas</span>
+                        <span class="font-semibold text-green-600">{{ formatCurrency(props.incomeTotal) }}</span>
                     </div>
                     <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted-foreground">
-                            <span class="font-semibold text-green-600">{{ formatCurrency(paidAmount) }}</span> pago
-                        </span>
-                        <span class="text-muted-foreground">
-                            <template v-if="pendingAmount > 0">
-                                <span class="font-semibold" :class="hasOverdue ? 'text-destructive' : 'text-amber-500'">Faltam {{ formatCurrency(pendingAmount) }}</span>
-                            </template>
-                            <span v-else class="font-semibold text-green-600">Tudo pago</span>
+                        <span class="text-muted-foreground">Total de gastos</span>
+                        <span class="font-semibold text-destructive">{{ formatCurrency(totalAmount) }}</span>
+                    </div>
+                    <div class="border-t pt-2 flex items-center justify-between text-sm font-semibold">
+                        <span class="text-muted-foreground">Saldo</span>
+                        <span :class="balance >= 0 ? 'text-green-600' : 'text-destructive'">
+                            {{ balance >= 0 ? '+' : '' }}{{ formatCurrency(balance) }}
                         </span>
                     </div>
-                </div>
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+        </div>
 
         <template v-if="activeTab === 'compras'">
             <PurchaseSummary

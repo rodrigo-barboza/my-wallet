@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PreferencesController;
 use App\Http\Controllers\PurchaseController;
@@ -46,6 +47,15 @@ Route::middleware('auth')->group(function () {
 
     Route::patch('/invoices/{invoice}/mark-as-paid', [InvoiceController::class, 'markAsPaid'])->name('invoices.mark-as-paid');
     Route::patch('/invoices/{invoice}/unmark-as-paid', [InvoiceController::class, 'unmarkAsPaid'])->name('invoices.unmark-as-paid');
+
+    Route::get('/incomes', [IncomeController::class, 'index'])->name('incomes.index');
+    Route::post('/incomes', [IncomeController::class, 'store'])->name('incomes.store');
+    Route::put('/incomes/{income}', [IncomeController::class, 'update'])->name('incomes.update');
+    Route::delete('/incomes/{income}', [IncomeController::class, 'destroy'])->name('incomes.destroy');
+    Route::patch('/income-months/{incomeMonth}', [IncomeController::class, 'updateMonth'])->name('incomes.update-month');
+    Route::post('/incomes/{income}/months/fill', [IncomeController::class, 'fillMonths'])->name('incomes.fill-months');
+    Route::post('/incomes/{income}/duplicate', [IncomeController::class, 'duplicate'])->name('incomes.duplicate');
+    Route::delete('/income-months/{incomeMonth}', [IncomeController::class, 'deleteMonth'])->name('incomes.delete-month');
 
     Route::patch('/preferences', [PreferencesController::class, 'update'])->name('preferences.update');
 });

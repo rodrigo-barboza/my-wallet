@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Wallet, TrendingUp, TrendingDown, AlertCircle } from '@lucide/vue'
-import { VisXYContainer, VisGroupedBar, VisAxis, VisLine, VisDonut, VisSingleContainer } from '@unovis/vue'
+import { VisXYContainer, VisGroupedBar, VisAxis, VisLine, VisDonut, VisSingleContainer, VisBulletLegend, VisCrosshair } from '@unovis/vue'
+import { ChartContainer, componentToString, ChartTooltipContent } from '@/components/ui/chart'
 import type {
     DashboardWindowMonth,
     DashboardMatrixItem,
@@ -63,8 +64,8 @@ function isOverdue(dateStr: string): boolean {
     return datePart < todayStr
 }
 
-const highlightedIndex = computed(() => props.window.findIndex((m: DashboardWindowMonth) => m.isHighlighted))
-const highlighted = computed(() => props.monthlySummary[highlightedIndex.value] as MonthlySummary)
+const highlightedIndex = computed(() => Math.max(0, props.window.findIndex((m: DashboardWindowMonth) => m.isHighlighted)))
+const highlighted = computed(() => (props.monthlySummary[highlightedIndex.value] ?? props.monthlySummary[0]) as MonthlySummary)
 
 const barChartData = computed(() =>
     props.monthlySummary.map((ms: MonthlySummary, i: number) => ({
@@ -156,6 +157,28 @@ function lineXTickFormat(d: number): string {
 function lineYTickFormat(d: number): string {
     return formatShortCurrency(d)
 }
+
+const barChartConfig = {
+    Entradas: { label: 'Entradas', color: '#10B981' },
+    Despesas: { label: 'Despesas', color: '#EF4444' },
+}
+
+const lineChartConfig = {
+    Saldo: { label: 'Saldo', color: '#10B981' },
+}
+
+const barCrosshairTemplate = componentToString(barChartConfig, ChartTooltipContent, {
+    labelFormatter: (d: number | Date): string => barChartData.value[d as number]?.month ?? '',
+} as any)
+
+const lineCrosshairTemplate = componentToString(lineChartConfig, ChartTooltipContent, {
+    labelFormatter: (d: number | Date): string => lineChartData.value[d as number]?.month ?? '',
+} as any)
+
+const barLegendItems = [
+    { name: 'Entradas', color: '#10B981' },
+    { name: 'Despesas', color: '#EF4444' },
+]
 </script>
 
 <template>
@@ -358,18 +381,22 @@ function lineYTickFormat(d: number): string {
                         Nenhum dado disponível para o período.
                     </div>
                     <div v-else class="h-[300px] w-full">
-                        <VisXYContainer :data="barChartData" :scale-by-domain="true">
-                            <VisGroupedBar
-                                :x="(d: any) => d.index"
-                                :y="[(d: any) => d.Entradas, (d: any) => d.Despesas]"
-                                :color="['#10B981', '#EF4444']"
-                                :rounded-corners="4"
-                                bar-padding="0.1"
-                                group-padding="0.2"
-                            />
-                            <VisAxis type="x" position="bottom" :tick-format="xTickFormat" :num-ticks="6" />
-                            <VisAxis type="y" position="left" :tick-format="yTickFormat" />
-                        </VisXYContainer>
+                        <VisBulletLegend :items="barLegendItems" />
+                        <ChartContainer :config="{}" class="aspect-auto">
+                            <VisXYContainer :data="barChartData" :scale-by-domain="true">
+                                <VisGroupedBar
+                                    :x="(d: any) => d.index"
+                                    :y="[(d: any) => d.Entradas, (d: any) => d.Despesas]"
+                                    :color="['#10B981', '#EF4444']"
+                                    :rounded-corners="4"
+                                    bar-padding="0.1"
+                                    group-padding="0.2"
+                                />
+                                <VisAxis type="x" position="bottom" :tick-format="xTickFormat" :num-ticks="6" />
+                                <VisAxis type="y" position="left" :tick-format="yTickFormat" />
+                                <VisCrosshair v-if="barCrosshairTemplate" :template="barCrosshairTemplate" />
+                            </VisXYContainer>
+                        </ChartContainer>
                     </div>
                 </CardContent>
             </Card>
@@ -421,16 +448,19 @@ function lineYTickFormat(d: number): string {
                 </CardHeader>
                 <CardContent>
                     <div class="h-[250px] w-full">
-                        <VisXYContainer :data="lineChartData" :scale-by-domain="true">
-                            <VisLine
-                                :x="(d: any) => d.index"
-                                :y="(d: any) => d.Saldo"
-                                :color="lineChartData[lineChartData.length - 1]?.Saldo >= 0 ? '#10B981' : '#EF4444'"
-                                :line-width="2"
-                            />
-                            <VisAxis type="x" position="bottom" :tick-format="lineXTickFormat" :num-ticks="6" />
-                            <VisAxis type="y" position="left" :tick-format="lineYTickFormat" />
-                        </VisXYContainer>
+                        <ChartContainer :config="{}" class="aspect-auto">
+                            <VisXYContainer :data="lineChartData" :scale-by-domain="true">
+                                <VisLine
+                                    :x="(d: any) => d.index"
+                                    :y="(d: any) => d.Saldo"
+                                    :color="lineChartData[lineChartData.length - 1]?.Saldo >= 0 ? '#10B981' : '#EF4444'"
+                                    :line-width="2"
+                                />
+                                <VisAxis type="x" position="bottom" :tick-format="lineXTickFormat" :num-ticks="6" />
+                                <VisAxis type="y" position="left" :tick-format="lineYTickFormat" />
+                                <VisCrosshair v-if="lineCrosshairTemplate" :template="lineCrosshairTemplate" />
+                            </VisXYContainer>
+                        </ChartContainer>
                     </div>
                 </CardContent>
             </Card>

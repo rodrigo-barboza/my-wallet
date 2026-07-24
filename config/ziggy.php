@@ -29,5 +29,13 @@ return [
         'invoices.mark-as-paid',
         'invoices.unmark-as-paid',
         'preferences.update',
+        'incomes.index',
+        'incomes.store',
+        'incomes.update',
+        'incomes.destroy',
+        'incomes.update-month',
+        'incomes.fill-months',
+        'incomes.duplicate',
+        'incomes.delete-month',
     ],
 ];
