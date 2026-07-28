@@ -18,7 +18,7 @@ it('returns atrasada status when payment_day has passed', function () {
 it('returns aberta status when payment_day has not passed', function () {
     $purchase = Purchase::factory()->create([
         'status' => PurchaseStatus::Aberta,
-        'payment_day' => 28,
+        'payment_day' => 29,
         'start_date' => now()->subMonth(),
     ]);
 
@@ -42,7 +42,7 @@ it('falls back to start_date->day when payment_day is null', function () {
 
 it('returns aberta status as default when status attribute is missing', function () {
     $purchase = Purchase::factory()->create([
-        'payment_day' => 28,
+        'payment_day' => 29,
         'start_date' => now()->subMonth(),
     ]);
 
