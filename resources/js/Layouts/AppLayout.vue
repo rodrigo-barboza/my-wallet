@@ -48,15 +48,15 @@ function isActive(name: string): boolean {
                         :class="isActive('dashboard') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
                         Dashboard
                     </Link>
-                    <Link :href="route('incomes.index')"
-                        class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                        :class="isActive('incomes*') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
-                        Entradas
-                    </Link>
                     <Link :href="route('purchases.index')"
                         class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
                         :class="isActive('purchases*') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
                         Compras
+                    </Link>
+                    <Link :href="route('incomes.index')"
+                        class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
+                        :class="isActive('incomes*') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
+                        Entradas
                     </Link>
                     <Link :href="route('cards.index')"
                         class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
