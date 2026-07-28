@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { router } from '@inertiajs/vue3'
+import { router, Head } from '@inertiajs/vue3'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -120,6 +120,7 @@ function categoryColor(index: number, type: string): string {
 
 <template>
     <div class="w-full space-y-6">
+        <Head title="My Wallet - Dashboard" />
         <h2 class="text-2xl font-bold">Dashboard</h2>
 
         <!-- Cards do mês em destaque -->

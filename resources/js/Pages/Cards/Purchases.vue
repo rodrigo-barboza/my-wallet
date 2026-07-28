@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import type { Purchase } from '@/types/purchase';
 import type { Card } from '@/types/card';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { Head } from '@inertiajs/vue3';
 import { router, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card as CardComponent, CardContent } from '@/components/ui/card';
@@ -213,6 +214,7 @@ function goToMonth(month: number, year?: number): void {
 
 <template>
     <div class="w-full space-y-6">
+        <Head title="My Wallet - Compras do cartão" />
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <Button variant="ghost" size="icon" @click="goBack">

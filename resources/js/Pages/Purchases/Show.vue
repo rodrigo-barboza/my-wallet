@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Purchase } from '@/types/purchase';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { router } from '@inertiajs/vue3';
+import { router, Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Pencil, Trash2 } from '@lucide/vue';
@@ -43,6 +43,7 @@ function deletePurchase(): void {
 
 <template>
     <div class="mx-auto w-full max-w-2xl space-y-6">
+        <Head title="My Wallet - Detalhes da compra" />
         <div class="flex items-center gap-4">
             <Button variant="ghost" size="icon" @click="router.get(route('purchases.index'))">
                 <ArrowLeft class="size-4" />

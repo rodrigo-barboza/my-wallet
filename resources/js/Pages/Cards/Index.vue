@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import type { Card } from '@/types/card';
-import { router } from '@inertiajs/vue3';
+import { router, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card as CardComponent, CardContent } from '@/components/ui/card';
@@ -71,6 +71,7 @@ function handleBulkDelete(ids: number[]): void {
 
 <template>
     <div class="w-full space-y-6">
+        <Head title="My Wallet - Cartões" />
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold">Cartões</h2>
             <div class="flex items-center gap-2">

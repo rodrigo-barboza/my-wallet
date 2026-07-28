@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue';
 import type { Purchase, PurchaseSummaryItem } from '@/types/purchase';
 import type { Card as CardType } from '@/types/card';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { router } from '@inertiajs/vue3';
+import { router, Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, LayoutList, Table as TableIcon, Plus, Receipt } from '@lucide/vue';
@@ -147,6 +147,7 @@ async function handleReorder(order: string[]): Promise<void> {
 
 <template>
     <div class="w-full space-y-6">
+        <Head title="My Wallet - Compras" />
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold">Compras</h2>
             <div class="flex items-center gap-2">

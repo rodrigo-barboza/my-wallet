@@ -2,7 +2,7 @@
 import { computed, ref, watchEffect } from 'vue';
 import type { Income } from '@/types/income';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { router } from '@inertiajs/vue3';
+import { router, Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChevronLeft, ChevronRight, Plus, Copy, Trash2, X, Check } from '@lucide/vue';
@@ -226,6 +226,7 @@ function nextMonth(): void {
 
 <template>
     <div class="w-full space-y-6">
+        <Head title="My Wallet - Entradas" />
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold">Entradas</h2>
             <div class="flex items-center gap-2">
