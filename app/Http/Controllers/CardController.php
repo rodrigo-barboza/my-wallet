@@ -26,7 +26,7 @@ final readonly class CardController
 
     public function purchases(Card $card): Response
     {
-        Gate::authorize('view', $card);
+        abort_unless($card->user_id === auth()->id(), 404);
 
         $month = (int) request()->input('month', now()->month);
         $year = (int) request()->input('year', now()->year);

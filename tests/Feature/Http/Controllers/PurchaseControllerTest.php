@@ -114,7 +114,7 @@ it('user cannot view other users purchases', function () {
 
     $purchase = Purchase::factory()->create(['user_id' => $otherUser->id]);
 
-    get(route('purchases.show', $purchase))->assertStatus(403);
+    get(route('purchases.show', $purchase))->assertStatus(404);
 });
 
 it('user cannot update other users purchases', function () {

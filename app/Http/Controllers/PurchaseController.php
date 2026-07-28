@@ -127,7 +127,7 @@ final readonly class PurchaseController
 
     public function show(Purchase $purchase): Response
     {
-        Gate::authorize('view', $purchase);
+        abort_unless($purchase->user_id === auth()->id(), 404);
 
         $purchase->load('card');
 
