@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm, usePage } from '@inertiajs/vue3'
+import { useForm, usePage, Head } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
 import {
@@ -25,10 +25,12 @@ function resend() {
 </script>
 
 <template>
-    <div class="flex flex-1 items-center justify-center">
+    <div class="flex min-h-screen items-center justify-center bg-muted/30 p-4 sm:p-8">
+        <Head title="My Wallet - Verificar e-mail" />
         <Card class="w-full max-w-md">
-            <CardHeader class="text-center">
-                <CardTitle class="text-2xl">Verifique seu e-mail</CardTitle>
+            <CardHeader class="items-center text-center">
+                <img src="/images/my-wallet.png" alt="Minha Carteira" class="h-10 mx-auto mb-1" />
+                <CardTitle class="text-xl">Verifique seu e-mail</CardTitle>
                 <CardDescription>
                     Obrigado por se cadastrar! Antes de começar, verifique seu e-mail clicando no link que enviamos.
                     Se você não recebeu o e-mail, enviaremos outro.

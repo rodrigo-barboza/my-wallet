@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, useForm } from '@inertiajs/vue3'
+import { Link, useForm, Head } from '@inertiajs/vue3'
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Wallet, Eye, EyeOff } from '@lucide/vue'
+import { Eye, EyeOff } from '@lucide/vue'
 
 const form = useForm({
     name: '',
@@ -30,11 +30,10 @@ function submit() {
 
 <template>
     <div class="flex min-h-screen items-center justify-center bg-muted/30 p-4 sm:p-8">
+        <Head title="My Wallet - Criar conta" />
         <Card class="w-full max-w-md">
             <CardHeader class="items-center text-center">
-                <div class="mx-auto mb-1 flex size-12 items-center justify-center rounded-lg bg-primary">
-                    <Wallet class="size-6 text-primary-foreground" />
-                </div>
+                <img src="/images/my-wallet.png" alt="Minha Carteira" class="h-10 mx-auto mb-1" />
                 <CardTitle class="text-xl">Criar conta</CardTitle>
                 <CardDescription>Preencha os dados para começar</CardDescription>
             </CardHeader>
