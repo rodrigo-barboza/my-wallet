@@ -23,15 +23,17 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('dashboard', DashboardController::class)->name('dashboard');
-
-    Route::post('logout', LogoutController::class)->name('logout');
-
     Route::get('verify-email', [EmailVerificationController::class, 'notice'])->name('verification.notice');
     Route::get('verify-email/{id}/{hash}', [EmailVerificationController::class, 'verify'])
         ->middleware('signed')
         ->name('verification.verify');
     Route::post('verify-email/send', [EmailVerificationController::class, 'send'])->name('verification.send');
+
+    Route::post('logout', LogoutController::class)->name('logout');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('cards', [CardController::class, 'index'])->name('cards.index');
     Route::post('cards', [CardController::class, 'store'])->name('cards.store');

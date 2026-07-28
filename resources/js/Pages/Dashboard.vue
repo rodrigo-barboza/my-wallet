@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { router } from '@inertiajs/vue3'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Wallet, TrendingUp, TrendingDown, AlertCircle } from '@lucide/vue'
-import { VisXYContainer, VisGroupedBar, VisAxis, VisLine, VisDonut, VisSingleContainer, VisBulletLegend, VisCrosshair } from '@unovis/vue'
-import { ChartContainer, componentToString, ChartTooltipContent } from '@/components/ui/chart'
+import DashboardBarChart from '@/Components/DashboardBarChart.vue'
+import { chartPalette, typeColors, colors } from '@/lib/colors'
 import type {
     DashboardWindowMonth,
     DashboardMatrixItem,
@@ -26,22 +27,22 @@ const props = defineProps<{
     upcomingPayments: UpcomingPayment[]
 }>()
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4']
+const isMobile = useMediaQuery('(max-width: 767px)')
+const visibleCount = computed(() => isMobile.value ? 3 : 6)
+
+const visibleWindow = computed(() => props.window.slice(0, visibleCount.value))
+const visibleMonthlySummary = computed(() => props.monthlySummary.slice(0, visibleCount.value))
+const visibleMatrix = computed(() =>
+    props.matrix.map(row => ({ ...row, totals: row.totals.slice(0, visibleCount.value) }))
+)
 
 function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value)
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 }
 
 function formatShortCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(value)
+    if (value >= 1000) return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value)
+    return formatCurrency(value)
 }
 
 function formatDate(dateStr: string): string {
@@ -51,198 +52,146 @@ function formatDate(dateStr: string): string {
 }
 
 function isToday(dateStr: string): boolean {
-    const [datePart] = dateStr.split('T')
-    const today = new Date()
-    const todayStr = today.toISOString().split('T')[0]
-    return datePart === todayStr
+    return dateStr.split('T')[0] === new Date().toISOString().split('T')[0]
 }
 
 function isOverdue(dateStr: string): boolean {
-    const [datePart] = dateStr.split('T')
-    const today = new Date()
-    const todayStr = today.toISOString().split('T')[0]
-    return datePart < todayStr
+    return dateStr.split('T')[0] < new Date().toISOString().split('T')[0]
 }
 
-const highlightedIndex = computed(() => Math.max(0, props.window.findIndex((m: DashboardWindowMonth) => m.isHighlighted)))
+const highlightedIndex = computed(() => Math.max(0, props.window.findIndex((m) => m.isHighlighted)))
 const highlighted = computed(() => (props.monthlySummary[highlightedIndex.value] ?? props.monthlySummary[0]) as MonthlySummary)
 
-const barChartData = computed(() =>
-    props.monthlySummary.map((ms: MonthlySummary, i: number) => ({
-        index: i,
-        month: props.window[i].label.slice(0, 3),
-        Entradas: ms.income,
-        Despesas: ms.expenses,
-    }))
-)
+const hasData = computed(() => visibleMonthlySummary.value.some((ms) => ms.income > 0 || ms.expenses > 0))
 
-const hasData = computed(() => barChartData.value.some((d) => d.Entradas > 0 || d.Despesas > 0))
-
-const lineChartData = computed(() => {
-    let cumulative = 0
-    return props.monthlySummary.map((ms: MonthlySummary, i: number) => {
-        cumulative += ms.balance
-        return {
-            index: i,
-            month: props.window[i].label.slice(0, 3),
-            Saldo: cumulative,
-        }
-    })
-})
-
-const pieChartData = computed(() =>
+const categoryBars = computed(() =>
     props.categoryDistribution
-        .filter((d: CategoryDistribution) => d.total > 0)
-        .map((d: CategoryDistribution) => ({
-            name: d.label,
-            value: d.total,
-        }))
+        .filter((d) => d.total > 0)
+        .map((d) => ({ name: d.label, value: d.total, type: d.type }))
 )
 
-const hasCategoryData = computed(() => props.categoryDistribution.some((d: CategoryDistribution) => d.total > 0))
+const categoryBarMax = computed(() => Math.max(1, ...categoryBars.value.map((d) => d.value), 1))
+
+const hasCategoryData = computed(() => props.categoryDistribution.some((d) => d.total > 0))
 
 const canGoBack = computed(() => {
     const first = props.window[0]
     const now = new Date()
-    const currentMonth = now.getMonth() + 1
-    const currentYear = now.getFullYear()
-    return !(first.year === currentYear && first.month === currentMonth)
+    return !(first.year === now.getFullYear() && first.month === now.getMonth() + 1)
 })
+
+const columnTotals = computed(() => {
+    return Array.from({ length: visibleCount.value }, (_, i) =>
+        visibleMatrix.value.reduce((sum, row) => sum + (row.totals[i] || 0), 0)
+    )
+})
+
+function goToMonth(month: number, year: number): void {
+    router.get(route('dashboard', { month, year }))
+}
 
 function goBack(): void {
     if (!canGoBack.value) return
     const first = props.window[0]
-    let newMonth = first.month - 1
-    let newYear = first.year
-    if (newMonth < 1) {
-        newMonth = 12
-        newYear--
-    }
-    router.get(route('dashboard', { month: newMonth, year: newYear }))
+    let m = first.month - 1, y = first.year
+    if (m < 1) { m = 12; y-- }
+    goToMonth(m, y)
 }
 
 function goForward(): void {
-    const last = props.window[5]
-    let newMonth = last.month + 1
-    let newYear = last.year
-    if (newMonth > 12) {
-        newMonth = 1
-        newYear++
-    }
-    router.get(route('dashboard', { month: newMonth, year: newYear }))
+    const first = props.window[0]
+    let m = first.month + 1, y = first.year
+    if (m > 12) { m = 1; y++ }
+    goToMonth(m, y)
 }
 
 function typeLabel(type: string): string {
-    const labels: Record<string, string> = {
-        credit_card: 'Cartão',
-        bill: 'Conta',
-        financing: 'Financiamento',
-        others: 'Outros',
-    }
-    return labels[type] ?? type
+    return { credit_card: 'Cartão', bill: 'Conta', financing: 'Financiamento', others: 'Outros' }[type] ?? type
 }
 
-function xTickFormat(d: number): string {
-    return barChartData.value[d]?.month ?? ''
+function typeColor(type: string): string {
+    return typeColors[type] ?? colors.background
 }
 
-function yTickFormat(d: number): string {
-    return formatShortCurrency(d)
+function categoryColor(index: number, type: string): string {
+    return typeColors[type] ?? chartPalette[index % chartPalette.length]
 }
-
-function lineXTickFormat(d: number): string {
-    return lineChartData.value[d]?.month ?? ''
-}
-
-function lineYTickFormat(d: number): string {
-    return formatShortCurrency(d)
-}
-
-const barChartConfig = {
-    Entradas: { label: 'Entradas', color: '#10B981' },
-    Despesas: { label: 'Despesas', color: '#EF4444' },
-}
-
-const lineChartConfig = {
-    Saldo: { label: 'Saldo', color: '#10B981' },
-}
-
-const barCrosshairTemplate = componentToString(barChartConfig, ChartTooltipContent, {
-    labelFormatter: (d: number | Date): string => barChartData.value[d as number]?.month ?? '',
-} as any)
-
-const lineCrosshairTemplate = componentToString(lineChartConfig, ChartTooltipContent, {
-    labelFormatter: (d: number | Date): string => lineChartData.value[d as number]?.month ?? '',
-} as any)
-
-const barLegendItems = [
-    { name: 'Entradas', color: '#10B981' },
-    { name: 'Despesas', color: '#EF4444' },
-]
 </script>
 
 <template>
     <div class="w-full space-y-6">
         <h2 class="text-2xl font-bold">Dashboard</h2>
 
-        <!-- Feedback do mês em destaque -->
-        <div class="grid gap-4 sm:grid-cols-3">
-            <Card>
-                <CardHeader class="pb-2">
-                    <CardTitle class="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                        <TrendingDown class="size-4" />
+        <!-- Cards do mês em destaque -->
+        <div class="grid gap-3 sm:grid-cols-3">
+            <Card style="background-color: color-mix(in oklch, oklch(0.577 0.245 27.325) 5%, transparent); border-color: color-mix(in oklch, oklch(0.577 0.245 27.325) 20%, transparent)" class="!py-3">
+                <CardHeader class="pb-1">
+                    <CardTitle class="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                        <TrendingDown class="size-3.5 text-destructive" />
                         Despesas
                     </CardTitle>
-                    <CardDescription class="text-xs">
+                    <CardDescription class="text-[11px]">
                         {{ window[highlightedIndex].label }} {{ window[highlightedIndex].year }}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div class="text-2xl font-bold text-destructive">{{ formatCurrency(highlighted.expenses) }}</div>
+                    <div class="text-xl font-bold text-destructive">{{ formatCurrency(highlighted.expenses) }}</div>
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader class="pb-2">
-                    <CardTitle class="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                        <TrendingUp class="size-4" />
+            <Card style="background-color: color-mix(in oklch, oklch(0.527 0.154 150.069) 5%, transparent); border-color: color-mix(in oklch, oklch(0.527 0.154 150.069) 20%, transparent)" class="!py-3">
+                <CardHeader class="pb-1">
+                    <CardTitle class="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                        <TrendingUp class="size-3.5" style="color: oklch(0.527 0.154 150.069)" />
                         Entradas
                     </CardTitle>
-                    <CardDescription class="text-xs">
+                    <CardDescription class="text-[11px]">
                         {{ window[highlightedIndex].label }} {{ window[highlightedIndex].year }}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div class="text-2xl font-bold text-green-600">{{ formatCurrency(highlighted.income) }}</div>
+                    <div class="text-xl font-bold" style="color: oklch(0.527 0.154 150.069)">{{ formatCurrency(highlighted.income) }}</div>
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader class="pb-2">
-                    <CardTitle class="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                        <Wallet class="size-4" />
+            <Card class="bg-primary/5 border-primary/20 !py-3">
+                <CardHeader class="pb-1">
+                    <CardTitle class="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                        <Wallet class="size-3.5 text-primary" />
                         Saldo
                     </CardTitle>
-                    <CardDescription class="text-xs">
+                    <CardDescription class="text-[11px]">
                         {{ window[highlightedIndex].label }} {{ window[highlightedIndex].year }}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div
-                        class="text-2xl font-bold"
-                        :class="highlighted.balance >= 0 ? 'text-green-600' : 'text-destructive'"
-                    >
+                    <div class="text-xl font-bold" :class="highlighted.balance >= 0 ? 'text-green-600' : 'text-destructive'">
                         {{ highlighted.balance >= 0 ? '+' : '' }}{{ formatCurrency(highlighted.balance) }}
                     </div>
                 </CardContent>
             </Card>
         </div>
 
-        <!-- Matriz -->
+        <!-- Gráfico de barras: Entradas vs Despesas -->
         <Card>
             <CardHeader class="pb-2">
+                <CardTitle class="text-base font-semibold">Entradas vs Despesas</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div v-if="!hasData" class="py-10 text-center text-sm text-muted-foreground">
+                    Nenhum dado disponível para o período.
+                </div>
+                <div v-else>
+                    <DashboardBarChart :monthly-summary="visibleMonthlySummary" :window="visibleWindow" />
+                </div>
+            </CardContent>
+        </Card>
+
+        <!-- Matriz de gastos -->
+        <Card class="p-0 overflow-hidden">
+            <CardHeader class="pb-3 px-4 pt-4">
                 <div class="flex items-center justify-between">
-                    <CardTitle class="text-base font-semibold">Próximos meses</CardTitle>
+                    <CardTitle class="text-base font-semibold">Gastos por mês</CardTitle>
                     <div class="flex items-center gap-1">
                         <Button variant="outline" size="icon" :disabled="!canGoBack" @click="goBack">
                             <ChevronLeft class="size-4" />
@@ -253,44 +202,52 @@ const barLegendItems = [
                     </div>
                 </div>
             </CardHeader>
-            <CardContent>
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[600px]">
+
+            <!-- Layout desktop: tabela -->
+            <CardContent class="p-0 hidden md:block">
+                <div class="overflow-x-auto rounded-b-xl">
+                    <table class="w-full">
                         <thead>
-                            <tr>
-                                <th class="pr-4 text-left text-sm font-semibold text-muted-foreground w-[180px]"></th>
+                            <tr class="border-b bg-muted/40">
+                                <th class="sticky left-0 z-10 bg-muted/40 pl-4 pr-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground rounded-tl-xl">
+                                    Descrição
+                                </th>
                                 <th
-                                    v-for="(month, index) in window"
+                                    v-for="(month, index) in visibleWindow"
                                     :key="index"
-                                    class="px-2 py-2 text-center text-sm"
-                                    :class="{
-                                        'font-bold bg-primary/10 rounded-md': month.isHighlighted,
-                                        'text-muted-foreground font-medium': !month.isHighlighted,
-                                    }"
+                                    class="px-3 py-2.5 text-center text-[11px] cursor-pointer select-none transition-colors"
+                                    :class="month.isHighlighted
+                                        ? 'bg-primary/10 font-bold text-primary border-b-2 border-primary'
+                                        : 'font-medium text-muted-foreground hover:bg-muted/30'"
+                                    @click="goToMonth(month.month, month.year)"
                                 >
-                                    <div>{{ month.label }}</div>
-                                    <div class="text-xs text-muted-foreground">{{ month.year }}</div>
-                                    <Badge v-if="month.isCurrent && !month.isHighlighted" variant="outline" class="mt-1 text-[10px] px-1 py-0 h-4">
+                                    <div class="uppercase tracking-wider leading-tight">{{ month.label.slice(0, 3) }}</div>
+                                    <div class="text-[10px] font-normal text-muted-foreground/60 leading-tight">{{ month.year }}</div>
+                                    <Badge v-if="month.isCurrent && !month.isHighlighted" variant="secondary" class="mt-0.5 text-[10px] px-1 py-0 h-3.5 leading-none rounded-sm">
                                         atual
                                     </Badge>
                                 </th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-if="matrix.length === 0">
-                                <td :colspan="7" class="py-10 text-center text-muted-foreground text-sm">
+                            <tr v-if="visibleMatrix.length === 0">
+                                <td :colspan="visibleWindow.length + 1" class="py-16 text-center text-muted-foreground text-sm">
                                     Nenhuma despesa prevista para este período.
                                 </td>
                             </tr>
                             <tr
-                                v-for="row in matrix"
+                                v-for="(row, ri) in visibleMatrix"
                                 :key="row.id"
-                                class="border-b border-muted/50"
+                                class="transition-colors"
+                                :class="ri % 2 === 0 ? 'bg-background' : 'bg-muted/20'"
                             >
-                                <td class="py-2 pr-4 text-sm font-medium">
-                                    <div class="flex items-center gap-2">
-                                        {{ row.name }}
-                                        <Badge variant="secondary" class="text-[10px] px-1.5 py-0 h-4">
+                                <td class="sticky left-0 z-10 pl-4 pr-3 py-2.5 text-sm"
+                                    :class="ri % 2 === 0 ? 'bg-background' : 'bg-muted/20'"
+                                >
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="h-5 w-1 rounded-full shrink-0" :style="{ backgroundColor: typeColor(row.type) }" />
+                                        <span class="font-medium truncate">{{ row.name }}</span>
+                                        <Badge variant="outline" class="text-[10px] px-1.5 py-0 h-4 leading-none shrink-0 border-muted-foreground/20 text-muted-foreground">
                                             {{ typeLabel(row.type) }}
                                         </Badge>
                                     </div>
@@ -298,28 +255,93 @@ const barLegendItems = [
                                 <td
                                     v-for="(total, ti) in row.totals"
                                     :key="ti"
-                                    class="px-2 py-2 text-center text-sm"
+                                    class="px-3 py-2.5 text-center text-sm tabular-nums transition-colors"
                                     :class="{
-                                        'bg-primary/10': window[ti]?.isHighlighted,
-                                        'rounded-md': window[ti]?.isHighlighted,
+                                        'bg-primary/5 font-semibold': visibleWindow[ti]?.isHighlighted,
+                                        'bg-muted/20': !visibleWindow[ti]?.isHighlighted && ri % 2 === 1,
                                     }"
                                 >
-                                    <span v-if="total > 0" class="font-mono tabular-nums">{{ formatShortCurrency(total) }}</span>
-                                    <span v-else class="text-muted-foreground">&mdash;</span>
+                                    <span v-if="total > 0">{{ formatShortCurrency(total) }}</span>
+                                    <span v-else class="text-muted-foreground/40">&mdash;</span>
                                 </td>
                             </tr>
                         </tbody>
+                        <tfoot>
+                            <tr class="border-t-2 bg-muted/30">
+                                <td class="sticky left-0 z-10 bg-muted/30 pl-4 pr-3 py-2.5 text-sm font-bold text-foreground">
+                                    Total
+                                </td>
+                                <td
+                                    v-for="(total, ti) in columnTotals"
+                                    :key="ti"
+                                    class="px-3 py-2.5 text-center text-sm font-bold tabular-nums"
+                                    :class="visibleWindow[ti]?.isHighlighted ? 'bg-primary/5' : ''"
+                                >
+                                    {{ total > 0 ? formatShortCurrency(total) : '—' }}
+                                </td>
+                            </tr>
+                        </tfoot>
                     </table>
+                </div>
+            </CardContent>
+
+            <!-- Layout mobile: cards -->
+            <CardContent class="p-0 md:hidden">
+                <div v-if="visibleMatrix.length === 0" class="py-16 text-center text-muted-foreground text-sm">
+                    Nenhuma despesa prevista para este período.
+                </div>
+                <div v-else class="divide-y divide-muted/30">
+                    <div
+                        v-for="(row, ri) in visibleMatrix"
+                        :key="row.id"
+                        class="px-4 py-3"
+                    >
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="h-4 w-1 rounded-full shrink-0" :style="{ backgroundColor: typeColor(row.type) }" />
+                            <span class="font-medium text-sm truncate">{{ row.name }}</span>
+                            <Badge variant="outline" class="text-[10px] px-1 py-0 h-3.5 leading-none shrink-0 border-muted-foreground/20 text-muted-foreground">
+                                {{ typeLabel(row.type) }}
+                            </Badge>
+                        </div>
+                        <div class="grid gap-2" :style="{ gridTemplateColumns: `repeat(${visibleWindow.length}, minmax(0, 1fr))` }">
+                            <div
+                                v-for="(month, mi) in visibleWindow"
+                                :key="mi"
+                                class="text-center rounded-md py-1.5 px-1"
+                                :class="month.isHighlighted ? 'bg-primary/10 font-bold text-primary' : 'text-muted-foreground'"
+                            >
+                                <div class="text-[10px] font-medium mb-0.5">{{ month.label.slice(0, 3) }}</div>
+                                <div class="text-xs tabular-nums font-semibold">
+                                    <span v-if="row.totals[mi] > 0">{{ formatShortCurrency(row.totals[mi]) }}</span>
+                                    <span v-else class="text-muted-foreground/40">&mdash;</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Total mobile -->
+                    <div class="px-4 py-3 bg-muted/30">
+                        <div class="font-bold text-sm mb-2">Total</div>
+                        <div class="grid gap-2" :style="{ gridTemplateColumns: `repeat(${visibleWindow.length}, minmax(0, 1fr))` }">
+                            <div
+                                v-for="(total, ti) in columnTotals"
+                                :key="ti"
+                                class="text-center rounded-md py-1.5 px-1 text-xs font-bold tabular-nums"
+                                :class="visibleWindow[ti]?.isHighlighted ? 'bg-primary/10 text-primary' : 'text-foreground'"
+                            >
+                                {{ total > 0 ? formatShortCurrency(total) : '—' }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </CardContent>
         </Card>
 
-        <!-- Próximos pagamentos -->
+        <!-- Próximos pagamentos + Despesas por tipo -->
         <div class="grid gap-6 lg:grid-cols-2">
             <Card>
                 <CardHeader class="pb-2">
                     <CardTitle class="flex items-center gap-2 text-base font-semibold">
-                        <AlertCircle class="size-4 text-amber-500" />
+                        <AlertCircle class="size-4" style="color: oklch(0.8 0.15 84)" />
                         Próximos pagamentos
                     </CardTitle>
                 </CardHeader>
@@ -331,77 +353,28 @@ const barLegendItems = [
                         <div
                             v-for="(payment, index) in upcomingPayments"
                             :key="index"
-                            class="flex items-center justify-between rounded-md border px-3 py-2"
+                            class="flex items-center justify-between rounded-lg border px-3 py-2.5 transition-colors"
                             :class="{
-                                'border-amber-500/50 bg-amber-500/5': isToday(payment.dueDate),
-                                'border-destructive/50 bg-destructive/5': isOverdue(payment.dueDate),
+                                'border-amber-500/40 bg-amber-500/5': isToday(payment.dueDate),
+                                'border-destructive/40 bg-destructive/5': isOverdue(payment.dueDate),
+                                'hover:bg-muted/50': !isToday(payment.dueDate) && !isOverdue(payment.dueDate),
                             }"
                         >
-                            <div class="flex flex-col">
-                                <span class="text-sm font-medium">{{ payment.name }}</span>
-                                <span class="flex items-center gap-1 text-xs text-muted-foreground">
+                            <div class="flex flex-col min-w-0 mr-2">
+                                <span class="text-sm font-medium truncate">{{ payment.name }}</span>
+                                <span class="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5 flex-wrap">
                                     {{ formatDate(payment.dueDate) }}
-                                    <Badge variant="secondary" class="text-[10px] px-1.5 py-0 h-4">
-                                        {{ typeLabel(payment.type) }}
-                                    </Badge>
-                                    <Badge
-                                        v-if="isOverdue(payment.dueDate)"
-                                        variant="destructive"
-                                        class="text-[10px] px-1.5 py-0 h-4"
-                                    >
-                                        atrasado
-                                    </Badge>
-                                    <Badge
-                                        v-else-if="isToday(payment.dueDate)"
-                                        variant="outline"
-                                        class="border-amber-500 text-amber-600 text-[10px] px-1.5 py-0 h-4"
-                                    >
-                                        hoje
-                                    </Badge>
+                                    <Badge variant="secondary" class="text-[10px] px-1.5 py-0 h-4 leading-none">{{ typeLabel(payment.type) }}</Badge>
+                                    <Badge v-if="isOverdue(payment.dueDate)" variant="destructive" class="text-[10px] px-1.5 py-0 h-4 leading-none">atrasado</Badge>
+                                    <Badge v-else-if="isToday(payment.dueDate)" variant="outline" class="border-amber-500 text-amber-600 text-[10px] px-1.5 py-0 h-4 leading-none">hoje</Badge>
                                 </span>
                             </div>
-                            <span class="text-sm font-semibold tabular-nums">{{ formatCurrency(payment.amount) }}</span>
+                            <span class="text-sm font-semibold tabular-nums shrink-0">{{ formatCurrency(payment.amount) }}</span>
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
-            <div class="hidden lg:block" />
-        </div>
-
-        <!-- Gráficos -->
-        <div class="space-y-6">
-            <!-- Barras: Entradas vs Despesas -->
-            <Card>
-                <CardHeader class="pb-2">
-                    <CardTitle class="text-base font-semibold">Entradas vs Despesas</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div v-if="!hasData" class="py-10 text-center text-sm text-muted-foreground">
-                        Nenhum dado disponível para o período.
-                    </div>
-                    <div v-else class="h-[300px] w-full">
-                        <VisBulletLegend :items="barLegendItems" />
-                        <ChartContainer :config="{}" class="aspect-auto">
-                            <VisXYContainer :data="barChartData" :scale-by-domain="true">
-                                <VisGroupedBar
-                                    :x="(d: any) => d.index"
-                                    :y="[(d: any) => d.Entradas, (d: any) => d.Despesas]"
-                                    :color="['#10B981', '#EF4444']"
-                                    :rounded-corners="4"
-                                    bar-padding="0.1"
-                                    group-padding="0.2"
-                                />
-                                <VisAxis type="x" position="bottom" :tick-format="xTickFormat" :num-ticks="6" />
-                                <VisAxis type="y" position="left" :tick-format="yTickFormat" />
-                                <VisCrosshair v-if="barCrosshairTemplate" :template="barCrosshairTemplate" />
-                            </VisXYContainer>
-                        </ChartContainer>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <!-- Distribuição por tipo -->
             <Card>
                 <CardHeader class="pb-2">
                     <CardTitle class="text-base font-semibold">Despesas por tipo</CardTitle>
@@ -413,54 +386,26 @@ const barLegendItems = [
                     <div v-if="!hasCategoryData" class="py-10 text-center text-sm text-muted-foreground">
                         Nenhuma despesa neste mês.
                     </div>
-                    <div v-else class="flex flex-col items-center gap-6 sm:flex-row">
-                        <div class="h-[200px] w-full sm:w-1/2">
-                            <VisSingleContainer :data="pieChartData">
-                                <VisDonut
-                                    :value="(d: any) => d.value"
-                                    :color="(d: any, i: number) => COLORS[i % COLORS.length]"
-                                    :arc-width="24"
-                                />
-                            </VisSingleContainer>
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <div
-                                v-for="(entry, index) in pieChartData"
-                                :key="entry.name"
-                                class="flex items-center gap-2"
-                            >
+                    <div v-else class="space-y-3">
+                        <div
+                            v-for="(entry, i) in categoryBars"
+                            :key="entry.name"
+                            class="flex items-center gap-3"
+                        >
+                            <span class="text-xs text-muted-foreground w-[70px] shrink-0 text-right truncate" :title="entry.name">{{ entry.name }}</span>
+                            <div class="flex-1 h-7 rounded-md bg-muted/50 overflow-hidden">
                                 <div
-                                    class="h-3 w-3 rounded-full"
-                                    :style="{ backgroundColor: COLORS[index % COLORS.length] }"
+                                    class="h-full rounded-md transition-all duration-300"
+                                    :style="{
+                                        width: `${(entry.value / categoryBarMax) * 100}%`,
+                                        minWidth: entry.value > 0 ? '4px' : '0',
+                                        backgroundColor: categoryColor(i, entry.type),
+                                        opacity: 0.85,
+                                    }"
                                 />
-                                <span class="text-muted-foreground">{{ entry.name }}</span>
-                                <span class="font-semibold tabular-nums">{{ formatCurrency(entry.value) }}</span>
                             </div>
+                            <span class="text-sm font-semibold tabular-nums w-[85px] shrink-0" :title="formatCurrency(entry.value)">{{ formatCurrency(entry.value) }}</span>
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <!-- Linha: Saldo acumulado -->
-            <Card v-if="hasData">
-                <CardHeader class="pb-2">
-                    <CardTitle class="text-base font-semibold">Saldo acumulado</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div class="h-[250px] w-full">
-                        <ChartContainer :config="{}" class="aspect-auto">
-                            <VisXYContainer :data="lineChartData" :scale-by-domain="true">
-                                <VisLine
-                                    :x="(d: any) => d.index"
-                                    :y="(d: any) => d.Saldo"
-                                    :color="lineChartData[lineChartData.length - 1]?.Saldo >= 0 ? '#10B981' : '#EF4444'"
-                                    :line-width="2"
-                                />
-                                <VisAxis type="x" position="bottom" :tick-format="lineXTickFormat" :num-ticks="6" />
-                                <VisAxis type="y" position="left" :tick-format="lineYTickFormat" />
-                                <VisCrosshair v-if="lineCrosshairTemplate" :template="lineCrosshairTemplate" />
-                            </VisXYContainer>
-                        </ChartContainer>
                     </div>
                 </CardContent>
             </Card>

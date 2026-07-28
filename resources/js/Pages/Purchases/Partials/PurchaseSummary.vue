@@ -6,6 +6,7 @@ import { CreditCard, ShoppingCart, Calendar, Banknote, Bell } from '@lucide/vue'
 import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue';
 import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import { typeColors } from '@/lib/colors';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const props = defineProps<{
@@ -60,12 +61,6 @@ const typeIcons: Record<string, typeof CreditCard> = {
     others: ShoppingCart,
 };
 
-const typeColors: Record<string, string> = {
-    bill: '#a8a29e',
-    financing: '#78716c',
-    others: '#57534e',
-};
-
 function openIndividualDetails(item: PurchaseSummaryItem): void {
     selectedPurchase.value = {
         ...item.items[0],
@@ -113,7 +108,7 @@ function toTitleCase(str: string): string {
                 :style="{ borderRadius: '0 var(--radius) var(--radius) 0' }"
                 @click="openCardDetails(item)">
                 <div class="absolute inset-y-0 left-0 w-1"
-                    :style="{ backgroundColor: item.items[0].card?.color ?? '#6b7280' }" />
+                    :style="{ backgroundColor: item.items[0].card?.color ?? typeColors.credit_card }" />
                 <CardHeader class="pb-2">
                     <CardTitle class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
