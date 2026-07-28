@@ -28,8 +28,9 @@ final class PurchasePaymentDueNotification extends Notification
 
         return (new MailMessage)
             ->subject("Pagamento de {$this->purchase->name} vence hoje")
-            ->greeting('Olá!')
-            ->line("O pagamento de **{$this->purchase->name}** no valor de R$ ".number_format($this->purchase->amount, 2, ',', '.')." vence hoje ({$this->purchase->payment_day}/{$now->format('m/Y')}).")
-            ->action('Ver detalhes', route('purchases.show', $this->purchase));
+            ->greeting("Olá, {$notifiable->name}!")
+            ->line("O pagamento de **{$this->purchase->name}** no valor de R$ ".number_format((float) $this->purchase->amount, 2, ',', '.')." vence hoje ({$this->purchase->payment_day}/{$now->format('m/Y')}).")
+            ->action('Ver detalhes', route('purchases.show', $this->purchase))
+            ->line('Acesse sua carteira para mais detalhes.');
     }
 }

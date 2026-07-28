@@ -17,7 +17,7 @@ class VerifyEmailNotification extends VerifyEmail implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('Confirme seu e-mail')
-            ->greeting('Olá!')
+            ->greeting("Olá, {$notifiable->name}!")
             ->line('Clique no botão abaixo para confirmar seu endereço de e-mail.')
             ->action('Confirmar e-mail', $this->verificationUrl($notifiable))
             ->line('Se você não criou uma conta, nenhuma ação é necessária.');

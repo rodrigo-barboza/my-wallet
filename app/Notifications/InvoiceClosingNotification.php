@@ -28,8 +28,9 @@ final class InvoiceClosingNotification extends Notification
 
         return (new MailMessage)
             ->subject("Fatura do cartão {$card->name} fecha hoje")
-            ->greeting('Olá!')
+            ->greeting("Olá, {$notifiable->name}!")
             ->line("A fatura do cartão **{$card->name}** referente a {$this->invoice->month}/{$this->invoice->year} fecha hoje ({$this->invoice->closing_date->format('d/m/Y')}).")
-            ->action('Ver compras', route('cards.purchases', $card));
+            ->action('Ver compras', route('cards.purchases', $card))
+            ->line('Acesse sua carteira para mais detalhes.');
     }
 }

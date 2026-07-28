@@ -28,8 +28,9 @@ final class InvoiceDueNotification extends Notification
 
         return (new MailMessage)
             ->subject("Fatura do cartão {$card->name} vence hoje")
-            ->greeting('Olá!')
+            ->greeting("Olá, {$notifiable->name}!")
             ->line("A fatura do cartão **{$card->name}** referente a {$this->invoice->month}/{$this->invoice->year} vence hoje ({$this->invoice->due_date->format('d/m/Y')}).")
-            ->action('Verificar pagamento', route('cards.purchases', $card));
+            ->action('Verificar pagamento', route('cards.purchases', $card))
+            ->line('Acesse sua carteira para mais detalhes.');
     }
 }
