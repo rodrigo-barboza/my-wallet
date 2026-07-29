@@ -13,6 +13,7 @@ import PaymentHistory from './Partials/PaymentHistory.vue';
 import PurchaseFormModal from '@/Components/PurchaseFormModal.vue';
 import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue';
 import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue';
+import MonthNavigator from '@/Components/MonthNavigator.vue';
 import {
     Tooltip,
     TooltipContent,
@@ -173,17 +174,13 @@ async function handleReorder(order: string[]): Promise<void> {
             </div>
         </div>
 
-        <div class="flex items-center justify-center gap-4">
-            <Button variant="outline" size="icon" @click="previousMonth">
-                <ChevronLeft class="size-4" />
-            </Button>
-            <div class="text-lg font-medium">
-                {{ currentMonthName }} {{ year }}
-            </div>
-            <Button variant="outline" size="icon" @click="nextMonth">
-                <ChevronRight class="size-4" />
-            </Button>
-        </div>
+        <MonthNavigator
+            :month="month"
+            :year="year"
+            :min-month="new Date().getMonth() + 1"
+            :min-year="new Date().getFullYear()"
+            @navigate="goToMonth"
+        />
 
         <div class="flex justify-center">
             <div class="flex items-center gap-1 rounded-lg bg-muted p-1">
