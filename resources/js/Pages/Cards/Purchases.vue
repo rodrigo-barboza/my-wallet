@@ -13,6 +13,7 @@ import PurchaseFormModal from '@/Components/PurchaseFormModal.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { formatCurrency } from '@/lib/format';
 import { monthNames, monthAbbrs } from '@/lib/constants';
+import { useMonthNavigation } from '@/composables/useMonthNavigation';
 
 defineOptions({ layout: AppLayout });
 
@@ -179,24 +180,22 @@ function deletePurchase(): void {
     });
 }
 
-function previousMonth(): void {
-    const newMonth = props.month === 1 ? 12 : props.month - 1;
-    const newYear = props.month === 1 ? props.year - 1 : props.year;
-    router.get(route('cards.purchases', { card: props.card.id, month: newMonth, year: newYear }));
-}
-
-function nextMonth(): void {
-    const newMonth = props.month === 12 ? 1 : props.month + 1;
-    const newYear = props.month === 12 ? props.year + 1 : props.year;
-    router.get(route('cards.purchases', { card: props.card.id, month: newMonth, year: newYear }));
-}
+const { goToMonth: goToMonthFn, previousMonth: prevMonth, nextMonth: nextMonthFn } = useMonthNavigation('cards.purchases')
 
 function goBack(): void {
     router.visit(route('purchases.index', { month: props.month, year: props.year }));
 }
 
 function goToMonth(month: number, year?: number): void {
-    router.get(route('cards.purchases', { card: props.card.id, month, year: year ?? props.year }));
+    goToMonthFn(month, year ?? props.year)
+}
+
+function previousMonth(): void {
+    prevMonth(props.month, props.year)
+}
+
+function nextMonth(): void {
+    nextMonthFn(props.month, props.year)
 }
 </script>
 

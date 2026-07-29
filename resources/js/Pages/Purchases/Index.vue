@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/tooltip';
 import { formatCurrency } from '@/lib/format';
 import { monthNames } from '@/lib/constants';
+import { useMonthNavigation } from '@/composables/useMonthNavigation';
 
 interface PaymentHistoryItem {
     id: number;
@@ -85,6 +86,8 @@ const hasOverdue = computed(() => props.summary.some((item) => item.status === '
 
 const balance = computed(() => props.incomeTotal - totalAmount.value);
 
+const { previousMonth: prevMonth, nextMonth: nextMonthFn } = useMonthNavigation('purchases.index')
+
 function onTableSelect(item: PurchaseSummaryItem): void {
     selectedPurchase.value = {
         ...item.items[0],
@@ -110,15 +113,11 @@ function onCloseForm(open: boolean): void {
 }
 
 function previousMonth(): void {
-    const newMonth = props.month === 1 ? 12 : props.month - 1;
-    const newYear = props.month === 1 ? props.year - 1 : props.year;
-    router.get(route('purchases.index', { month: newMonth, year: newYear }));
+    prevMonth(props.month, props.year)
 }
 
 function nextMonth(): void {
-    const newMonth = props.month === 12 ? 1 : props.month + 1;
-    const newYear = props.month === 12 ? props.year + 1 : props.year;
-    router.get(route('purchases.index', { month: newMonth, year: newYear }));
+    nextMonthFn(props.month, props.year)
 }
 
 async function handleReorder(order: string[]): Promise<void> {
