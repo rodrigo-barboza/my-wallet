@@ -12,6 +12,7 @@ import {
     SheetTrigger,
     SheetClose,
 } from '@/components/ui/sheet'
+import NavLink from '@/Components/NavLink.vue'
 
 router.on('flash', (event) => {
     const flash = (event.detail as { flash?: { message?: string; type?: string } }).flash;
@@ -30,6 +31,13 @@ router.on('flash', (event) => {
 function isActive(name: string): boolean {
     return route().current(name);
 }
+
+const navLinks = [
+    { name: 'Dashboard', route: 'dashboard', pattern: 'dashboard', icon: LayoutDashboard },
+    { name: 'Compras', route: 'purchases.index', pattern: 'purchases*', icon: ShoppingCart },
+    { name: 'Entradas', route: 'incomes.index', pattern: 'incomes*', icon: Banknote },
+    { name: 'Cartões', route: 'cards.index', pattern: 'cards*', icon: CreditCard },
+]
 </script>
 
 <template>
@@ -43,26 +51,14 @@ function isActive(name: string): boolean {
                 </Link>
 
                 <nav class="hidden items-center gap-1 sm:flex">
-                    <Link :href="route('dashboard')"
-                        class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                        :class="isActive('dashboard') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
-                        Dashboard
-                    </Link>
-                    <Link :href="route('purchases.index')"
-                        class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                        :class="isActive('purchases*') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
-                        Compras
-                    </Link>
-                    <Link :href="route('incomes.index')"
-                        class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                        :class="isActive('incomes*') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
-                        Entradas
-                    </Link>
-                    <Link :href="route('cards.index')"
-                        class="rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                        :class="isActive('cards*') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
-                        Cartões
-                    </Link>
+                    <NavLink
+                        v-for="link in navLinks"
+                        :key="link.route"
+                        :href="route(link.route)"
+                        :active="isActive(link.pattern)"
+                    >
+                        {{ link.name }}
+                    </NavLink>
                 </nav>
             </div>
 
@@ -84,36 +80,14 @@ function isActive(name: string): boolean {
                             </SheetTitle>
                         </SheetHeader>
                         <nav class="mt-8 flex flex-col gap-1">
-                            <SheetClose as-child>
-                                <Link :href="route('dashboard')"
+                            <SheetClose as-child v-for="link in navLinks" :key="link.route">
+                                <Link
+                                    :href="route(link.route)"
                                     class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                                    :class="isActive('dashboard') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
-                                    <LayoutDashboard class="size-4" />
-                                    Dashboard
-                                </Link>
-                            </SheetClose>
-                            <SheetClose as-child>
-                                <Link :href="route('incomes.index')"
-                                    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                                    :class="isActive('incomes*') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
-                                    <Banknote class="size-4" />
-                                    Entradas
-                                </Link>
-                            </SheetClose>
-                            <SheetClose as-child>
-                                <Link :href="route('purchases.index')"
-                                    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                                    :class="isActive('purchases*') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
-                                    <ShoppingCart class="size-4" />
-                                    Compras
-                                </Link>
-                            </SheetClose>
-                            <SheetClose as-child>
-                                <Link :href="route('cards.index')"
-                                    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                                    :class="isActive('cards*') ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'">
-                                    <CreditCard class="size-4" />
-                                    Cartões
+                                    :class="isActive(link.pattern) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
+                                >
+                                    <component :is="link.icon" class="size-4" />
+                                    {{ link.name }}
                                 </Link>
                             </SheetClose>
                             <SheetClose as-child>
