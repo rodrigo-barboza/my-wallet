@@ -80,7 +80,7 @@ These rules are STRICT and NON-NEGOTIABLE. You MUST apply them on EVERY Vue comp
 
 ## 1. Import Order
 
-Imports MUST be grouped in this order, alphabetically within each group:
+Imports MUST be grouped in this order, alphabetically within each group. Always use **absolute paths** (`@/...`), never relative paths (`./...`).
 
 ```
 // 1. Vue / VueUse

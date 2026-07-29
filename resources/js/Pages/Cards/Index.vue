@@ -1,101 +1,97 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import type { Card } from '@/types/card';
-import { router, Head } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
-import { Button } from '@/components/ui/button';
-import { Card as CardComponent, CardContent } from '@/components/ui/card';
-import { CreditCard, Plus, LayoutGrid, List } from '@lucide/vue';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import CardsSectionGridMode from './Partials/CardsSectionGridMode.vue';
-import CardsSectionTableMode from './Partials/CardsSectionTableMode.vue';
-import CardFormModal from '@/Components/CardFormModal.vue';
-import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import { Button } from '@/components/ui/button'
+import { Card as CardComponent, CardContent } from '@/components/ui/card'
+import { CreditCard, LayoutGrid, List, Plus } from '@lucide/vue'
+import { Head, router } from '@inertiajs/vue3'
+import { ref } from 'vue'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useLocalStorage } from '@/composables/useLocalStorage'
+import AppLayout from '@/Layouts/AppLayout.vue'
+import CardFormModal from '@/Components/CardFormModal.vue'
+import CardsSectionGridMode from '@/Pages/Cards/Partials/CardsSectionGridMode.vue'
+import CardsSectionTableMode from '@/Pages/Cards/Partials/CardsSectionTableMode.vue'
+import ConfirmDialog from '@/Components/ConfirmDialog.vue'
+import type { Card } from '@/types/card'
 
-defineOptions({ layout: AppLayout });
+defineOptions({ layout: AppLayout })
 
-const props = defineProps<{
-    cards: Card[];
-}>();
+defineProps<{
+    cards: Card[]
+}>()
 
-const storedViewMode = localStorage.getItem('cards_view_mode') as 'grid' | 'table' | null;
-const viewMode = ref<'grid' | 'table'>(storedViewMode ?? 'table');
-watch(viewMode, (mode) => localStorage.setItem('cards_view_mode', mode));
-const showModal = ref<boolean>(false);
-const editingCard = ref<Card | null>(null);
+let confirmAction: (() => void) | null = null
 
-const showConfirm = ref<boolean>(false);
-const confirmTitle = ref<string>('');
-const confirmDescription = ref<string>('');
-let confirmAction: (() => void) | null = null;
+const viewModes = [
+    { key: 'grid' as const, icon: LayoutGrid, label: 'Visualização em grade' },
+    { key: 'table' as const, icon: List, label: 'Visualização em tabela' },
+]
+
+const viewMode = useLocalStorage<'grid' | 'table'>('cards_view_mode', 'table')
+const showModal = ref(false)
+const editingCard = ref<Card | null>(null)
+const showConfirm = ref(false)
+const confirmTitle = ref('')
+const confirmDescription = ref('')
 
 function openCreateModal(): void {
-    editingCard.value = null;
-    showModal.value = true;
-};
+    editingCard.value = null
+    showModal.value = true
+}
 
 function openEditModal(card: Card): void {
-    editingCard.value = card;
-    showModal.value = true;
-};
+    editingCard.value = card
+    showModal.value = true
+}
 
 function openConfirm(title: string, description: string, action: () => void): void {
-    confirmTitle.value = title;
-    confirmDescription.value = description;
-    confirmAction = action;
-    showConfirm.value = true;
-};
+    confirmTitle.value = title
+    confirmDescription.value = description
+    confirmAction = action
+    showConfirm.value = true
+}
 
 function handleConfirm(): void {
-    confirmAction?.();
-    showConfirm.value = false;
-    confirmAction = null;
-};
+    confirmAction?.()
+    showConfirm.value = false
+    confirmAction = null
+}
 
 function handleDelete(card: Card): void {
-    openConfirm(
-        'Excluir cartão',
-        `Deseja realmente excluir o cartão "${card.name}"?`,
-        () => router.delete(route('cards.destroy', card)),
-    );
-};
+    openConfirm('Excluir cartão', `Deseja realmente excluir o cartão "${card.name}"?`, () => router.delete(route('cards.destroy', card.id)))
+}
 
 function handleBulkDelete(ids: number[]): void {
-    openConfirm(
-        'Excluir cartões',
-        `Deseja realmente excluir ${ids.length} cartão(s)?`,
-        () => router.post(route('cards.bulk-destroy'), { ids }),
-    );
-};
+    openConfirm('Excluir cartões', `Deseja realmente excluir ${ids.length} cartão(s)?`, () => router.post(route('cards.bulk-destroy'), { ids }))
+}
 </script>
 
 <template>
     <div class="w-full space-y-6">
         <Head title="My Wallet - Cartões" />
+
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold">Cartões</h2>
             <div class="flex items-center gap-2">
                 <TooltipProvider>
-                    <Tooltip>
+                    <Tooltip
+                        v-for="mode in viewModes"
+                        :key="mode.key"
+                    >
                         <TooltipTrigger as-child>
-                            <Button variant="outline" size="icon"
-                                :class="{ 'bg-primary text-primary-foreground': viewMode === 'grid' }" @click="viewMode = 'grid'">
-                                <LayoutGrid class="size-4" />
+                            <Button
+                                :class="viewMode === mode.key ? 'bg-primary text-primary-foreground' : ''"
+                                variant="outline"
+                                size="icon"
+                                @click="viewMode = mode.key"
+                            >
+                                <component
+                                    :is="mode.icon"
+                                    class="size-4"
+                                />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>Visualização em grade</p>
-                        </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger as-child>
-                            <Button variant="outline" size="icon"
-                                :class="{ 'bg-primary text-primary-foreground': viewMode === 'table' }" @click="viewMode = 'table'">
-                                <List class="size-4" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Visualização em tabela</p>
+                            <p>{{ mode.label }}</p>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
@@ -106,7 +102,10 @@ function handleBulkDelete(ids: number[]): void {
             </div>
         </div>
 
-        <CardComponent v-if="cards.length === 0" class="mx-auto max-w-md">
+        <CardComponent
+            v-if="cards.length === 0"
+            class="mx-auto max-w-md"
+        >
             <CardContent class="flex flex-col items-center justify-center py-12 text-center">
                 <div class="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
                     <CreditCard class="size-8 text-muted-foreground" />
@@ -122,15 +121,33 @@ function handleBulkDelete(ids: number[]): void {
             </CardContent>
         </CardComponent>
 
-        <CardsSectionGridMode v-else-if="viewMode === 'grid'" :cards="cards" @edit="openEditModal"
-            @delete="handleDelete" />
+        <CardsSectionGridMode
+            v-else-if="viewMode === 'grid'"
+            :cards="cards"
+            @delete="handleDelete"
+            @edit="openEditModal"
+        />
 
-        <CardsSectionTableMode v-else :cards="cards" @edit="openEditModal" @delete="handleDelete"
-            @bulk-delete="handleBulkDelete" />
+        <CardsSectionTableMode
+            v-else
+            :cards="cards"
+            @bulk-delete="handleBulkDelete"
+            @delete="handleDelete"
+            @edit="openEditModal"
+        />
 
-        <CardFormModal :open="showModal" :card="editingCard" @update:open="showModal = $event" />
+        <CardFormModal
+            :open="showModal"
+            :card="editingCard"
+            @update:open="showModal = $event"
+        />
 
-        <ConfirmDialog :open="showConfirm" :title="confirmTitle" :description="confirmDescription"
-            @update:open="showConfirm = $event" @confirm="handleConfirm" />
+        <ConfirmDialog
+            :open="showConfirm"
+            :title="confirmTitle"
+            :description="confirmDescription"
+            @update:open="showConfirm = $event"
+            @confirm="handleConfirm"
+        />
     </div>
 </template>

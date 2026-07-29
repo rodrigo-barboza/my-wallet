@@ -59,8 +59,6 @@ const editingPurchase = ref<Purchase | undefined>();
 const selectedCardPurchase = ref<PurchaseSummaryItem | undefined>();
 const showCardDetailsModal = ref(false);
 
-const monthNames = monthNames;
-
 const currentMonthName = computed(() => monthNames[props.month - 1]);
 
 const totalAmount = computed(() => props.summary.reduce((sum, item) => {
@@ -87,7 +85,7 @@ const hasOverdue = computed(() => props.summary.some((item) => item.status === '
 
 const balance = computed(() => props.incomeTotal - totalAmount.value);
 
-const { previousMonth: prevMonth, nextMonth: nextMonthFn } = useMonthNavigation('purchases.index')
+const { goToMonth, previousMonth: prevMonth, nextMonth: nextMonthFn } = useMonthNavigation('purchases.index')
 
 function onTableSelect(item: PurchaseSummaryItem): void {
     selectedPurchase.value = {
