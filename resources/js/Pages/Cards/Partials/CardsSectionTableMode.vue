@@ -111,7 +111,7 @@ function handleBulkDelete(): void {
                     class="cursor-pointer"
                     @click="router.visit(route('cards.purchases', { card: card.id }))"
                 >
-                    <TableCell>
+                    <TableCell @click.stop>
                         <Checkbox
                             :checked="selectedIds.includes(card.id)"
                             @update:checked="toggleSelect(card.id)"
