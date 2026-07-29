@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Wallet, TrendingUp, TrendingDown, AlertCircle } from '@lucide/vue'
 import DashboardBarChart from '@/Components/DashboardBarChart.vue'
+import SummaryCard from '@/Components/SummaryCard.vue'
 import { chartPalette, typeColors, colors } from '@/lib/colors'
 import { formatCurrency, formatShortCurrency, formatDate } from '@/lib/format'
 import type {
@@ -111,52 +112,38 @@ function categoryColor(index: number, type: string): string {
 
         <!-- Cards do mês em destaque -->
         <div class="grid gap-3 sm:grid-cols-3">
-            <Card style="background-color: color-mix(in oklch, oklch(0.577 0.245 27.325) 5%, transparent); border-color: color-mix(in oklch, oklch(0.577 0.245 27.325) 20%, transparent)" class="!py-3">
-                <CardHeader class="pb-1">
-                    <CardTitle class="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                        <TrendingDown class="size-3.5 text-destructive" />
-                        Despesas
-                    </CardTitle>
-                    <CardDescription class="text-[11px]">
-                        {{ window[highlightedIndex].label }} {{ window[highlightedIndex].year }}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div class="text-xl font-bold text-destructive">{{ formatCurrency(highlighted.expenses) }}</div>
-                </CardContent>
-            </Card>
+            <SummaryCard
+                title="Despesas"
+                :description="`${window[highlightedIndex].label} ${window[highlightedIndex].year}`"
+                :icon="TrendingDown"
+                icon-color="hsl(var(--destructive))"
+                :value="formatCurrency(highlighted.expenses)"
+                value-color="text-destructive"
+                bg-color="color-mix(in oklch, oklch(0.577 0.245 27.325) 5%, transparent)"
+                border-color="color-mix(in oklch, oklch(0.577 0.245 27.325) 20%, transparent)"
+            />
 
-            <Card style="background-color: color-mix(in oklch, oklch(0.527 0.154 150.069) 5%, transparent); border-color: color-mix(in oklch, oklch(0.527 0.154 150.069) 20%, transparent)" class="!py-3">
-                <CardHeader class="pb-1">
-                    <CardTitle class="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                        <TrendingUp class="size-3.5" style="color: oklch(0.527 0.154 150.069)" />
-                        Entradas
-                    </CardTitle>
-                    <CardDescription class="text-[11px]">
-                        {{ window[highlightedIndex].label }} {{ window[highlightedIndex].year }}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div class="text-xl font-bold" style="color: oklch(0.527 0.154 150.069)">{{ formatCurrency(highlighted.income) }}</div>
-                </CardContent>
-            </Card>
+            <SummaryCard
+                title="Entradas"
+                :description="`${window[highlightedIndex].label} ${window[highlightedIndex].year}`"
+                :icon="TrendingUp"
+                icon-color="#10B981"
+                :value="formatCurrency(highlighted.income)"
+                value-color="text-green-600"
+                bg-color="color-mix(in oklch, oklch(0.527 0.154 150.069) 5%, transparent)"
+                border-color="color-mix(in oklch, oklch(0.527 0.154 150.069) 20%, transparent)"
+            />
 
-            <Card class="bg-primary/5 border-primary/20 !py-3">
-                <CardHeader class="pb-1">
-                    <CardTitle class="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                        <Wallet class="size-3.5 text-primary" />
-                        Saldo
-                    </CardTitle>
-                    <CardDescription class="text-[11px]">
-                        {{ window[highlightedIndex].label }} {{ window[highlightedIndex].year }}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div class="text-xl font-bold" :class="highlighted.balance >= 0 ? 'text-green-600' : 'text-destructive'">
-                        {{ highlighted.balance >= 0 ? '+' : '' }}{{ formatCurrency(highlighted.balance) }}
-                    </div>
-                </CardContent>
-            </Card>
+            <SummaryCard
+                title="Saldo"
+                :description="`${window[highlightedIndex].label} ${window[highlightedIndex].year}`"
+                :icon="Wallet"
+                icon-color="hsl(var(--primary))"
+                :value="`${highlighted.balance >= 0 ? '+' : ''}${formatCurrency(highlighted.balance)}`"
+                :value-color="highlighted.balance >= 0 ? 'text-green-600' : 'text-destructive'"
+                bg-color="hsl(var(--primary) / 0.05)"
+                border-color="hsl(var(--primary) / 0.2)"
+            />
         </div>
 
         <!-- Gráfico de barras: Entradas vs Despesas -->
