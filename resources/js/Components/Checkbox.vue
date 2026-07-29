@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { cn } from '@/lib/utils';
-import { CheckIcon } from '@lucide/vue';
+import { Check } from '@lucide/vue';
 
 const props = defineProps<{
     checked?: boolean;
@@ -15,12 +15,9 @@ const emit = defineEmits<{
 const isChecked = computed<boolean>(() => props.checked ?? false);
 
 function toggle(): void {
-    if (props.disabled) {
-        return;
-    };
-
+    if (props.disabled) return;
     emit('update:checked', !isChecked.value);
-};
+}
 </script>
 
 <template>
@@ -31,13 +28,13 @@ function toggle(): void {
         :data-state="isChecked ? 'checked' : 'unchecked'"
         :disabled="disabled"
         :class="cn(
-            'border-input dark:bg-input/30 peer size-4 shrink-0 rounded-[4px] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50',
-            isChecked ? 'bg-primary text-primary-foreground border-primary' : 'bg-transparent',
+            'peer size-4 shrink-0 cursor-pointer rounded-[4px] border border-primary ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+            isChecked ? 'bg-primary text-primary-foreground' : 'bg-background',
         )"
         @click="toggle"
     >
-        <span class="flex size-4 items-center justify-center" v-if="isChecked">
-            <CheckIcon class="size-3.5" />
+        <span class="flex items-center justify-center text-current">
+            <Check v-if="isChecked" class="size-3" />
         </span>
     </button>
 </template>

@@ -12,6 +12,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Eye, EyeOff } from '@lucide/vue'
+import Checkbox from '@/Components/Checkbox.vue'
 
 const form = useForm({
     email: '',
@@ -72,11 +73,9 @@ function submit() {
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <Input
-                            id="remember"
-                            v-model="form.remember"
-                            type="checkbox"
-                            class="size-4"
+                        <Checkbox
+                            :checked="form.remember"
+                            @update:checked="(v: boolean) => form.remember = v"
                         />
                         <Label for="remember" class="text-sm text-muted-foreground">Lembrar de mim</Label>
                     </div>
