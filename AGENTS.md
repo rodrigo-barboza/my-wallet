@@ -68,6 +68,189 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
 - Check for existing components to reuse before writing a new one.
+- **NEVER commit changes unless explicitly asked.** Wait for user approval before any `git commit`.
+- **When modifying Vue files**, always run `npm run build` to verify no TypeScript/template errors.
+- **When modifying PHP files**, always run `vendor/bin/pint --format agent` before finalizing.
+
+=== frontend rules (MANDATORY) ===
+
+# Frontend Code Conventions
+
+These rules are STRICT and NON-NEGOTIABLE. You MUST apply them on EVERY Vue component you touch. Never make the user repeat these rules.
+
+## 1. Import Order
+
+Imports MUST be grouped in this order, alphabetically within each group:
+
+```
+// 1. Vue / VueUse
+import { computed, ref, watch } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
+
+// 2. Inertia
+import { Head, Link, router } from '@inertiajs/vue3'
+
+// 3. UI Components (shadcn)
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+// 4. Icons
+import { Check, Eye, EyeOff, Plus } from '@lucide/vue'
+
+// 5. Local Components
+import AuthCard from '@/Components/AuthCard.vue'
+import ConfirmDialog from '@/Components/ConfirmDialog.vue'
+
+// 6. Utilities
+import { cn } from '@/lib/utils'
+import { formatCurrency } from '@/lib/format'
+
+// 7. Types
+import type { Card } from '@/types/card'
+import type { Purchase } from '@/types/purchase'
+```
+
+## 2. Script Setup Structure
+
+MUST follow this exact order:
+
+```
+1. Imports
+2. defineOptions (if needed)
+3. Props (defineProps)
+4. Emits (defineEmits)
+5. Composables (use*)
+6. Local state (ref, reactive)
+7. Computed
+8. Watches
+9. Functions
+10. Lifecycle hooks (onMounted, etc.)
+11. defineExpose (if needed)
+```
+
+## 3. Template Attribute Order
+
+MUST follow this EXACT order. Attributes are ordered top-to-bottom:
+
+```
+is
+v-for
+v-if
+v-else-if
+v-else
+v-show
+v-cloak
+v-pre
+v-once
+id
+ref
+key
+slot
+v-model      (and v-model:name)
+v-custom-directive
+class
+:class
+style
+:style
+propComum    (plain props like type, for, src, alt, placeholder)
+:propBind    (:prop-name, :checked, :disabled, :href)
+@action      (@click, @submit, @update:modelValue)
+v-html
+v-text
+```
+
+Examples:
+```html
+<img
+    class="h-10 mx-auto"
+    src="/images/logo.png"
+    alt="Logo"
+/>
+
+<Input
+    id="email"
+    v-model="form.email"
+    type="email"
+    placeholder="email@exemplo.com"
+/>
+
+<Label
+    class="text-muted-foreground"
+    for="email"
+>
+    E-mail
+</Label>
+```
+
+## 4. Line Breaking
+
+- **> 2 attributes on any element** → break into multiple lines, one attribute per line
+- **1-2 attributes** → can stay on one line
+
+```html
+<!-- 2 attrs: OK on one line -->
+<Button type="submit" class="w-full">Enviar</Button>
+
+<!-- 3+ attrs: MUST break -->
+<Input
+    id="email"
+    v-model="form.email"
+    type="email"
+    placeholder="email@exemplo.com"
+/>
+```
+
+## 5. No Duplicated HTML
+
+Create objects/arrays and iterate with `v-for` instead of copying HTML blocks.
+
+```html
+<!-- BAD: duplicated -->
+<Link :href="route('dashboard')" class="...">Dashboard</Link>
+<Link :href="route('cards.index')" class="...">Cartões</Link>
+
+<!-- GOOD: iterate -->
+<Link
+    v-for="link in navLinks"
+    :key="link.route"
+    :href="route(link.route)"
+    class="..."
+>
+    {{ link.name }}
+</Link>
+```
+
+## 6. No Else — Use Early Returns or Ternaries
+
+```ts
+// BAD
+if (loading) { showSpinner() } else { showContent() }
+
+// GOOD
+if (loading) { showSpinner(); return }
+showContent()
+
+// BAD
+if (condition) { data.value = 'x' } else { data.value = 'y' }
+
+// GOOD
+data.value = condition ? 'x' : 'y'
+```
+
+## 7. Component Composition (SOLID)
+
+- **Pages/Screens**: orchestration, async requests, global state
+- **Child components**: receive props, emit events, NEVER do fetch/async work
+- **Composables**: shared reactive logic extracted into `composables/`
+
+## 8. Prefer Existing Utilities
+
+Always check for existing code before writing local functions:
+- `formatCurrency`, `formatDate`, `toTitleCase` → `@/lib/format`
+- `monthNames`, `monthAbbrs`, `typeIcons`, `typeLabels` → `@/lib/constants`
+- `statusColors`, `typeColors`, `chartPalette` → `@/lib/colors`
+- `useMonthNavigation`, `useTableSort`, `useLocalStorage` → `@/composables/*`
 
 ## Verification Scripts
 

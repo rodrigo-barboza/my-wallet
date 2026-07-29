@@ -21,7 +21,12 @@ const showPassword = ref(false)
 
 <template>
     <div class="space-y-2">
-        <Label :for="id" class="text-muted-foreground">{{ label }}</Label>
+        <Label
+            class="text-muted-foreground"
+            :for="id"
+        >
+            {{ label }}
+        </Label>
         <div class="relative">
             <Input
                 :id="id"
@@ -31,14 +36,22 @@ const showPassword = ref(false)
                 @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
             />
             <button
-                type="button"
                 class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                type="button"
                 tabindex="-1"
                 @click="showPassword = !showPassword"
             >
-                <component :is="showPassword ? EyeOff : Eye" class="size-4" />
+                <component
+                    :is="showPassword ? EyeOff : Eye"
+                    class="size-4"
+                />
             </button>
         </div>
-        <p v-if="error" class="text-xs text-destructive">{{ error }}</p>
+        <p
+            v-if="error"
+            class="text-xs text-destructive"
+        >
+            {{ error }}
+        </p>
     </div>
 </template>

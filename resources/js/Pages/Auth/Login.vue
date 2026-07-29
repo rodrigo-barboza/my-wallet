@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Link, Head, useForm } from '@inertiajs/vue3'
+import { Head, Link, useForm } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -20,19 +19,33 @@ function submit() {
 </script>
 
 <template>
-    <AuthCard title="Entrar" description="Acesse sua conta">
+    <AuthCard
+        title="Entrar"
+        description="Acesse sua conta"
+    >
         <Head title="My Wallet - Entrar" />
 
-        <form @submit.prevent="submit" class="space-y-4">
+        <form
+            class="space-y-4"
+            @submit.prevent="submit"
+        >
             <div class="space-y-2">
-                <Label for="email" class="text-muted-foreground">E-mail</Label>
+                <Label
+                    class="text-muted-foreground"
+                    for="email"
+                >
+                    E-mail
+                </Label>
                 <Input
                     id="email"
                     v-model="form.email"
                     type="email"
                     placeholder="email@exemplo.com"
                 />
-                <p v-if="form.errors.email" class="text-xs text-destructive">
+                <p
+                    v-if="form.errors.email"
+                    class="text-xs text-destructive"
+                >
                     {{ form.errors.email }}
                 </p>
             </div>
@@ -40,8 +53,8 @@ function submit() {
             <PasswordInput
                 id="password"
                 label="Senha"
-                :model-value="form.password"
                 placeholder="Sua senha"
+                :model-value="form.password"
                 :error="form.errors.password"
                 @update:model-value="form.password = $event"
             />
@@ -51,16 +64,28 @@ function submit() {
                     :checked="form.remember"
                     @update:checked="(v: boolean) => form.remember = v"
                 />
-                <Label for="remember" class="text-sm text-muted-foreground">Lembrar de mim</Label>
+                <Label
+                    class="text-sm text-muted-foreground"
+                    for="remember"
+                >
+                    Lembrar de mim
+                </Label>
             </div>
 
-            <Button type="submit" class="w-full" :disabled="form.processing">
+            <Button
+                class="w-full"
+                type="submit"
+                :disabled="form.processing"
+            >
                 {{ form.processing ? 'Entrando…' : 'Entrar' }}
             </Button>
 
             <p class="text-center text-xs text-muted-foreground">
                 Ainda não tem conta?
-                <Link :href="route('register')" class="font-medium text-primary hover:underline">
+                <Link
+                    class="font-medium text-primary hover:underline"
+                    :href="route('register')"
+                >
                     Criar conta
                 </Link>
             </p>

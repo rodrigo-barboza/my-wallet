@@ -23,7 +23,7 @@ function resend() {
         <Head title="My Wallet - Verificar e-mail" />
 
         <div class="space-y-4">
-            <p class="text-sm text-muted-foreground text-center">
+            <p class="text-center text-sm text-muted-foreground">
                 Obrigado por se cadastrar! Antes de começar, verifique seu e-mail clicando no link que enviamos.
                 Se você não recebeu o e-mail, enviaremos outro.
             </p>
@@ -35,8 +35,14 @@ function resend() {
                 Um novo link de verificação foi enviado para o e-mail informado no cadastro.
             </div>
 
-            <form @submit.prevent="resend" class="flex justify-center">
-                <Button type="submit" :disabled="form.processing">
+            <form
+                class="flex justify-center"
+                @submit.prevent="resend"
+            >
+                <Button
+                    type="submit"
+                    :disabled="form.processing"
+                >
                     {{ form.processing ? 'Enviando…' : 'Reenviar e-mail de verificação' }}
                 </Button>
             </form>
