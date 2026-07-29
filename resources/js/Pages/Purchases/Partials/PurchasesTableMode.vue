@@ -13,6 +13,8 @@ import {
 import { CreditCard, ShoppingCart, Calendar, Banknote, Bell, FileText } from '@lucide/vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatCurrency, toTitleCase } from '@/lib/format';
+import { typeIcons } from '@/lib/constants';
 
 const props = defineProps<{
     items: PurchaseSummaryItem[];
@@ -43,13 +45,6 @@ watch([sortKey, sortDir], ([key, dir]) => {
         }),
     });
 }, { deep: true });
-
-const typeIcons: Record<string, typeof CreditCard> = {
-    credit_card: CreditCard,
-    bill: Calendar,
-    financing: Banknote,
-    others: ShoppingCart,
-};
 
 const typeColors: Record<string, string> = {
     bill: '#a8a29e',
@@ -142,17 +137,6 @@ function handleRowClick(item: PurchaseSummaryItem): void {
     } else {
         emit('select', item);
     }
-}
-
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value);
-}
-
-function toTitleCase(str: string): string {
-    return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 </script>
 

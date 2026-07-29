@@ -19,6 +19,8 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { formatCurrency } from '@/lib/format';
+import { monthNames } from '@/lib/constants';
 
 interface PaymentHistoryItem {
     id: number;
@@ -55,10 +57,7 @@ const editingPurchase = ref<Purchase | undefined>();
 const selectedCardPurchase = ref<PurchaseSummaryItem | undefined>();
 const showCardDetailsModal = ref(false);
 
-const monthNames = [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-];
+const monthNames = monthNames;
 
 const currentMonthName = computed(() => monthNames[props.month - 1]);
 
@@ -85,13 +84,6 @@ const pendingAmount = computed(() => {
 const hasOverdue = computed(() => props.summary.some((item) => item.status === 'atrasada'));
 
 const balance = computed(() => props.incomeTotal - totalAmount.value);
-
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value);
-}
 
 function onTableSelect(item: PurchaseSummaryItem): void {
     selectedPurchase.value = {

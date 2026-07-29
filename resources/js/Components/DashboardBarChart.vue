@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
+import { formatCurrency } from '@/lib/format'
 import type { MonthlySummary, DashboardWindowMonth } from '@/types/dashboard'
 import { colors } from '@/lib/colors'
 
@@ -12,10 +13,6 @@ const props = defineProps<{
     monthlySummary: MonthlySummary[]
     window: DashboardWindowMonth[]
 }>()
-
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
-}
 
 const chartData = computed(() => ({
     labels: props.window.map((m) => m.label.slice(0, 3)),

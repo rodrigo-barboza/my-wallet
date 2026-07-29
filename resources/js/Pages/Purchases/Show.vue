@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Pencil, Trash2 } from '@lucide/vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { ref } from 'vue';
+import { formatCurrency } from '@/lib/format';
 
 defineOptions({ layout: AppLayout });
 
@@ -22,13 +23,6 @@ const typeLabels: Record<string, string> = {
     financing: 'Financiamento',
     others: 'Outros',
 };
-
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value);
-}
 
 function formatDate(value: string): string {
     return new Date(value + 'T00:00:00').toLocaleDateString('pt-BR');

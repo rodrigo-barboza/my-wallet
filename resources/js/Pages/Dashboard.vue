@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Wallet, TrendingUp, TrendingDown, AlertCircle } from '@lucide/vue'
 import DashboardBarChart from '@/Components/DashboardBarChart.vue'
 import { chartPalette, typeColors, colors } from '@/lib/colors'
+import { formatCurrency, formatShortCurrency, formatDate } from '@/lib/format'
 import type {
     DashboardWindowMonth,
     DashboardMatrixItem,
@@ -35,21 +36,6 @@ const visibleMonthlySummary = computed(() => props.monthlySummary.slice(0, visib
 const visibleMatrix = computed(() =>
     props.matrix.map(row => ({ ...row, totals: row.totals.slice(0, visibleCount.value) }))
 )
-
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
-}
-
-function formatShortCurrency(value: number): string {
-    if (value >= 1000) return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value)
-    return formatCurrency(value)
-}
-
-function formatDate(dateStr: string): string {
-    const [datePart] = dateStr.split('T')
-    const [year, month, day] = datePart.split('-')
-    return `${parseInt(day)}/${month}`
-}
 
 function isToday(dateStr: string): boolean {
     return dateStr.split('T')[0] === new Date().toISOString().split('T')[0]

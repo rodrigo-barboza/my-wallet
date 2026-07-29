@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { CreditCard, ChevronLeft, ChevronRight, Plus, Pencil, Trash2, ArrowLeft } from '@lucide/vue';
 import PurchaseFormModal from '@/Components/PurchaseFormModal.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import { formatCurrency } from '@/lib/format';
+import { monthNames, monthAbbrs } from '@/lib/constants';
 
 defineOptions({ layout: AppLayout });
 
@@ -47,13 +49,6 @@ watch([sortKey, sortDir], ([key, dir]) => {
         }),
     });
 }, { deep: true });
-
-const monthNames = [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-];
-
-const monthAbbrs = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 const currentMonthName = computed(() => monthNames[props.month - 1]);
 
@@ -139,13 +134,6 @@ function barHeight(total: number): number {
 
 function isCurrentMonth(m: { month: number; year: number }): boolean {
     return m.month === props.month && m.year === props.year;
-}
-
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value);
 }
 
 function formatDate(value: string): string {

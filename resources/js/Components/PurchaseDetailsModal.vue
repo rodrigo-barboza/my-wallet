@@ -13,6 +13,7 @@ import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import { formatCurrency } from '@/lib/format';
 
 const props = defineProps<{
     open: boolean;
@@ -34,13 +35,6 @@ const typeLabels: Record<string, string> = {
     financing: 'Financiamento',
     others: 'Outros',
 };
-
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value);
-}
 
 function formatDate(value: string): string {
     const date = value.includes('T') ? value : value.split(' ')[0] + 'T00:00:00';

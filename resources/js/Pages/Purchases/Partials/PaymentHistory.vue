@@ -10,6 +10,8 @@ import {
 } from '@/components/ui/table';
 import { CreditCard, Receipt, Calendar, Banknote, ShoppingCart } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
+import { formatCurrency } from '@/lib/format';
+import { typeIcons } from '@/lib/constants';
 
 interface PaymentHistoryItem {
     id: number;
@@ -31,23 +33,9 @@ const typeLabels: Record<string, string> = {
     others: 'Outros',
 };
 
-const typeIcons: Record<string, typeof CreditCard> = {
-    credit_card: CreditCard,
-    bill: Calendar,
-    financing: Banknote,
-    others: ShoppingCart,
-};
-
 const sortedItems = computed(() =>
     [...props.items].sort((a, b) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime())
 );
-
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value);
-}
 
 function formatDateTime(value: string): string {
     const date = new Date(value);

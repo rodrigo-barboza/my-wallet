@@ -16,6 +16,7 @@ import {
 import Toggle from '@/Components/Toggle.vue';
 import Checkbox from '@/Components/Checkbox.vue';
 import CurrencyInput from '@/Components/CurrencyInput.vue';
+import { formatCurrency } from '@/lib/format';
 
 const props = defineProps<{
     purchase?: Purchase;
@@ -52,13 +53,6 @@ const installmentValue = computed(() => {
     }
     return form.amount / form.installments_total;
 });
-
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value);
-}
 
 watch(() => form.type, (newType) => {
     if (newType === 'credit_card') {

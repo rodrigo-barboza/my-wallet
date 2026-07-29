@@ -13,6 +13,7 @@ import { CreditCard, Undo2, ExternalLink } from '@lucide/vue';
 import { router } from '@inertiajs/vue3';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import CurrencyInput from '@/Components/CurrencyInput.vue';
+import { formatCurrency, formatDateRange } from '@/lib/format';
 
 const props = defineProps<{
     open: boolean;
@@ -44,13 +45,6 @@ watch(() => props.purchaseSummary, (summary) => {
     paymentAmount.value = Math.max(0, (summary?.total ?? 0) - (summary?.paid_amount ?? 0));
 }, { immediate: true });
 
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value);
-}
-
 function formatDateTime(value: string): string {
     return new Date(value).toLocaleDateString('pt-BR', {
         day: '2-digit',
@@ -59,10 +53,6 @@ function formatDateTime(value: string): string {
         hour: '2-digit',
         minute: '2-digit',
     });
-}
-
-function formatDateRange(closing: number, due: number): string {
-    return `Fech: ${closing} / Venc: ${due}`;
 }
 
 function close(): void {

@@ -8,6 +8,8 @@ import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue'
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { typeColors } from '@/lib/colors';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatCurrency, formatDateRange, toTitleCase } from '@/lib/format';
+import { typeIcons } from '@/lib/constants';
 
 const props = defineProps<{
     items: PurchaseSummaryItem[];
@@ -54,13 +56,6 @@ useSortable(el, list, {
     },
 });
 
-const typeIcons: Record<string, typeof CreditCard> = {
-    credit_card: CreditCard,
-    bill: Calendar,
-    financing: Banknote,
-    others: ShoppingCart,
-};
-
 function openIndividualDetails(item: PurchaseSummaryItem): void {
     selectedPurchase.value = {
         ...item.items[0],
@@ -77,21 +72,6 @@ function openCardDetails(item: PurchaseSummaryItem): void {
 
 function onEditPurchase(purchase: Purchase): void {
     emit('editPurchase', purchase);
-}
-
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value);
-}
-
-function formatDateRange(closing: number, due: number): string {
-    return `Fechamento: ${closing} / Vencimento: ${due}`;
-}
-
-function toTitleCase(str: string): string {
-    return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 </script>
 

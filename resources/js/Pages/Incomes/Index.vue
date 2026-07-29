@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/tooltip';
 import IncomeFormModal from '@/Components/IncomeFormModal.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import { formatCurrency } from '@/lib/format';
+import { monthAbbrs } from '@/lib/constants';
 
 defineOptions({ layout: AppLayout });
 
@@ -28,8 +30,6 @@ const props = defineProps<{
     incomes: Income[];
     year: number;
 }>();
-
-const monthAbbrs = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 const centerMonth = ref(new Date().getMonth() + 1);
 const centerYear = ref(props.year);
@@ -89,13 +89,6 @@ function getAmount(income: Income, month: number, year: number): number | null {
 
 function getMonthId(income: Income, month: number, year: number): number | null {
     return income.months[year]?.[month]?.id ?? null;
-}
-
-function formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(value);
 }
 
 const showFormModal = ref(false);
