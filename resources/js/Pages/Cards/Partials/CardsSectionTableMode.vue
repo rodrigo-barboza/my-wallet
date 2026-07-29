@@ -7,6 +7,7 @@ import Checkbox from '@/Components/Checkbox.vue';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CreditCard, Trash2 } from '@lucide/vue';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useTableSort } from '@/composables/useTableSort';
 
 const props = defineProps<{
     cards: Card[];
@@ -23,19 +24,12 @@ const selectedIds = ref<number[]>([]);
 const page = usePage();
 const initialPrefs = (page.props.preferences as Record<string, any>) ?? {};
 const storedSort = initialPrefs.cards_table_sort ?? null;
-const sortKey = ref<'name' | null>(storedSort?.key ?? null);
-const sortDir = ref<'asc' | 'desc'>(storedSort?.dir ?? 'asc');
 
-watch([sortKey, sortDir], ([key, dir]) => {
-    fetch(route('preferences.update'), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            key: 'cards_table_sort',
-            value: key ? { key, dir } : null,
-        }),
-    });
-}, { deep: true });
+const { sortKey, sortDir, toggleSort, sortIcon } = useTableSort(
+    storedSort?.key ?? null,
+    storedSort?.dir ?? 'asc',
+    'cards_table_sort'
+)
 
 const sortedCards = computed(() => {
     if (!sortKey.value) return props.cards;
@@ -45,24 +39,6 @@ const sortedCards = computed(() => {
         return sortDir.value === 'asc' ? cmp : -cmp;
     });
 });
-
-function toggleSort(field: 'name'): void {
-    if (sortKey.value === field) {
-        if (sortDir.value === 'asc') {
-            sortDir.value = 'desc';
-        } else {
-            sortKey.value = null;
-        }
-    } else {
-        sortKey.value = field;
-        sortDir.value = 'asc';
-    }
-}
-
-function sortIcon(field: 'name'): string {
-    if (sortKey.value !== field) return ' ⇅';
-    return sortDir.value === 'asc' ? ' ▲' : ' ▼';
-}
 
 const allSelected = computed((): boolean =>
     selectedIds.value.length === props.cards.length && props.cards.length > 0
