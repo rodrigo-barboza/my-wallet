@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useSortable } from '@vueuse/integrations/useSortable'
-import type { Card } from '@/types/card'
 import type { Purchase, PurchaseSummaryItem } from '@/types/purchase'
 import { Card as CardComponent, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Banknote, Bell, Calendar, CreditCard, ShoppingCart } from '@lucide/vue'
-import AppLayout from '@/Layouts/AppLayout.vue'
+import { Bell, CreditCard, ShoppingCart } from '@lucide/vue'
 import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue'
 import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue'
 import StatusBadge from '@/Components/StatusBadge.vue'
@@ -94,7 +92,7 @@ function onEditPurchase(purchase: Purchase): void {
             Nenhuma compra neste mês
         </div>
 
-        <template v-for="(item, index) in list" :key="getItemKey(item)">
+        <template v-for="(item) in list" :key="getItemKey(item)">
             <CardComponent
                 v-if="item.items[0].card_id"
                 class="relative cursor-grab active:cursor-grabbing overflow-hidden transition-colors hover:bg-muted/30"

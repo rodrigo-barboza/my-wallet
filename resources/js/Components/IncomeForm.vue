@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import type { IncomeFormData } from '@/types/income';
 import { Button } from '@/components/ui/button';

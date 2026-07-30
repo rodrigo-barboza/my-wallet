@@ -9,7 +9,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import AppLayout from '@/Layouts/AppLayout.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 import IncomeFormModal from '@/Components/IncomeFormModal.vue'
-import Toggle from '@/Components/Toggle.vue'
 import { formatCurrency } from '@/lib/format'
 import { monthAbbrs } from '@/lib/constants'
 import type { Income } from '@/types/income'

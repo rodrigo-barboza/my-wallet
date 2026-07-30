@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Banknote, Calendar, CreditCard, Receipt, ShoppingCart } from '@lucide/vue'
+import { Receipt } from '@lucide/vue'
 import { formatCurrency } from '@/lib/format'
 import { typeIcons } from '@/lib/constants'
 

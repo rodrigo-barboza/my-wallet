@@ -2,11 +2,11 @@
 import { computed, ref, watch } from 'vue'
 import type { Purchase, PurchaseSummaryItem } from '@/types/purchase'
 import type { Card as CardType } from '@/types/card'
-import { Head, router } from '@inertiajs/vue3'
+import { Head } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { ChevronLeft, ChevronRight, LayoutList, Plus, Receipt, Table as TableIcon } from '@lucide/vue'
+import { LayoutList, Plus, Receipt, Table as TableIcon } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue'
 import MonthNavigator from '@/Components/MonthNavigator.vue'
@@ -16,7 +16,6 @@ import PaymentHistory from '@/Pages/Purchases/Partials/PaymentHistory.vue'
 import PurchasesTableMode from '@/Pages/Purchases/Partials/PurchasesTableMode.vue'
 import PurchaseSummary from '@/Pages/Purchases/Partials/PurchaseSummary.vue'
 import { formatCurrency } from '@/lib/format'
-import { monthNames } from '@/lib/constants'
 import { useMonthNavigation } from '@/composables/useMonthNavigation'
 
 interface PaymentHistoryItem {
@@ -54,8 +53,6 @@ const selectedCardPurchase = ref<PurchaseSummaryItem | undefined>()
 const showCardDetailsModal = ref(false)
 
 const { goToMonth } = useMonthNavigation('purchases.index')
-
-const currentMonthName = computed(() => monthNames[props.month - 1])
 
 const totalAmount = computed(() => props.summary.reduce((sum, item) => sum + parseFloat(String(item.total)), 0))
 
@@ -106,20 +103,6 @@ function onEditPurchase(purchase: Purchase): void {
 function onCloseForm(open: boolean): void {
     showFormModal.value = open
     if (!open) editingPurchase.value = undefined
-}
-
-function previousMonth(): void {
-    let newMonth = props.month - 1
-    let newYear = props.year
-    if (newMonth < 1) { newMonth = 12; newYear-- }
-    router.get(route('purchases.index', { month: newMonth, year: newYear }))
-}
-
-function nextMonth(): void {
-    let newMonth = props.month + 1
-    let newYear = props.year
-    if (newMonth > 12) { newMonth = 1; newYear++ }
-    router.get(route('purchases.index', { month: newMonth, year: newYear }))
 }
 
 async function handleReorder(order: string[]): Promise<void> {

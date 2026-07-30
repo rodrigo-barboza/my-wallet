@@ -1,9 +1,8 @@
 <script setup lang="ts">
+import { router } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Card as CardComponent, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CreditCard } from '@lucide/vue'
-import { router } from '@inertiajs/vue3'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import NotificationBadges from '@/Pages/Cards/Partials/NotificationBadges.vue'
 import type { Card } from '@/types/card'
 

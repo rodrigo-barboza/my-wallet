@@ -5,6 +5,8 @@
         "moduleResolution": "bundler",
         "jsx": "preserve",
         "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
         "skipLibCheck": true,
         "noEmit": true,
         "isolatedModules": true,

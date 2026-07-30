@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import type { Purchase, PurchaseSummaryItem } from '@/types/purchase';
+import type { PurchaseSummaryItem } from '@/types/purchase';
 import {
     Dialog,
     DialogContent,

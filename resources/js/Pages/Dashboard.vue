@@ -293,7 +293,7 @@ function categoryColor(index: number, type: string): string {
                     class="divide-y divide-muted/30"
                 >
                     <div
-                        v-for="(row, ri) in visibleMatrix"
+                        v-for="(row) in visibleMatrix"
                         :key="row.id"
                         class="px-4 py-3"
                     >

@@ -19,13 +19,13 @@ export function formatShortCurrency(value: number): string {
 
 export function formatDate(dateStr: string): string {
     const [datePart] = dateStr.split('T')
-    const [year, month, day] = datePart.split('-')
+    const [, month, day] = datePart.split('-')
     return `${parseInt(day)}/${month}`
 }
 
 export function formatDateTime(dateStr: string): string {
     const [datePart, timePart] = dateStr.split('T')
-    const [year, month, day] = datePart.split('-')
+    const [, month, day] = datePart.split('-')
     const [hour, minute] = timePart.split(':')
     return `${parseInt(day)}/${month} ${hour}:${minute}`
 }

@@ -4,7 +4,7 @@ import { usePage } from '@inertiajs/vue3'
 import type { PurchaseSummaryItem } from '@/types/purchase'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Banknote, Bell, Calendar, CreditCard, FileText, ShoppingCart } from '@lucide/vue'
+import { Bell, CreditCard, ShoppingCart } from '@lucide/vue'
 import StatusBadge from '@/Components/StatusBadge.vue'
 import { formatCurrency, toTitleCase } from '@/lib/format'
 import { typeIcons } from '@/lib/constants'
@@ -92,13 +92,6 @@ function handleRowClick(item: PurchaseSummaryItem): void {
     emit('select', item)
 }
 
-const statusLabels: Record<string, string> = {
-    paga: 'Paga',
-    parcialmente_paga: 'Parcial',
-    aberta: 'Aberta',
-    fechada: 'Fechada',
-    atrasada: 'Atrasada',
-}
 </script>
 
 <template>
