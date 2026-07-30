@@ -17,7 +17,7 @@ createInertiaApp({
             .use(ZiggyVue, {
                 ...(props.initialPage.props as { ziggy?: Record<string, unknown> }).ziggy,
                 location: new URL((props.initialPage.props as { ziggy?: { location: string } }).ziggy?.location ?? window.location.href),
-            })
+            } as any)
             .provide(LUCIDE_CONTEXT, {})
             .mount(el)
     },

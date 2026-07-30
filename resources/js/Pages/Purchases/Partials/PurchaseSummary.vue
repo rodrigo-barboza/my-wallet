@@ -54,8 +54,24 @@ useSortable(el, list, {
     },
 })
 
+function getClosingDate(item: PurchaseSummaryItem): number {
+    return !Array.isArray(item.dates) ? item.dates.closing : 0
+}
+
+function getDueDate(item: PurchaseSummaryItem): number {
+    return !Array.isArray(item.dates) ? item.dates.due : 0
+}
+
+function getPaymentDay(item: PurchaseSummaryItem): number {
+    return Array.isArray(item.dates) ? item.dates[0] : 0
+}
+
 function openIndividualDetails(item: PurchaseSummaryItem): void {
-    selectedPurchase.value = { ...item.items[0], status: item.status ?? 'aberta', paid_at: item.paid_at }
+    selectedPurchase.value = {
+        ...item.items[0],
+        status: item.status ?? 'aberta',
+        paid_at: item.paid_at ?? null,
+    } as Purchase
     showDetailsModal.value = true
 }
 
@@ -107,7 +123,7 @@ function onEditPurchase(purchase: Purchase): void {
                 <CardContent>
                     <div class="flex items-center justify-between text-sm">
                         <span class="text-muted-foreground">
-                            {{ formatDateRange(item.dates.closing, item.dates.due) }}
+                            {{ formatDateRange(getClosingDate(item), getDueDate(item)) }}
                         </span>
                         <span class="font-semibold">{{ formatCurrency(item.total) }}</span>
                     </div>
@@ -159,7 +175,7 @@ function onEditPurchase(purchase: Purchase): void {
                 <CardContent>
                     <div class="flex items-center justify-between text-sm">
                         <span class="text-muted-foreground">
-                            Dia {{ item.dates[0] }}
+                            Dia {{ getPaymentDay(item) }}
                         </span>
                         <span class="font-semibold">{{ formatCurrency(item.total) }}</span>
                     </div>

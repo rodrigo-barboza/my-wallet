@@ -85,7 +85,11 @@ function isCardGroup(item: PurchaseSummaryItem): boolean {
 }
 
 function handleRowClick(item: PurchaseSummaryItem): void {
-    emit(isCardGroup(item) ? 'cardSelect' : 'select', item)
+    if (isCardGroup(item)) {
+        emit('cardSelect', item)
+        return
+    }
+    emit('select', item)
 }
 
 const statusLabels: Record<string, string> = {

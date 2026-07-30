@@ -85,7 +85,11 @@ const viewModes = [
 ]
 
 function onTableSelect(item: PurchaseSummaryItem): void {
-    selectedPurchase.value = { ...item.items[0], status: item.status ?? 'aberta', paid_at: item.paid_at }
+    selectedPurchase.value = {
+        ...item.items[0],
+        status: item.status ?? 'aberta',
+        paid_at: item.paid_at ?? null,
+    } as Purchase
     showDetailsModal.value = true
 }
 
