@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
-import { Toaster } from '@/components/ui/sonner'
-import { toast } from 'vue-sonner'
 import { Menu, LayoutDashboard, Banknote, ShoppingCart, CreditCard, LogOut } from '@lucide/vue'
 import {
     Sheet,
@@ -13,17 +11,21 @@ import {
     SheetClose,
 } from '@/components/ui/sheet'
 import NavLink from '@/Components/NavLink.vue'
+import ToastContainer from '@/Components/ToastContainer.vue'
+import { useToast } from '@/composables/useToast'
+
+const { show } = useToast()
 
 router.on('flash', (event) => {
     const flash = (event.detail as { flash?: { message?: string; type?: string } }).flash;
     if (flash?.message) {
         const type = flash.type ?? 'success';
         if (type === 'success') {
-            toast.success(flash.message);
+            show(flash.message, 'success')
         } else if (type === 'error') {
-            toast.error(flash.message);
+            show(flash.message, 'error')
         } else {
-            toast(flash.message);
+            show(flash.message, 'info')
         }
     }
 });
@@ -42,7 +44,7 @@ const navLinks = [
 
 <template>
     <div class="flex min-h-screen flex-col bg-muted/30">
-        <Toaster position="top-right" />
+        <ToastContainer />
 
         <header class="flex items-center justify-between border-b bg-background px-4 py-3 sm:px-6 lg:px-8">
             <div class="flex items-center gap-6">

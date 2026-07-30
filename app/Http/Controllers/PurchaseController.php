@@ -122,6 +122,10 @@ final readonly class PurchaseController
 
         Inertia::flash('toast', ['message' => 'Compra criada com sucesso!', 'type' => 'success']);
 
+        if ($request->boolean('add_more')) {
+            return back(303);
+        }
+
         return $this->redirectToPurchase($purchase);
     }
 

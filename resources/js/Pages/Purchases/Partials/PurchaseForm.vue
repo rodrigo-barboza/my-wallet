@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import type { Card } from '@/types/card'
 import type { Purchase, PurchaseFormData } from '@/types/purchase'
@@ -11,6 +11,9 @@ import Checkbox from '@/Components/Checkbox.vue'
 import CurrencyInput from '@/Components/CurrencyInput.vue'
 import Toggle from '@/Components/Toggle.vue'
 import { formatCurrency } from '@/lib/format'
+import { useToast } from '@/composables/useToast'
+
+const { show: showToast } = useToast()
 
 const props = defineProps<{
     purchase?: Purchase
@@ -21,6 +24,8 @@ const props = defineProps<{
 const emit = defineEmits<{
     success: []
 }>()
+
+const isAddingMore = ref(false)
 
 const form = useForm<PurchaseFormData>({
     name: props.purchase?.name ?? '',
@@ -57,6 +62,11 @@ watch(() => form.type, (newType) => {
     }
 })
 
+function getXsrfToken(): string {
+    const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/)
+    return match ? decodeURIComponent(match[1]) : ''
+}
+
 function submit(): void {
     if (props.purchase) {
         form.put(route('purchases.update', props.purchase.id), { onSuccess: () => emit('success') })
@@ -64,11 +74,59 @@ function submit(): void {
     }
 
     form.post(route('purchases.store'), {
-        onSuccess: () => {
-            form.reset()
-            emit('success')
-        },
+        onSuccess: () => { emit('success') },
     })
+}
+
+async function submitAndAddMore(): Promise<void> {
+    isAddingMore.value = true
+
+    const payload = {
+        name: form.name,
+        type: form.type,
+        payment_day: form.payment_day,
+        is_recurring: form.is_recurring,
+        card_id: form.card_id,
+        amount: form.amount,
+        installments_total: form.installments_total,
+        start_date: form.start_date,
+        notes: form.notes,
+        notify_due: form.notify_due,
+        add_more: true,
+    }
+
+    try {
+        const response = await fetch(route('purchases.store'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-XSRF-TOKEN': getXsrfToken(),
+            },
+            body: JSON.stringify(payload),
+            credentials: 'same-origin',
+        })
+
+        if (response.ok) {
+            showToast('Compra criada com sucesso!', 'success')
+            form.name = ''
+            form.amount = 0
+            form.installments_total = null
+            form.start_date = new Date().toISOString().split('T')[0]
+            form.notes = ''
+            form.mark_as_paid = false
+        } else {
+            const errorData = await response.json()
+            form.errors = errorData.errors || {}
+            showToast('Erro ao criar compra. Verifique os dados.', 'error')
+        }
+    } catch {
+        form.errors = { name: 'Erro ao salvar compra. Tente novamente.' }
+        showToast('Erro ao salvar compra. Tente novamente.', 'error')
+    } finally {
+        isAddingMore.value = false
+    }
 }
 </script>
 
@@ -262,12 +320,24 @@ function submit(): void {
             </Label>
         </div>
 
-        <Button
-            type="submit"
-            class="w-full"
-            :disabled="form.processing"
-        >
-            {{ form.processing ? 'Salvando...' : 'Salvar' }}
-        </Button>
+        <div class="grid grid-cols-2 gap-3">
+            <Button
+                v-if="!purchase"
+                type="button"
+                variant="outline"
+                class="w-full"
+                :disabled="isAddingMore || form.processing"
+                @click="submitAndAddMore"
+            >
+                {{ isAddingMore ? 'Salvando...' : 'Salvar e adicionar outra' }}
+            </Button>
+            <Button
+                type="submit"
+                class="w-full"
+                :disabled="isAddingMore || form.processing"
+            >
+                {{ form.processing ? 'Salvando...' : purchase ? 'Salvar alterações' : 'Salvar' }}
+            </Button>
+        </div>
     </form>
 </template>

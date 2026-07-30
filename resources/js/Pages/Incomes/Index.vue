@@ -321,11 +321,11 @@ function nextMonth(): void {
                         >
                             <div
                                 v-if="editingCell?.incomeId === income.id && editingCell?.month === m.month && editingCell?.year === m.year"
-                                class="flex items-center justify-end gap-0.5"
+                                class="flex items-center justify-center gap-0.5"
                             >
                                 <Input
                                     v-model="editingValue"
-                                    class="h-6 w-20 py-0 text-right text-sm tabular-nums"
+                                    class="h-6 w-20 py-0 text-center text-sm tabular-nums"
                                     type="text"
                                     inputmode="decimal"
                                     @keydown.enter="saveCell"
