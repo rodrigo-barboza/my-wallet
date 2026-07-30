@@ -1,23 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
-import AppLayout from '@/Layouts/AppLayout.vue'
 import { router, Head } from '@inertiajs/vue3'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, Wallet, TrendingUp, TrendingDown, AlertCircle } from '@lucide/vue'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AlertCircle, ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Wallet } from '@lucide/vue'
+import AppLayout from '@/Layouts/AppLayout.vue'
 import DashboardBarChart from '@/Components/DashboardBarChart.vue'
 import SummaryCard from '@/Components/SummaryCard.vue'
-import { chartPalette, typeColors, colors } from '@/lib/colors'
-import { formatCurrency, formatShortCurrency, formatDate } from '@/lib/format'
-import type {
-    DashboardWindowMonth,
-    DashboardMatrixItem,
-    MonthlySummary,
-    CategoryDistribution,
-    UpcomingPayment,
-} from '@/types/dashboard'
+import { chartPalette, colors, typeColors } from '@/lib/colors'
+import { formatCurrency, formatDate, formatShortCurrency } from '@/lib/format'
+import type { CategoryDistribution, DashboardMatrixItem, DashboardWindowMonth, MonthlySummary, UpcomingPayment } from '@/types/dashboard'
 
 defineOptions({ layout: AppLayout })
 
@@ -38,14 +32,6 @@ const visibleMatrix = computed(() =>
     props.matrix.map(row => ({ ...row, totals: row.totals.slice(0, visibleCount.value) }))
 )
 
-function isToday(dateStr: string): boolean {
-    return dateStr.split('T')[0] === new Date().toISOString().split('T')[0]
-}
-
-function isOverdue(dateStr: string): boolean {
-    return dateStr.split('T')[0] < new Date().toISOString().split('T')[0]
-}
-
 const highlightedIndex = computed(() => Math.max(0, props.window.findIndex((m) => m.isHighlighted)))
 const highlighted = computed(() => (props.monthlySummary[highlightedIndex.value] ?? props.monthlySummary[0]) as MonthlySummary)
 
@@ -58,7 +44,6 @@ const categoryBars = computed(() =>
 )
 
 const categoryBarMax = computed(() => Math.max(1, ...categoryBars.value.map((d) => d.value), 1))
-
 const hasCategoryData = computed(() => props.categoryDistribution.some((d) => d.total > 0))
 
 const canGoBack = computed(() => {
@@ -72,6 +57,14 @@ const columnTotals = computed(() => {
         visibleMatrix.value.reduce((sum, row) => sum + (row.totals[i] || 0), 0)
     )
 })
+
+function isToday(dateStr: string): boolean {
+    return dateStr.split('T')[0] === new Date().toISOString().split('T')[0]
+}
+
+function isOverdue(dateStr: string): boolean {
+    return dateStr.split('T')[0] < new Date().toISOString().split('T')[0]
+}
 
 function goToMonth(month: number, year: number): void {
     router.get(route('dashboard', { month, year }))
@@ -108,9 +101,9 @@ function categoryColor(index: number, type: string): string {
 <template>
     <div class="w-full space-y-6">
         <Head title="My Wallet - Dashboard" />
+
         <h2 class="text-2xl font-bold">Dashboard</h2>
 
-        <!-- Cards do mês em destaque -->
         <div class="grid gap-3 sm:grid-cols-3">
             <SummaryCard
                 title="Despesas"
@@ -146,39 +139,52 @@ function categoryColor(index: number, type: string): string {
             />
         </div>
 
-        <!-- Gráfico de barras: Entradas vs Despesas -->
         <Card>
             <CardHeader class="pb-2">
                 <CardTitle class="text-base font-semibold">Entradas vs Despesas</CardTitle>
             </CardHeader>
             <CardContent>
-                <div v-if="!hasData" class="py-10 text-center text-sm text-muted-foreground">
+                <div
+                    v-if="!hasData"
+                    class="py-10 text-center text-sm text-muted-foreground"
+                >
                     Nenhum dado disponível para o período.
                 </div>
                 <div v-else>
-                    <DashboardBarChart :monthly-summary="visibleMonthlySummary" :window="visibleWindow" />
+                    <DashboardBarChart
+                        :monthly-summary="visibleMonthlySummary"
+                        :window="visibleWindow"
+                    />
                 </div>
             </CardContent>
         </Card>
 
-        <!-- Matriz de gastos -->
         <Card class="p-0 overflow-hidden">
             <CardHeader class="pb-3 px-4 pt-4">
                 <div class="flex items-center justify-between">
                     <CardTitle class="text-base font-semibold">Gastos por mês</CardTitle>
                     <div class="flex items-center gap-1">
-                        <Button variant="outline" size="icon" :disabled="!canGoBack" @click="goBack">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            :disabled="!canGoBack"
+                            @click="goBack"
+                        >
                             <ChevronLeft class="size-4" />
                         </Button>
-                        <Button variant="outline" size="icon" @click="goForward">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            @click="goForward"
+                        >
                             <ChevronRight class="size-4" />
                         </Button>
                     </div>
                 </div>
             </CardHeader>
 
-            <!-- Layout desktop: tabela -->
-            <CardContent class="p-0 hidden md:block">
+            <!-- Desktop table -->
+            <CardContent class="hidden p-0 md:block">
                 <div class="overflow-x-auto rounded-b-xl">
                     <table class="w-full">
                         <thead>
@@ -190,14 +196,16 @@ function categoryColor(index: number, type: string): string {
                                     v-for="(month, index) in visibleWindow"
                                     :key="index"
                                     class="px-3 py-2.5 text-center text-[11px] cursor-pointer select-none transition-colors"
-                                    :class="month.isHighlighted
-                                        ? 'bg-primary/10 font-bold text-primary border-b-2 border-primary'
-                                        : 'font-medium text-muted-foreground hover:bg-muted/30'"
+                                    :class="month.isHighlighted ? 'bg-primary/10 font-bold text-primary border-b-2 border-primary' : 'font-medium text-muted-foreground hover:bg-muted/30'"
                                     @click="goToMonth(month.month, month.year)"
                                 >
                                     <div class="uppercase tracking-wider leading-tight">{{ month.label.slice(0, 3) }}</div>
                                     <div class="text-[10px] font-normal text-muted-foreground/60 leading-tight">{{ month.year }}</div>
-                                    <Badge v-if="month.isCurrent && !month.isHighlighted" variant="secondary" class="mt-0.5 text-[10px] px-1 py-0 h-3.5 leading-none rounded-sm">
+                                    <Badge
+                                        v-if="month.isCurrent && !month.isHighlighted"
+                                        variant="secondary"
+                                        class="mt-0.5 text-[10px] px-1 py-0 h-3.5 leading-none rounded-sm"
+                                    >
                                         atual
                                     </Badge>
                                 </th>
@@ -205,7 +213,10 @@ function categoryColor(index: number, type: string): string {
                         </thead>
                         <tbody>
                             <tr v-if="visibleMatrix.length === 0">
-                                <td :colspan="visibleWindow.length + 1" class="py-16 text-center text-muted-foreground text-sm">
+                                <td
+                                    :colspan="visibleWindow.length + 1"
+                                    class="py-16 text-center text-muted-foreground text-sm"
+                                >
                                     Nenhuma despesa prevista para este período.
                                 </td>
                             </tr>
@@ -215,13 +226,20 @@ function categoryColor(index: number, type: string): string {
                                 class="transition-colors"
                                 :class="ri % 2 === 0 ? 'bg-background' : 'bg-muted/20'"
                             >
-                                <td class="sticky left-0 z-10 pl-4 pr-3 py-2.5 text-sm"
+                                <td
+                                    class="sticky left-0 z-10 pl-4 pr-3 py-2.5 text-sm"
                                     :class="ri % 2 === 0 ? 'bg-background' : 'bg-muted/20'"
                                 >
                                     <div class="flex items-center gap-2.5">
-                                        <div class="h-5 w-1 rounded-full shrink-0" :style="{ backgroundColor: typeColor(row.type) }" />
+                                        <div
+                                            class="h-5 w-1 rounded-full shrink-0"
+                                            :style="{ backgroundColor: typeColor(row.type) }"
+                                        />
                                         <span class="font-medium truncate">{{ row.name }}</span>
-                                        <Badge variant="outline" class="text-[10px] px-1.5 py-0 h-4 leading-none shrink-0 border-muted-foreground/20 text-muted-foreground">
+                                        <Badge
+                                            variant="outline"
+                                            class="text-[10px] px-1.5 py-0 h-4 leading-none shrink-0 border-muted-foreground/20 text-muted-foreground"
+                                        >
                                             {{ typeLabel(row.type) }}
                                         </Badge>
                                     </div>
@@ -236,7 +254,10 @@ function categoryColor(index: number, type: string): string {
                                     }"
                                 >
                                     <span v-if="total > 0">{{ formatShortCurrency(total) }}</span>
-                                    <span v-else class="text-muted-foreground/40">&mdash;</span>
+                                    <span
+                                        v-else
+                                        class="text-muted-foreground/40"
+                                    >&mdash;</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -259,25 +280,40 @@ function categoryColor(index: number, type: string): string {
                 </div>
             </CardContent>
 
-            <!-- Layout mobile: cards -->
+            <!-- Mobile cards -->
             <CardContent class="p-0 md:hidden">
-                <div v-if="visibleMatrix.length === 0" class="py-16 text-center text-muted-foreground text-sm">
+                <div
+                    v-if="visibleMatrix.length === 0"
+                    class="py-16 text-center text-muted-foreground text-sm"
+                >
                     Nenhuma despesa prevista para este período.
                 </div>
-                <div v-else class="divide-y divide-muted/30">
+                <div
+                    v-else
+                    class="divide-y divide-muted/30"
+                >
                     <div
                         v-for="(row, ri) in visibleMatrix"
                         :key="row.id"
                         class="px-4 py-3"
                     >
                         <div class="flex items-center gap-2 mb-2">
-                            <div class="h-4 w-1 rounded-full shrink-0" :style="{ backgroundColor: typeColor(row.type) }" />
+                            <div
+                                class="h-4 w-1 rounded-full shrink-0"
+                                :style="{ backgroundColor: typeColor(row.type) }"
+                            />
                             <span class="font-medium text-sm truncate">{{ row.name }}</span>
-                            <Badge variant="outline" class="text-[10px] px-1 py-0 h-3.5 leading-none shrink-0 border-muted-foreground/20 text-muted-foreground">
+                            <Badge
+                                variant="outline"
+                                class="text-[10px] px-1 py-0 h-3.5 leading-none shrink-0 border-muted-foreground/20 text-muted-foreground"
+                            >
                                 {{ typeLabel(row.type) }}
                             </Badge>
                         </div>
-                        <div class="grid gap-2" :style="{ gridTemplateColumns: `repeat(${visibleWindow.length}, minmax(0, 1fr))` }">
+                        <div
+                            class="grid gap-2"
+                            :style="{ gridTemplateColumns: `repeat(${visibleWindow.length}, minmax(0, 1fr))` }"
+                        >
                             <div
                                 v-for="(month, mi) in visibleWindow"
                                 :key="mi"
@@ -287,15 +323,21 @@ function categoryColor(index: number, type: string): string {
                                 <div class="text-[10px] font-medium mb-0.5">{{ month.label.slice(0, 3) }}</div>
                                 <div class="text-xs tabular-nums font-semibold">
                                     <span v-if="row.totals[mi] > 0">{{ formatShortCurrency(row.totals[mi]) }}</span>
-                                    <span v-else class="text-muted-foreground/40">&mdash;</span>
+                                    <span
+                                        v-else
+                                        class="text-muted-foreground/40"
+                                    >&mdash;</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <!-- Total mobile -->
+
                     <div class="px-4 py-3 bg-muted/30">
                         <div class="font-bold text-sm mb-2">Total</div>
-                        <div class="grid gap-2" :style="{ gridTemplateColumns: `repeat(${visibleWindow.length}, minmax(0, 1fr))` }">
+                        <div
+                            class="grid gap-2"
+                            :style="{ gridTemplateColumns: `repeat(${visibleWindow.length}, minmax(0, 1fr))` }"
+                        >
                             <div
                                 v-for="(total, ti) in columnTotals"
                                 :key="ti"
@@ -310,20 +352,28 @@ function categoryColor(index: number, type: string): string {
             </CardContent>
         </Card>
 
-        <!-- Próximos pagamentos + Despesas por tipo -->
         <div class="grid gap-6 lg:grid-cols-2">
             <Card>
                 <CardHeader class="pb-2">
                     <CardTitle class="flex items-center gap-2 text-base font-semibold">
-                        <AlertCircle class="size-4" style="color: oklch(0.8 0.15 84)" />
+                        <AlertCircle
+                            class="size-4"
+                            style="color: oklch(0.8 0.15 84)"
+                        />
                         Próximos pagamentos
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div v-if="upcomingPayments.length === 0" class="py-6 text-center text-sm text-muted-foreground">
+                    <div
+                        v-if="upcomingPayments.length === 0"
+                        class="py-6 text-center text-sm text-muted-foreground"
+                    >
                         Nenhum pagamento próximo.
                     </div>
-                    <div v-else class="space-y-2">
+                    <div
+                        v-else
+                        class="space-y-2"
+                    >
                         <div
                             v-for="(payment, index) in upcomingPayments"
                             :key="index"
@@ -338,9 +388,26 @@ function categoryColor(index: number, type: string): string {
                                 <span class="text-sm font-medium truncate">{{ payment.name }}</span>
                                 <span class="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5 flex-wrap">
                                     {{ formatDate(payment.dueDate) }}
-                                    <Badge variant="secondary" class="text-[10px] px-1.5 py-0 h-4 leading-none">{{ typeLabel(payment.type) }}</Badge>
-                                    <Badge v-if="isOverdue(payment.dueDate)" variant="destructive" class="text-[10px] px-1.5 py-0 h-4 leading-none">atrasado</Badge>
-                                    <Badge v-else-if="isToday(payment.dueDate)" variant="outline" class="border-amber-500 text-amber-600 text-[10px] px-1.5 py-0 h-4 leading-none">hoje</Badge>
+                                    <Badge
+                                        variant="secondary"
+                                        class="text-[10px] px-1.5 py-0 h-4 leading-none"
+                                    >
+                                        {{ typeLabel(payment.type) }}
+                                    </Badge>
+                                    <Badge
+                                        v-if="isOverdue(payment.dueDate)"
+                                        variant="destructive"
+                                        class="text-[10px] px-1.5 py-0 h-4 leading-none"
+                                    >
+                                        atrasado
+                                    </Badge>
+                                    <Badge
+                                        v-else-if="isToday(payment.dueDate)"
+                                        variant="outline"
+                                        class="border-amber-500 text-amber-600 text-[10px] px-1.5 py-0 h-4 leading-none"
+                                    >
+                                        hoje
+                                    </Badge>
                                 </span>
                             </div>
                             <span class="text-sm font-semibold tabular-nums shrink-0">{{ formatCurrency(payment.amount) }}</span>
@@ -357,16 +424,27 @@ function categoryColor(index: number, type: string): string {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div v-if="!hasCategoryData" class="py-10 text-center text-sm text-muted-foreground">
+                    <div
+                        v-if="!hasCategoryData"
+                        class="py-10 text-center text-sm text-muted-foreground"
+                    >
                         Nenhuma despesa neste mês.
                     </div>
-                    <div v-else class="space-y-3">
+                    <div
+                        v-else
+                        class="space-y-3"
+                    >
                         <div
                             v-for="(entry, i) in categoryBars"
                             :key="entry.name"
                             class="flex items-center gap-3"
                         >
-                            <span class="text-xs text-muted-foreground w-[70px] shrink-0 text-right truncate" :title="entry.name">{{ entry.name }}</span>
+                            <span
+                                class="text-xs text-muted-foreground w-[70px] shrink-0 text-right truncate"
+                                :title="entry.name"
+                            >
+                                {{ entry.name }}
+                            </span>
                             <div class="flex-1 h-7 rounded-md bg-muted/50 overflow-hidden">
                                 <div
                                     class="h-full rounded-md transition-all duration-300"
@@ -378,7 +456,12 @@ function categoryColor(index: number, type: string): string {
                                     }"
                                 />
                             </div>
-                            <span class="text-sm font-semibold tabular-nums w-[85px] shrink-0" :title="formatCurrency(entry.value)">{{ formatCurrency(entry.value) }}</span>
+                            <span
+                                class="text-sm font-semibold tabular-nums w-[85px] shrink-0"
+                                :title="formatCurrency(entry.value)"
+                            >
+                                {{ formatCurrency(entry.value) }}
+                            </span>
                         </div>
                     </div>
                 </CardContent>
