@@ -40,7 +40,9 @@ final class ProfileController
 
         $request->user()->update($validated);
 
-        return back()->with('toast', ['message' => 'Nome atualizado com sucesso!', 'type' => 'success']);
+        Inertia::flash('toast', ['message' => 'Nome atualizado com sucesso!', 'type' => 'success']);
+
+        return back();
     }
 
     public function updateEmail(Request $request): RedirectResponse
@@ -60,7 +62,9 @@ final class ProfileController
             'email_verified_at' => null,
         ]);
 
-        return back()->with('toast', ['message' => 'E-mail atualizado! Verifique seu novo endereço.', 'type' => 'success']);
+        Inertia::flash('toast', ['message' => 'E-mail atualizado! Verifique seu novo endereço.', 'type' => 'success']);
+
+        return back();
     }
 
     public function updatePassword(Request $request): RedirectResponse
@@ -85,7 +89,9 @@ final class ProfileController
             ? 'Senha definida com sucesso! Agora você pode entrar com e-mail e senha.'
             : 'Senha atualizada com sucesso!';
 
-        return back()->with('toast', ['message' => $message, 'type' => 'success']);
+        Inertia::flash('toast', ['message' => $message, 'type' => 'success']);
+
+        return back();
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -100,10 +106,12 @@ final class ProfileController
 
         $user->notify(new AccountDeletionNotification($confirmationUrl));
 
-        return back()->with('toast', [
+        Inertia::flash('toast', [
             'message' => 'Enviamos um e-mail de confirmação para excluir sua conta. Verifique sua caixa de entrada.',
             'type' => 'success',
         ]);
+
+        return back();
     }
 
     public function confirmDestroy(Request $request): RedirectResponse

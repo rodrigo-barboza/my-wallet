@@ -6,10 +6,11 @@ namespace App\Notifications;
 
 use App\Models\Invoice;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-final class InvoiceClosingNotification extends Notification
+final class InvoiceClosingNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
