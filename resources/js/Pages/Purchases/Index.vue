@@ -1,136 +1,132 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import type { Purchase, PurchaseSummaryItem } from '@/types/purchase';
-import type { Card as CardType } from '@/types/card';
-import AppLayout from '@/Layouts/AppLayout.vue';
-import { router, Head } from '@inertiajs/vue3';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, LayoutList, Table as TableIcon, Plus, Receipt } from '@lucide/vue';
-import PurchaseSummary from './Partials/PurchaseSummary.vue';
-import PurchasesTableMode from './Partials/PurchasesTableMode.vue';
-import PaymentHistory from './Partials/PaymentHistory.vue';
-import PurchaseFormModal from '@/Components/PurchaseFormModal.vue';
-import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue';
-import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue';
-import MonthNavigator from '@/Components/MonthNavigator.vue';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { formatCurrency } from '@/lib/format';
-import { monthNames } from '@/lib/constants';
-import { useMonthNavigation } from '@/composables/useMonthNavigation';
+import { computed, ref, watch } from 'vue'
+import type { Purchase, PurchaseSummaryItem } from '@/types/purchase'
+import type { Card as CardType } from '@/types/card'
+import { Head, router } from '@inertiajs/vue3'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { ChevronLeft, ChevronRight, LayoutList, Plus, Receipt, Table as TableIcon } from '@lucide/vue'
+import AppLayout from '@/Layouts/AppLayout.vue'
+import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue'
+import MonthNavigator from '@/Components/MonthNavigator.vue'
+import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue'
+import PurchaseFormModal from '@/Components/PurchaseFormModal.vue'
+import PaymentHistory from '@/Pages/Purchases/Partials/PaymentHistory.vue'
+import PurchasesTableMode from '@/Pages/Purchases/Partials/PurchasesTableMode.vue'
+import PurchaseSummary from '@/Pages/Purchases/Partials/PurchaseSummary.vue'
+import { formatCurrency } from '@/lib/format'
+import { monthNames } from '@/lib/constants'
+import { useMonthNavigation } from '@/composables/useMonthNavigation'
 
 interface PaymentHistoryItem {
-    id: number;
-    name: string;
-    amount: number;
-    paid_at: string;
-    type: string;
-    partial?: boolean;
+    id: number
+    name: string
+    amount: number
+    paid_at: string
+    type: string
+    partial?: boolean
 }
 
-defineOptions({ layout: AppLayout });
+defineOptions({ layout: AppLayout })
 
 const props = defineProps<{
-    purchases: Purchase[];
-    summary: PurchaseSummaryItem[];
-    paymentHistory: PaymentHistoryItem[];
-    incomeTotal: number;
-    month: number;
-    year: number;
-    cards: CardType[];
-}>();
+    purchases: Purchase[]
+    summary: PurchaseSummaryItem[]
+    paymentHistory: PaymentHistoryItem[]
+    incomeTotal: number
+    month: number
+    year: number
+    cards: CardType[]
+}>()
 
-const storedViewMode = localStorage.getItem('purchases_view_mode') as 'card' | 'table' | null;
-const viewMode = ref<'card' | 'table'>(storedViewMode ?? 'card');
-watch(viewMode, (mode) => localStorage.setItem('purchases_view_mode', mode));
+const storedViewMode = localStorage.getItem('purchases_view_mode') as 'card' | 'table' | null
+const viewMode = ref<'card' | 'table'>(storedViewMode ?? 'card')
 
-const activeTab = ref<'compras' | 'pagamentos'>('compras');
+watch(viewMode, (mode) => localStorage.setItem('purchases_view_mode', mode))
 
-const showFormModal = ref(false);
+const activeTab = ref<'compras' | 'pagamentos'>('compras')
+const showFormModal = ref(false)
+const selectedPurchase = ref<Purchase | undefined>()
+const showDetailsModal = ref(false)
+const editingPurchase = ref<Purchase | undefined>()
+const selectedCardPurchase = ref<PurchaseSummaryItem | undefined>()
+const showCardDetailsModal = ref(false)
 
-const selectedPurchase = ref<Purchase | undefined>();
-const showDetailsModal = ref(false);
-const editingPurchase = ref<Purchase | undefined>();
-const selectedCardPurchase = ref<PurchaseSummaryItem | undefined>();
-const showCardDetailsModal = ref(false);
+const { goToMonth } = useMonthNavigation('purchases.index')
 
-const currentMonthName = computed(() => monthNames[props.month - 1]);
+const currentMonthName = computed(() => monthNames[props.month - 1])
 
-const totalAmount = computed(() => props.summary.reduce((sum, item) => {
-    return sum + parseFloat(String(item.total));
-}, 0));
+const totalAmount = computed(() => props.summary.reduce((sum, item) => sum + parseFloat(String(item.total)), 0))
 
 const paidAmount = computed(() => props.summary.reduce((sum, item) => {
-    const total = parseFloat(String(item.total));
-    if (item.paid_amount) {
-        return sum + Math.min(parseFloat(String(item.paid_amount)), total);
-    }
-    if (item.status === 'paga') {
-        return sum + total;
-    }
-    return sum;
-}, 0));
+    const total = parseFloat(String(item.total))
+    if (item.paid_amount) return sum + Math.min(parseFloat(String(item.paid_amount)), total)
+    if (item.status === 'paga') return sum + total
+    return sum
+}, 0))
 
 const pendingAmount = computed(() => {
-    const pending = totalAmount.value - paidAmount.value;
-    return Math.abs(pending) < 0.01 ? 0 : pending;
-});
+    const pending = totalAmount.value - paidAmount.value
+    return Math.abs(pending) < 0.01 ? 0 : pending
+})
 
-const hasOverdue = computed(() => props.summary.some((item) => item.status === 'atrasada'));
+const hasOverdue = computed(() => props.summary.some((item) => item.status === 'atrasada'))
+const balance = computed(() => props.incomeTotal - totalAmount.value)
 
-const balance = computed(() => props.incomeTotal - totalAmount.value);
+const tabs = [
+    { key: 'compras' as const, label: 'Visão geral', condition: true },
+    { key: 'pagamentos' as const, label: 'Pagamentos', icon: Receipt },
+]
 
-const { goToMonth, previousMonth: prevMonth, nextMonth: nextMonthFn } = useMonthNavigation('purchases.index')
+const viewModes = [
+    { key: 'card' as const, icon: LayoutList, label: 'Visualização em cards' },
+    { key: 'table' as const, icon: TableIcon, label: 'Visualização em tabela' },
+]
 
 function onTableSelect(item: PurchaseSummaryItem): void {
-    selectedPurchase.value = {
-        ...item.items[0],
-        status: item.status ?? 'aberta',
-        paid_at: item.paid_at,
-    };
-    showDetailsModal.value = true;
+    selectedPurchase.value = { ...item.items[0], status: item.status ?? 'aberta', paid_at: item.paid_at }
+    showDetailsModal.value = true
 }
 
 function onTableCardSelect(item: PurchaseSummaryItem): void {
-    selectedCardPurchase.value = item;
-    showCardDetailsModal.value = true;
+    selectedCardPurchase.value = item
+    showCardDetailsModal.value = true
 }
 
 function onEditPurchase(purchase: Purchase): void {
-    editingPurchase.value = purchase;
-    showFormModal.value = true;
+    editingPurchase.value = purchase
+    showFormModal.value = true
 }
 
 function onCloseForm(open: boolean): void {
-    showFormModal.value = open;
-    if (!open) editingPurchase.value = undefined;
+    showFormModal.value = open
+    if (!open) editingPurchase.value = undefined
 }
 
 function previousMonth(): void {
-    prevMonth(props.month, props.year)
+    let newMonth = props.month - 1
+    let newYear = props.year
+    if (newMonth < 1) { newMonth = 12; newYear-- }
+    router.get(route('purchases.index', { month: newMonth, year: newYear }))
 }
 
 function nextMonth(): void {
-    nextMonthFn(props.month, props.year)
+    let newMonth = props.month + 1
+    let newYear = props.year
+    if (newMonth > 12) { newMonth = 1; newYear++ }
+    router.get(route('purchases.index', { month: newMonth, year: newYear }))
 }
 
 async function handleReorder(order: string[]): Promise<void> {
     try {
         await fetch(route('purchases.reorder'), {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ order }),
-        });
+        })
     } catch {
-        // Silently fail — não afeta a UI
+        // Silently fail
     }
 }
 </script>
@@ -138,30 +134,27 @@ async function handleReorder(order: string[]): Promise<void> {
 <template>
     <div class="w-full space-y-6">
         <Head title="My Wallet - Compras" />
+
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold">Compras</h2>
             <div class="flex items-center gap-2">
                 <template v-if="activeTab === 'compras'">
                     <TooltipProvider>
-                        <Tooltip>
+                        <Tooltip
+                            v-for="mode in viewModes"
+                            :key="mode.key"
+                        >
                             <TooltipTrigger as-child>
-                                <Button variant="outline" size="icon"
-                                    :class="{ 'bg-primary text-primary-foreground': viewMode === 'card' }"
-                                    @click="viewMode = 'card'">
-                                    <LayoutList class="size-4" />
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    :class="viewMode === mode.key ? 'bg-primary text-primary-foreground' : ''"
+                                    @click="viewMode = mode.key"
+                                >
+                                    <component :is="mode.icon" class="size-4" />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Visualização em cards</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                            <TooltipTrigger as-child>
-                                <Button variant="outline" size="icon"
-                                    :class="{ 'bg-primary text-primary-foreground': viewMode === 'table' }"
-                                    @click="viewMode = 'table'">
-                                    <TableIcon class="size-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Visualização em tabela</TooltipContent>
+                            <TooltipContent>{{ mode.label }}</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
                 </template>
@@ -175,27 +168,20 @@ async function handleReorder(order: string[]): Promise<void> {
         <MonthNavigator
             :month="month"
             :year="year"
-            :min-month="new Date().getMonth() + 1"
-            :min-year="new Date().getFullYear()"
             @navigate="goToMonth"
         />
 
         <div class="flex justify-center">
             <div class="flex items-center gap-1 rounded-lg bg-muted p-1">
                 <button
-                    class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer"
-                    :class="activeTab === 'compras' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-                    @click="activeTab = 'compras'"
+                    v-for="tab in tabs"
+                    :key="tab.key"
+                    class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer flex items-center gap-1.5"
+                    :class="activeTab === tab.key ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                    @click="activeTab = tab.key"
                 >
-                    Visão geral
-                </button>
-                <button
-                    class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
-                    :class="activeTab === 'pagamentos' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-                    @click="activeTab = 'pagamentos'"
-                >
-                    <Receipt class="size-3.5" />
-                    Pagamentos
+                    <component :is="tab.icon" v-if="tab.icon" class="size-3.5" />
+                    {{ tab.label }}
                 </button>
             </div>
         </div>
@@ -219,9 +205,13 @@ async function handleReorder(order: string[]): Promise<void> {
                                 <span class="font-semibold text-green-600">{{ formatCurrency(paidAmount) }}</span> pago
                             </span>
                             <span class="text-muted-foreground">
-                                <template v-if="pendingAmount > 0">
-                                    <span class="font-semibold" :class="hasOverdue ? 'text-destructive' : 'text-amber-500'">Faltam {{ formatCurrency(pendingAmount) }}</span>
-                                </template>
+                                <span
+                                    v-if="pendingAmount > 0"
+                                    class="font-semibold"
+                                    :class="hasOverdue ? 'text-destructive' : 'text-amber-500'"
+                                >
+                                    Faltam {{ formatCurrency(pendingAmount) }}
+                                </span>
                                 <span v-else class="font-semibold text-green-600">Tudo pago</span>
                             </span>
                         </div>
@@ -244,7 +234,9 @@ async function handleReorder(order: string[]): Promise<void> {
                     </div>
                     <div class="border-t pt-2 flex items-center justify-between text-sm font-semibold">
                         <span class="text-muted-foreground">Saldo</span>
-                        <span :class="balance >= 0 ? 'text-green-600' : 'text-destructive'">
+                        <span
+                            :class="balance >= 0 ? 'text-green-600' : 'text-destructive'"
+                        >
                             {{ balance >= 0 ? '+' : '' }}{{ formatCurrency(balance) }}
                         </span>
                     </div>
@@ -261,7 +253,6 @@ async function handleReorder(order: string[]): Promise<void> {
                 @reorder="handleReorder"
                 @edit-purchase="onEditPurchase"
             />
-
             <PurchasesTableMode
                 v-else
                 :items="summary"
@@ -277,10 +268,21 @@ async function handleReorder(order: string[]): Promise<void> {
             :items="paymentHistory"
         />
 
-        <PurchaseDetailsModal v-model:open="showDetailsModal" :purchase="selectedPurchase" :month="month" :year="year"
-            @edit="onEditPurchase" />
+        <PurchaseDetailsModal
+            v-model:open="showDetailsModal"
+            :purchase="selectedPurchase"
+            :month="month"
+            :year="year"
+            @edit="onEditPurchase"
+        />
 
-        <CardPurchaseDetailsModal v-model:open="showCardDetailsModal" :purchase-summary="selectedCardPurchase" :month="month" :year="year" context="purchases" />
+        <CardPurchaseDetailsModal
+            v-model:open="showCardDetailsModal"
+            :purchase-summary="selectedCardPurchase"
+            :month="month"
+            :year="year"
+            context="purchases"
+        />
 
         <PurchaseFormModal
             :open="showFormModal"

@@ -1,48 +1,38 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import { CreditCard, Receipt, Calendar, Banknote, ShoppingCart } from '@lucide/vue';
-import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/format';
-import { typeIcons } from '@/lib/constants';
+import { computed } from 'vue'
+import { Badge } from '@/components/ui/badge'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Banknote, Calendar, CreditCard, Receipt, ShoppingCart } from '@lucide/vue'
+import { formatCurrency } from '@/lib/format'
+import { typeIcons } from '@/lib/constants'
 
 interface PaymentHistoryItem {
-    id: number;
-    name: string;
-    amount: number;
-    paid_at: string;
-    type: string;
-    partial?: boolean;
+    id: number
+    name: string
+    amount: number
+    paid_at: string
+    type: string
+    partial?: boolean
 }
 
 const props = defineProps<{
-    items: PaymentHistoryItem[];
-}>();
+    items: PaymentHistoryItem[]
+}>()
 
 const typeLabels: Record<string, string> = {
     credit_card: 'Cartão',
     bill: 'Compra mensal',
     financing: 'Financiamento',
     others: 'Outros',
-};
+}
 
 const sortedItems = computed(() =>
     [...props.items].sort((a, b) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime())
-);
+)
 
 function formatDateTime(value: string): string {
-    const date = new Date(value);
-    return date.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-    });
+    const date = new Date(value)
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
 </script>
 
@@ -86,16 +76,19 @@ function formatDateTime(value: string): string {
                         {{ typeLabels[item.type] ?? item.type }}
                     </TableCell>
                     <TableCell class="py-2.5">
-                        <Badge v-if="item.partial" variant="secondary" class="bg-amber-100 text-amber-700 hover:bg-amber-100">
-                            Parcial
-                        </Badge>
-                        <Badge v-else variant="secondary" class="bg-green-100 text-green-700 hover:bg-green-100">
-                            Total
+                        <Badge
+                            variant="secondary"
+                            :class="item.partial ? 'bg-amber-100 text-amber-700 hover:bg-amber-100' : 'bg-green-100 text-green-700 hover:bg-green-100'"
+                        >
+                            {{ item.partial ? 'Parcial' : 'Total' }}
                         </Badge>
                     </TableCell>
                 </TableRow>
                 <TableRow v-if="items.length === 0">
-                    <TableCell colspan="6" class="h-24 text-center text-muted-foreground">
+                    <TableCell
+                        colspan="6"
+                        class="h-24 text-center text-muted-foreground"
+                    >
                         Nenhum pagamento registrado neste mês
                     </TableCell>
                 </TableRow>

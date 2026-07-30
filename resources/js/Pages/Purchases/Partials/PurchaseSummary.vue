@@ -1,101 +1,107 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import type { Purchase, PurchaseSummaryItem } from '@/types/purchase';import { useSortable } from '@vueuse/integrations/useSortable';
-import { Card as CardComponent, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreditCard, ShoppingCart, Calendar, Banknote, Bell } from '@lucide/vue';
-import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue';
-import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue';
-import StatusBadge from '@/Components/StatusBadge.vue';
-import { typeColors } from '@/lib/colors';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { formatCurrency, formatDateRange, toTitleCase } from '@/lib/format';
-import { typeIcons } from '@/lib/constants';
+import { computed, ref, watch } from 'vue'
+import { useSortable } from '@vueuse/integrations/useSortable'
+import type { Card } from '@/types/card'
+import type { Purchase, PurchaseSummaryItem } from '@/types/purchase'
+import { Card as CardComponent, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Banknote, Bell, Calendar, CreditCard, ShoppingCart } from '@lucide/vue'
+import AppLayout from '@/Layouts/AppLayout.vue'
+import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue'
+import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue'
+import StatusBadge from '@/Components/StatusBadge.vue'
+import { formatCurrency, formatDateRange, toTitleCase } from '@/lib/format'
+import { typeColors } from '@/lib/colors'
+import { typeIcons } from '@/lib/constants'
 
 const props = defineProps<{
-    items: PurchaseSummaryItem[];
-    month: number;
-    year: number;
-}>();
+    items: PurchaseSummaryItem[]
+    month: number
+    year: number
+}>()
 
 const emit = defineEmits<{
-    reorder: [order: string[]];
-    editPurchase: [purchase: Purchase];
-}>();
+    reorder: [order: string[]]
+    editPurchase: [purchase: Purchase]
+}>()
 
-const selectedPurchase = ref<Purchase | undefined>();
-const showDetailsModal = ref(false);
-const selectedCardPurchase = ref<PurchaseSummaryItem | undefined>();
-const showCardDetailsModal = ref(false);
+const selectedPurchase = ref<Purchase | undefined>()
+const showDetailsModal = ref(false)
+const selectedCardPurchase = ref<PurchaseSummaryItem | undefined>()
+const showCardDetailsModal = ref(false)
 
-const list = ref([...props.items]);
-watch(() => props.items, (newItems) => {
-    list.value = [...newItems];
-});
+const list = ref([...props.items])
+watch(() => props.items, (newItems) => { list.value = [...newItems] })
 
-const el = ref<HTMLElement | null>(null);
+const el = ref<HTMLElement | null>(null)
 
 function getItemKey(item: PurchaseSummaryItem): string {
-    const first = item.items[0];
-    if (first?.card_id) {
-        return `card_${first.card_id}`;
-    }
-    return `purchase_${first?.id}`;
+    const first = item.items[0]
+    return first?.card_id ? `card_${first.card_id}` : `purchase_${first?.id}`
 }
 
 useSortable(el, list, {
     animation: 200,
     onUpdate: (e) => {
-        const { oldIndex, newIndex } = e;
-        if (oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) return;
+        const { oldIndex, newIndex } = e
+        if (oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) return
 
-        const item = list.value.splice(oldIndex, 1)[0];
-        list.value.splice(newIndex, 0, item);
+        const item = list.value.splice(oldIndex, 1)[0]
+        list.value.splice(newIndex, 0, item)
 
-        const order = list.value.map(getItemKey);
-        emit('reorder', order);
+        const order = list.value.map(getItemKey)
+        emit('reorder', order)
     },
-});
+})
 
 function openIndividualDetails(item: PurchaseSummaryItem): void {
-    selectedPurchase.value = {
-        ...item.items[0],
-        status: item.status ?? 'aberta',
-        paid_at: item.paid_at,
-    };
-    showDetailsModal.value = true;
+    selectedPurchase.value = { ...item.items[0], status: item.status ?? 'aberta', paid_at: item.paid_at }
+    showDetailsModal.value = true
 }
 
 function openCardDetails(item: PurchaseSummaryItem): void {
-    selectedCardPurchase.value = item;
-    showCardDetailsModal.value = true;
+    selectedCardPurchase.value = item
+    showCardDetailsModal.value = true
 }
 
 function onEditPurchase(purchase: Purchase): void {
-    emit('editPurchase', purchase);
+    emit('editPurchase', purchase)
 }
 </script>
 
 <template>
-    <div ref="el" class="space-y-3">
-        <div v-if="list.length === 0" class="text-center text-muted-foreground">
+    <div class="space-y-3">
+        <div
+            v-if="list.length === 0"
+            class="text-center text-muted-foreground"
+        >
             Nenhuma compra neste mês
         </div>
 
         <template v-for="(item, index) in list" :key="getItemKey(item)">
-            <!-- Card purchase (grouped by card) -->
-            <CardComponent v-if="item.items[0].card_id"
+            <CardComponent
+                v-if="item.items[0].card_id"
                 class="relative cursor-grab active:cursor-grabbing overflow-hidden transition-colors hover:bg-muted/30"
                 :style="{ borderRadius: '0 var(--radius) var(--radius) 0' }"
-                @click="openCardDetails(item)">
-                <div class="absolute inset-y-0 left-0 w-1"
-                    :style="{ backgroundColor: item.items[0].card?.color ?? typeColors.credit_card }" />
+                @click="openCardDetails(item)"
+            >
+                <div
+                    class="absolute inset-y-0 left-0 w-1"
+                    :style="{ backgroundColor: item.items[0].card?.color ?? typeColors.credit_card }"
+                />
                 <CardHeader class="pb-2">
                     <CardTitle class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <CreditCard class="size-5" :style="{ color: item.items[0].card?.color ?? '#6b7280' }" />
+                            <CreditCard
+                                class="size-5"
+                                :style="{ color: item.items[0].card?.color ?? '#6b7280' }"
+                            />
                             {{ item.name }}
                         </div>
-                        <StatusBadge v-if="item.status" :status="item.status" />
+                        <StatusBadge
+                            v-if="item.status"
+                            :status="item.status"
+                        />
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -105,25 +111,33 @@ function onEditPurchase(purchase: Purchase): void {
                         </span>
                         <span class="font-semibold">{{ formatCurrency(item.total) }}</span>
                     </div>
-                    <div v-if="item.paid_amount && item.paid_amount < item.total" class="mt-1 text-xs text-muted-foreground">
+                    <div
+                        v-if="item.paid_amount && item.paid_amount < item.total"
+                        class="mt-1 text-xs text-muted-foreground"
+                    >
                         Pago {{ formatCurrency(item.paid_amount) }} de {{ formatCurrency(item.total) }}
                     </div>
                 </CardContent>
             </CardComponent>
 
-            <!-- Individual purchase -->
-            <CardComponent v-else
+            <CardComponent
+                v-else
                 class="relative cursor-grab active:cursor-grabbing overflow-hidden transition-colors hover:bg-muted/30"
                 :style="{ borderRadius: '0 var(--radius) var(--radius) 0' }"
-                @click="openIndividualDetails(item)">
-                <div class="absolute inset-y-0 left-0 w-1"
-                    :style="{ backgroundColor: typeColors[item.items[0].type] ?? '#6b7280' }" />
+                @click="openIndividualDetails(item)"
+            >
+                <div
+                    class="absolute inset-y-0 left-0 w-1"
+                    :style="{ backgroundColor: typeColors[item.items[0].type] ?? '#6b7280' }"
+                />
                 <CardHeader class="pb-2">
                     <CardTitle class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <component :is="typeIcons[item.items[0].type] ?? ShoppingCart"
+                            <component
+                                :is="typeIcons[item.items[0].type] ?? ShoppingCart"
                                 class="size-5"
-                                :style="{ color: typeColors[item.items[0].type] ?? '#6b7280' }" />
+                                :style="{ color: typeColors[item.items[0].type] ?? '#6b7280' }"
+                            />
                             {{ item.name ? toTitleCase(item.name) : 'Sem nome' }}
                             <TooltipProvider v-if="item.items[0].notify_due">
                                 <Tooltip>
@@ -136,7 +150,10 @@ function onEditPurchase(purchase: Purchase): void {
                                 </Tooltip>
                             </TooltipProvider>
                         </div>
-                        <StatusBadge v-if="item.status" :status="item.status" />
+                        <StatusBadge
+                            v-if="item.status"
+                            :status="item.status"
+                        />
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -151,7 +168,19 @@ function onEditPurchase(purchase: Purchase): void {
         </template>
     </div>
 
-    <PurchaseDetailsModal v-model:open="showDetailsModal" :purchase="selectedPurchase" :month="month" :year="year" @edit="onEditPurchase" />
+    <PurchaseDetailsModal
+        v-model:open="showDetailsModal"
+        :purchase="selectedPurchase"
+        :month="month"
+        :year="year"
+        @edit="onEditPurchase"
+    />
 
-    <CardPurchaseDetailsModal v-model:open="showCardDetailsModal" :purchase-summary="selectedCardPurchase" :month="month" :year="year" context="purchases" />
+    <CardPurchaseDetailsModal
+        v-model:open="showCardDetailsModal"
+        :purchase-summary="selectedCardPurchase"
+        :month="month"
+        :year="year"
+        context="purchases"
+    />
 </template>

@@ -1,56 +1,41 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { usePage } from '@inertiajs/vue3';
-import type { PurchaseSummaryItem } from '@/types/purchase';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
-import { CreditCard, ShoppingCart, Calendar, Banknote, Bell, FileText } from '@lucide/vue';
-import StatusBadge from '@/Components/StatusBadge.vue';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { formatCurrency, toTitleCase } from '@/lib/format';
-import { typeIcons } from '@/lib/constants';
+import { computed } from 'vue'
+import { usePage } from '@inertiajs/vue3'
+import type { PurchaseSummaryItem } from '@/types/purchase'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Banknote, Bell, Calendar, CreditCard, FileText, ShoppingCart } from '@lucide/vue'
+import StatusBadge from '@/Components/StatusBadge.vue'
+import { formatCurrency, toTitleCase } from '@/lib/format'
+import { typeIcons } from '@/lib/constants'
+import { useTableSort } from '@/composables/useTableSort'
 
 const props = defineProps<{
-    items: PurchaseSummaryItem[];
-    month: number;
-    year: number;
-}>();
+    items: PurchaseSummaryItem[]
+    month: number
+    year: number
+}>()
 
 const emit = defineEmits<{
-    select: [item: PurchaseSummaryItem];
-    cardSelect: [item: PurchaseSummaryItem];
-}>();
+    select: [item: PurchaseSummaryItem]
+    cardSelect: [item: PurchaseSummaryItem]
+}>()
 
-type SortKey = 'name' | 'status' | 'amount';
+const page = usePage()
+const initialPrefs = (page.props.preferences as Record<string, any>) ?? {}
+const storedSort = initialPrefs.purchases_table_sort ?? null
 
-const page = usePage();
-const initialPrefs = (page.props.preferences as Record<string, any>) ?? {};
-const storedSort = initialPrefs.purchases_table_sort ?? null;
-const sortKey = ref<SortKey | null>(storedSort?.key ?? null);
-const sortDir = ref<'asc' | 'desc'>(storedSort?.dir ?? 'asc');
-
-watch([sortKey, sortDir], ([key, dir]) => {
-    fetch(route('preferences.update'), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            key: 'purchases_table_sort',
-            value: key ? { key, dir } : null,
-        }),
-    });
-}, { deep: true });
+const { sortKey, sortDir, toggleSort, sortIcon } = useTableSort(
+    storedSort?.key ?? null,
+    storedSort?.dir ?? 'asc',
+    'purchases_table_sort',
+)
 
 const typeColors: Record<string, string> = {
     bill: '#a8a29e',
     financing: '#78716c',
     others: '#57534e',
-};
+}
 
 const statusOrder: Record<string, number> = {
     paga: 0,
@@ -58,85 +43,57 @@ const statusOrder: Record<string, number> = {
     aberta: 2,
     fechada: 3,
     atrasada: 4,
-};
+}
 
 const sortedItems = computed(() => {
-    if (!sortKey.value) return props.items;
+    if (!sortKey.value) return props.items
 
     return [...props.items].sort((a, b) => {
-        let cmp = 0;
-
-        if (sortKey.value === 'name') {
-            cmp = (a.name ?? '').localeCompare(b.name ?? '');
-        } else if (sortKey.value === 'status') {
-            const aOrder = statusOrder[a.status ?? 'aberta'] ?? 0;
-            const bOrder = statusOrder[b.status ?? 'aberta'] ?? 0;
-            cmp = aOrder - bOrder;
-        } else if (sortKey.value === 'amount') {
-            cmp = a.total - b.total;
+        const sortMap: Record<string, () => number> = {
+            name: () => (a.name ?? '').localeCompare(b.name ?? ''),
+            status: () => (statusOrder[a.status ?? 'aberta'] ?? 0) - (statusOrder[b.status ?? 'aberta'] ?? 0),
+            amount: () => a.total - b.total,
         }
+        const cmp = (sortMap[sortKey.value as string] ?? (() => 0))()
+        return sortDir.value === 'asc' ? cmp : -cmp
+    })
+})
 
-        return sortDir.value === 'asc' ? cmp : -cmp;
-    });
-});
-
-function toggleSort(key: SortKey): void {
-    if (sortKey.value === key) {
-        if (sortDir.value === 'asc') {
-            sortDir.value = 'desc';
-        } else {
-            sortKey.value = null;
-        }
-    } else {
-        sortKey.value = key;
-        sortDir.value = 'asc';
-    }
-}
-
-function sortIcon(key: SortKey): string {
-    if (sortKey.value !== key) return ' ⇅';
-    return sortDir.value === 'asc' ? ' ▲' : ' ▼';
-}
-
-function getIcon(item: PurchaseSummaryItem): typeof CreditCard {
-    const first = item.items[0];
-    return first?.card_id ? CreditCard : (typeIcons[first?.type] ?? ShoppingCart);
+function getIcon(item: PurchaseSummaryItem) {
+    const first = item.items[0]
+    return first?.card_id ? CreditCard : (typeIcons[first?.type] ?? ShoppingCart)
 }
 
 function getIconColor(item: PurchaseSummaryItem): string {
-    const first = item.items[0];
-    if (first?.card_id) {
-        return first.card?.color ?? '#6b7280';
-    }
-    return typeColors[first?.type] ?? '#6b7280';
+    const first = item.items[0]
+    return first?.card_id ? (first.card?.color ?? '#6b7280') : (typeColors[first?.type] ?? '#6b7280')
 }
 
 function getName(item: PurchaseSummaryItem): string {
-    if (item.name) return item.name;
-    const first = item.items[0];
-    return first?.name ? toTitleCase(first.name) : 'Sem nome';
+    if (item.name) return item.name
+    const first = item.items[0]
+    return first?.name ? toTitleCase(first.name) : 'Sem nome'
 }
 
 function getDates(item: PurchaseSummaryItem): string {
-    if (!item.dates) return '';
-
-    if (Array.isArray(item.dates)) {
-        return `Dia ${item.dates[0]}`;
-    }
-
-    return `Fechamento: ${item.dates.closing} / Vencimento: ${item.dates.due}`;
+    if (!item.dates) return ''
+    return Array.isArray(item.dates) ? `Dia ${item.dates[0]}` : `Fechamento: ${item.dates.closing} / Vencimento: ${item.dates.due}`
 }
 
 function isCardGroup(item: PurchaseSummaryItem): boolean {
-    return !!item.items[0]?.card_id;
+    return !!item.items[0]?.card_id
 }
 
 function handleRowClick(item: PurchaseSummaryItem): void {
-    if (isCardGroup(item)) {
-        emit('cardSelect', item);
-    } else {
-        emit('select', item);
-    }
+    emit(isCardGroup(item) ? 'cardSelect' : 'select', item)
+}
+
+const statusLabels: Record<string, string> = {
+    paga: 'Paga',
+    parcialmente_paga: 'Parcial',
+    aberta: 'Aberta',
+    fechada: 'Fechada',
+    atrasada: 'Atrasada',
 }
 </script>
 
@@ -147,14 +104,23 @@ function handleRowClick(item: PurchaseSummaryItem): void {
                 <TableRow>
                     <TableHead class="w-10">#</TableHead>
                     <TableHead class="w-10" />
-                    <TableHead class="cursor-pointer select-none" @click="toggleSort('name')">
+                    <TableHead
+                        class="cursor-pointer select-none"
+                        @click="toggleSort('name')"
+                    >
                         Nome<span class="text-muted-foreground">{{ sortIcon('name') }}</span>
                     </TableHead>
                     <TableHead class="hidden sm:table-cell">Datas</TableHead>
-                    <TableHead class="cursor-pointer select-none" @click="toggleSort('status')">
+                    <TableHead
+                        class="cursor-pointer select-none"
+                        @click="toggleSort('status')"
+                    >
                         Status<span class="text-muted-foreground">{{ sortIcon('status') }}</span>
                     </TableHead>
-                    <TableHead class="cursor-pointer select-none text-right" @click="toggleSort('amount')">
+                    <TableHead
+                        class="cursor-pointer select-none text-right"
+                        @click="toggleSort('amount')"
+                    >
                         Valor<span class="text-muted-foreground">{{ sortIcon('amount') }}</span>
                     </TableHead>
                 </TableRow>
@@ -209,7 +175,10 @@ function handleRowClick(item: PurchaseSummaryItem): void {
                     </TableCell>
                 </TableRow>
                 <TableRow v-if="sortedItems.length === 0">
-                    <TableCell colspan="6" class="h-24 text-center text-muted-foreground">
+                    <TableCell
+                        colspan="6"
+                        class="h-24 text-center text-muted-foreground"
+                    >
                         Nenhuma compra neste mês
                     </TableCell>
                 </TableRow>

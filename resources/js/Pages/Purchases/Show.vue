@@ -1,45 +1,50 @@
 <script setup lang="ts">
-import type { Purchase } from '@/types/purchase';
-import AppLayout from '@/Layouts/AppLayout.vue';
-import { router, Head } from '@inertiajs/vue3';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Pencil, Trash2 } from '@lucide/vue';
-import ConfirmDialog from '@/Components/ConfirmDialog.vue';
-import { ref } from 'vue';
-import { formatCurrency } from '@/lib/format';
+import { ref } from 'vue'
+import type { Purchase } from '@/types/purchase'
+import { Head, router } from '@inertiajs/vue3'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ArrowLeft, Pencil, Trash2 } from '@lucide/vue'
+import AppLayout from '@/Layouts/AppLayout.vue'
+import ConfirmDialog from '@/Components/ConfirmDialog.vue'
+import { formatCurrency } from '@/lib/format'
 
-defineOptions({ layout: AppLayout });
+defineOptions({ layout: AppLayout })
 
 const props = defineProps<{
-    purchase: Purchase;
-}>();
+    purchase: Purchase
+}>()
 
-const showDeleteDialog = ref(false);
+const showDeleteDialog = ref(false)
 
 const typeLabels: Record<string, string> = {
     credit_card: 'Compra no cartão',
     bill: 'Conta mensal',
     financing: 'Financiamento',
     others: 'Outros',
-};
+}
 
 function formatDate(value: string): string {
-    return new Date(value + 'T00:00:00').toLocaleDateString('pt-BR');
+    return new Date(value + 'T00:00:00').toLocaleDateString('pt-BR')
 }
 
 function deletePurchase(): void {
     router.delete(route('purchases.destroy', props.purchase.id), {
         onSuccess: () => router.get(route('purchases.index')),
-    });
+    })
 }
 </script>
 
 <template>
     <div class="mx-auto w-full max-w-2xl space-y-6">
         <Head title="My Wallet - Detalhes da compra" />
+
         <div class="flex items-center gap-4">
-            <Button variant="ghost" size="icon" @click="router.get(route('purchases.index'))">
+            <Button
+                variant="ghost"
+                size="icon"
+                @click="router.get(route('purchases.index'))"
+            >
                 <ArrowLeft class="size-4" />
             </Button>
             <h2 class="text-2xl font-bold">Detalhes da Compra</h2>
@@ -87,7 +92,11 @@ function deletePurchase(): void {
                 </div>
 
                 <div class="flex gap-4 pt-4">
-                    <Button variant="outline" class="flex-1" @click="showDeleteDialog = true">
+                    <Button
+                        variant="outline"
+                        class="flex-1"
+                        @click="showDeleteDialog = true"
+                    >
                         <Trash2 class="mr-2 size-4" />
                         Excluir
                     </Button>

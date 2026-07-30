@@ -1,218 +1,198 @@
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue';
-import type { Income } from '@/types/income';
-import AppLayout from '@/Layouts/AppLayout.vue';
-import { router, Head } from '@inertiajs/vue3';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ChevronLeft, ChevronRight, Plus, Copy, Trash2, X, Check } from '@lucide/vue';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import Toggle from '@/Components/Toggle.vue';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
-import IncomeFormModal from '@/Components/IncomeFormModal.vue';
-import ConfirmDialog from '@/Components/ConfirmDialog.vue';
-import { formatCurrency } from '@/lib/format';
-import { monthAbbrs } from '@/lib/constants';
+import { computed, ref, watchEffect } from 'vue'
+import { Head, router } from '@inertiajs/vue3'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Check, ChevronLeft, ChevronRight, Copy, Plus, Trash2, X } from '@lucide/vue'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import AppLayout from '@/Layouts/AppLayout.vue'
+import ConfirmDialog from '@/Components/ConfirmDialog.vue'
+import IncomeFormModal from '@/Components/IncomeFormModal.vue'
+import Toggle from '@/Components/Toggle.vue'
+import { formatCurrency } from '@/lib/format'
+import { monthAbbrs } from '@/lib/constants'
+import type { Income } from '@/types/income'
 
-defineOptions({ layout: AppLayout });
+defineOptions({ layout: AppLayout })
 
 const props = defineProps<{
-    incomes: Income[];
-    year: number;
-}>();
+    incomes: Income[]
+    year: number
+}>()
 
-const centerMonth = ref(new Date().getMonth() + 1);
-const centerYear = ref(props.year);
-const sortAsc = ref(true);
-const showAll = ref(false);
+const actionButtons = [
+    { label: 'Duplicar entrada', icon: Copy, handler: (income: Income) => router.post(route('incomes.duplicate', income.id), { preserveScroll: true }) },
+    { label: 'Excluir entrada', icon: Trash2, handler: (income: Income) => { deletingIncome.value = income; showDeleteDialog.value = true }, color: 'text-destructive' },
+]
+
+const centerMonth = ref(new Date().getMonth() + 1)
+const centerYear = ref(props.year)
+const sortAsc = ref(true)
+const showAll = ref(false)
+const filteredIncomes = ref<Income[]>([])
+const showFormModal = ref(false)
+const showDeleteDialog = ref(false)
+const deletingIncome = ref<Income | undefined>()
+const editingCell = ref<{ incomeId: number; month: number; year: number } | null>(null)
+const editingValue = ref('')
+const editingName = ref<{ incomeId: number; value: string } | null>(null)
+const fillDialog = ref<{ incomeId: number; month: number; year: number; amount: number; open: boolean }>({
+    incomeId: 0, month: 0, year: 0, amount: 0, open: false,
+})
+const fillCount = ref(1)
 
 const visibleMonths = computed(() => {
-    const months: { month: number; year: number; label: string }[] = [];
+    const months: { month: number; year: number; label: string }[] = []
     for (let i = -3; i <= 3; i++) {
-        let m = centerMonth.value + i;
-        let y = centerYear.value;
-        if (m < 1) { m += 12; y--; }
-        if (m > 12) { m -= 12; y++; }
-        months.push({ month: m, year: y, label: monthAbbrs[m - 1] });
+        let m = centerMonth.value + i
+        let y = centerYear.value
+        if (m < 1) { m += 12; y-- }
+        if (m > 12) { m -= 12; y++ }
+        months.push({ month: m, year: y, label: monthAbbrs[m - 1] })
     }
-    return months;
-});
-
-const filteredIncomes = ref<Income[]>([]);
-
-function updateFiltered(): void {
-    if (showAll.value) {
-        filteredIncomes.value = props.incomes;
-    } else {
-        filteredIncomes.value = props.incomes.filter(income => {
-            return visibleMonths.value.some(m => {
-                const yearMonths = income.months[m.year];
-                return yearMonths && yearMonths[m.month] !== undefined;
-            });
-        });
-    }
-}
-
-watchEffect(updateFiltered);
+    return months
+})
 
 const sortedIncomes = computed(() => {
-    const sorted = [...filteredIncomes.value];
-    sorted.sort((a, b) => a.name.localeCompare(b.name));
-    if (!sortAsc.value) sorted.reverse();
-    return sorted;
-});
+    const sorted = [...filteredIncomes.value]
+    sorted.sort((a, b) => a.name.localeCompare(b.name))
+    if (!sortAsc.value) sorted.reverse()
+    return sorted
+})
 
 const totals = computed(() => {
     return visibleMonths.value.map(m => {
-        let total = 0;
+        let total = 0
         for (const income of props.incomes) {
-            const val = income.months[m.year]?.[m.month]?.amount ?? 0;
-            total += val;
+            const val = income.months[m.year]?.[m.month]?.amount ?? 0
+            total += val
         }
-        return total;
-    });
-});
+        return total
+    })
+})
+
+watchEffect(updateFiltered)
+
+function updateFiltered(): void {
+    filteredIncomes.value = showAll.value
+        ? props.incomes
+        : props.incomes.filter(income => visibleMonths.value.some(m => {
+            const yearMonths = income.months[m.year]
+            return yearMonths && yearMonths[m.month] !== undefined
+        }))
+}
 
 function getAmount(income: Income, month: number, year: number): number | null {
-    return income.months[year]?.[month]?.amount ?? null;
+    return income.months[year]?.[month]?.amount ?? null
 }
 
 function getMonthId(income: Income, month: number, year: number): number | null {
-    return income.months[year]?.[month]?.id ?? null;
+    return income.months[year]?.[month]?.id ?? null
 }
 
-const showFormModal = ref(false);
-const showDeleteDialog = ref(false);
-const deletingIncome = ref<Income | undefined>();
-
-const editingCell = ref<{ incomeId: number; month: number; year: number } | null>(null);
-const editingValue = ref('');
-
-const editingName = ref<{ incomeId: number; value: string } | null>(null);
-
-const fillDialog = ref<{ incomeId: number; month: number; year: number; amount: number; open: boolean }>({
-    incomeId: 0, month: 0, year: 0, amount: 0, open: false,
-});
-const fillCount = ref(1);
-
 function startEdit(income: Income, month: number, year: number): void {
-    const val = getAmount(income, month, year);
-    editingCell.value = { incomeId: income.id, month, year };
-    editingValue.value = val !== null ? String(val) : '';
+    const val = getAmount(income, month, year)
+    editingCell.value = { incomeId: income.id, month, year }
+    editingValue.value = val !== null ? String(val) : ''
 }
 
 function saveCell(): void {
-    if (!editingCell.value) return;
-    const { incomeId, month, year } = editingCell.value;
-    const monthId = getMonthId(props.incomes.find(i => i.id === incomeId)!, month, year);
-    const amount = parseFloat(editingValue.value.replace(',', '.'));
+    if (!editingCell.value) return
+    const { incomeId, month, year } = editingCell.value
+    const monthId = getMonthId(props.incomes.find(i => i.id === incomeId)!, month, year)
+    const amount = parseFloat(editingValue.value.replace(',', '.'))
 
     if (monthId !== null && !isNaN(amount)) {
         router.patch(route('incomes.update-month', monthId), { amount }, {
             preserveScroll: true,
-            onSuccess: () => { editingCell.value = null; },
-        });
-    } else {
-        editingCell.value = null;
+            onSuccess: () => { editingCell.value = null },
+        })
+        return
     }
+
+    editingCell.value = null
 }
 
 function cancelEdit(): void {
-    editingCell.value = null;
+    editingCell.value = null
 }
 
 function delayedCancelEdit(): void {
     setTimeout(() => {
         if (editingCell.value) {
-            editingCell.value = null;
+            editingCell.value = null
         }
-    }, 150);
+    }, 150)
 }
 
 function startEditName(income: Income): void {
-    editingName.value = { incomeId: income.id, value: income.name };
+    editingName.value = { incomeId: income.id, value: income.name }
 }
 
 function saveName(): void {
-    if (!editingName.value) return;
-    const income = props.incomes.find(i => i.id === editingName.value!.incomeId);
-    if (income) {
-        router.put(route('incomes.update', income.id), {
-            name: editingName.value.value,
-        }, {
-            preserveScroll: true,
-            onSuccess: () => { editingName.value = null; },
-        });
-    }
+    if (!editingName.value) return
+    const income = props.incomes.find(i => i.id === editingName.value!.incomeId)
+    if (!income) return
+
+    router.put(route('incomes.update', income.id), { name: editingName.value.value }, {
+        preserveScroll: true,
+        onSuccess: () => { editingName.value = null },
+    })
 }
 
 function cancelEditName(): void {
-    editingName.value = null;
+    editingName.value = null
 }
 
 function openFill(income: Income, month: number, year: number): void {
-    const val = getAmount(income, month, year);
-    if (val === null) return;
-    fillDialog.value = { incomeId: income.id, month, year, amount: val, open: true };
-    fillCount.value = 1;
+    const val = getAmount(income, month, year)
+    if (val === null) return
+    fillDialog.value = { incomeId: income.id, month, year, amount: val, open: true }
+    fillCount.value = 1
 }
 
 function confirmFill(): void {
-    const { incomeId, month, year, amount } = fillDialog.value;
-    const income = props.incomes.find(i => i.id === incomeId);
-    if (!income) return;
+    const { incomeId, month, year, amount } = fillDialog.value
+    const income = props.incomes.find(i => i.id === incomeId)
+    if (!income) return
 
     router.post(route('incomes.fill-months', income.id), {
-        start_month: month,
-        start_year: year,
-        repeat_count: fillCount.value,
-        amount,
+        start_month: month, start_year: year, repeat_count: fillCount.value, amount,
     }, {
         preserveScroll: true,
-        onSuccess: () => {
-            fillDialog.value.open = false;
-        },
-    });
+        onSuccess: () => { fillDialog.value.open = false },
+    })
 }
 
 function confirmDelete(): void {
-    if (!deletingIncome.value) return;
+    if (!deletingIncome.value) return
     router.delete(route('incomes.destroy', deletingIncome.value.id), {
         preserveScroll: true,
         onSuccess: () => {
-            showDeleteDialog.value = false;
-            deletingIncome.value = undefined;
+            showDeleteDialog.value = false
+            deletingIncome.value = undefined
         },
-    });
+    })
 }
 
 function toggleShowAll(checked: boolean): void {
-    showAll.value = checked;
+    showAll.value = checked
 }
 
 function previousMonth(): void {
-    centerMonth.value--;
+    centerMonth.value--
     if (centerMonth.value < 1) {
-        centerMonth.value = 12;
-        centerYear.value--;
+        centerMonth.value = 12
+        centerYear.value--
     }
 }
 
 function nextMonth(): void {
-    centerMonth.value++;
+    centerMonth.value++
     if (centerMonth.value > 12) {
-        centerMonth.value = 1;
-        centerYear.value++;
+        centerMonth.value = 1
+        centerYear.value++
     }
 }
 </script>
@@ -220,6 +200,7 @@ function nextMonth(): void {
 <template>
     <div class="w-full space-y-6">
         <Head title="My Wallet - Entradas" />
+
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold">Entradas</h2>
             <div class="flex items-center gap-2">
@@ -231,7 +212,11 @@ function nextMonth(): void {
         </div>
 
         <div class="flex items-center justify-center gap-4">
-            <Button variant="outline" size="icon" @click="previousMonth">
+            <Button
+                variant="outline"
+                size="icon"
+                @click="previousMonth"
+            >
                 <ChevronLeft class="size-4" />
             </Button>
             <div class="text-sm text-muted-foreground">
@@ -239,13 +224,21 @@ function nextMonth(): void {
                 <span class="mx-1">até</span>
                 <span class="text-base font-semibold text-foreground">{{ monthAbbrs[visibleMonths[6].month - 1] }}/{{ visibleMonths[6].year }}</span>
             </div>
-            <Button variant="outline" size="icon" @click="nextMonth">
+            <Button
+                variant="outline"
+                size="icon"
+                @click="nextMonth"
+            >
                 <ChevronRight class="size-4" />
             </Button>
         </div>
 
         <div class="flex items-center justify-end text-sm">
-            <Button variant="outline" size="sm" @click="toggleShowAll(!showAll)">
+            <Button
+                variant="outline"
+                size="sm"
+                @click="toggleShowAll(!showAll)"
+            >
                 {{ showAll ? 'Ocultar vazias' : 'Mostrar todas' }}
             </Button>
         </div>
@@ -254,16 +247,24 @@ function nextMonth(): void {
             <table class="w-full border-collapse text-sm">
                 <thead>
                     <tr class="border-b bg-muted/50">
-                        <th class="sticky left-0 z-10 bg-muted/50 px-3 py-2.5 text-left font-medium text-muted-foreground min-w-[140px] cursor-pointer select-none" @click="sortAsc = !sortAsc">
+                        <th
+                            class="sticky left-0 z-10 bg-muted/50 px-3 py-2.5 text-left font-medium text-muted-foreground min-w-[140px] cursor-pointer select-none"
+                            @click="sortAsc = !sortAsc"
+                        >
                             Nome
                             <span class="text-xs ml-1">{{ sortAsc ? '▲' : '▼' }}</span>
                         </th>
-                        <th v-for="m in visibleMonths" :key="`${m.month}-${m.year}`"
+                        <th
+                            v-for="m in visibleMonths"
+                            :key="`${m.month}-${m.year}`"
                             class="px-3 py-2.5 text-center font-medium text-muted-foreground min-w-[100px]"
                             :class="m.month === centerMonth && m.year === centerYear ? 'text-foreground bg-primary/5' : ''"
                         >
                             {{ m.label }}
-                            <span class="text-xs font-normal" v-if="m.year !== centerYear">/{{ m.year }}</span>
+                            <span
+                                v-if="m.year !== centerYear"
+                                class="text-xs font-normal"
+                            >/{{ m.year }}</span>
                         </th>
                         <th class="px-3 py-2.5 text-right font-medium text-muted-foreground min-w-[60px]">
                             Ações
@@ -271,34 +272,82 @@ function nextMonth(): void {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="income in sortedIncomes" :key="income.id" class="border-b last:border-b-0 hover:bg-muted/30">
+                    <tr
+                        v-for="income in sortedIncomes"
+                        :key="income.id"
+                        class="border-b last:border-b-0 hover:bg-muted/30"
+                    >
                         <td class="sticky left-0 z-10 bg-background px-3 py-2.5 font-medium">
-                            <div v-if="editingName?.incomeId === income.id" class="flex items-center gap-1">
-                                <Input v-model="editingName.value" class="h-7 text-sm" @keydown.enter="saveName" @keydown.esc="cancelEditName" />
-                                <Button variant="ghost" size="icon" class="size-6 shrink-0" @click="saveName">
+                            <div
+                                v-if="editingName?.incomeId === income.id"
+                                class="flex items-center gap-1"
+                            >
+                                <Input
+                                    v-model="editingName.value"
+                                    class="h-7 text-sm"
+                                    @keydown.enter="saveName"
+                                    @keydown.esc="cancelEditName"
+                                />
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    class="size-6 shrink-0"
+                                    @click="saveName"
+                                >
                                     <Check class="size-3" />
                                 </Button>
-                                <Button variant="ghost" size="icon" class="size-6 shrink-0" @click="cancelEditName">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    class="size-6 shrink-0"
+                                    @click="cancelEditName"
+                                >
                                     <X class="size-3" />
                                 </Button>
                             </div>
-                            <span v-else @click="startEditName(income)" class="cursor-pointer hover:text-primary">{{ income.name }}</span>
+                            <span
+                                v-else
+                                class="cursor-pointer hover:text-primary"
+                                @click="startEditName(income)"
+                            >
+                                {{ income.name }}
+                            </span>
                         </td>
-                        <td v-for="m in visibleMonths" :key="`${m.month}-${m.year}`"
+                        <td
+                            v-for="m in visibleMonths"
+                            :key="`${m.month}-${m.year}`"
                             class="px-3 py-2.5 text-center tabular-nums cursor-pointer"
                             :class="m.month === centerMonth && m.year === centerYear ? 'bg-primary/5' : ''"
                             @click="startEdit(income, m.month, m.year)"
                         >
-                            <div v-if="editingCell?.incomeId === income.id && editingCell?.month === m.month && editingCell?.year === m.year"
+                            <div
+                                v-if="editingCell?.incomeId === income.id && editingCell?.month === m.month && editingCell?.year === m.year"
                                 class="flex items-center justify-end gap-0.5"
                             >
-                                <Input v-model="editingValue" class="h-6 w-20 py-0 text-right text-sm tabular-nums" type="text" inputmode="decimal"
-                                    @keydown.enter="saveCell" @keydown.esc="cancelEdit" @blur="delayedCancelEdit" @click.stop
+                                <Input
+                                    v-model="editingValue"
+                                    class="h-6 w-20 py-0 text-right text-sm tabular-nums"
+                                    type="text"
+                                    inputmode="decimal"
+                                    @keydown.enter="saveCell"
+                                    @keydown.esc="cancelEdit"
+                                    @blur="delayedCancelEdit"
+                                    @click.stop
                                 />
-                                <Button variant="ghost" size="icon" class="size-5 shrink-0" @click.stop="saveCell">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    class="size-5 shrink-0"
+                                    @click.stop="saveCell"
+                                >
                                     <Check class="size-3" />
                                 </Button>
-                                <Button variant="ghost" size="icon" class="size-5 shrink-0" @click.stop="openFill(income, m.month, m.year)">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    class="size-5 shrink-0"
+                                    @click.stop="openFill(income, m.month, m.year)"
+                                >
                                     <span class="text-[10px] font-bold">→</span>
                                 </Button>
                             </div>
@@ -309,30 +358,40 @@ function nextMonth(): void {
                         <td class="px-3 py-2.5 text-right">
                             <div class="flex items-center justify-end gap-0.5">
                                 <TooltipProvider>
-                                    <Tooltip>
+                                    <Tooltip
+                                        v-for="btn in actionButtons"
+                                        :key="btn.label"
+                                    >
                                         <TooltipTrigger as-child>
-                                            <Button variant="ghost" size="icon" class="size-7 cursor-pointer" @click="router.post(route('incomes.duplicate', income.id), { preserveScroll: true })">
-                                                <Copy class="size-3.5" />
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                class="size-7 cursor-pointer"
+                                                :class="btn.color ?? ''"
+                                                @click="btn.handler(income)"
+                                            >
+                                                <component
+                                                    :is="btn.icon"
+                                                    class="size-3.5"
+                                                />
                                             </Button>
                                         </TooltipTrigger>
-                                        <TooltipContent>Duplicar entrada</TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger as-child>
-                                            <Button variant="ghost" size="icon" class="size-7 cursor-pointer" @click="deletingIncome = income; showDeleteDialog = true">
-                                                <Trash2 class="size-3.5 text-destructive" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Excluir entrada</TooltipContent>
+                                        <TooltipContent>
+                                            <p>{{ btn.label }}</p>
+                                        </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             </div>
                         </td>
                     </tr>
-                    <tr v-if="sortedIncomes.length === 0" class="border-b last:border-b-0">
-                        <td :colspan="visibleMonths.length + 2" class="h-24 text-center text-muted-foreground">
+                    <tr
+                        v-if="sortedIncomes.length === 0"
+                        class="border-b last:border-b-0"
+                    >
+                        <td
+                            :colspan="visibleMonths.length + 2"
+                            class="h-24 text-center text-muted-foreground"
+                        >
                             Nenhuma entrada registrada. Clique em "Nova entrada" para adicionar.
                         </td>
                     </tr>
@@ -342,7 +401,9 @@ function nextMonth(): void {
                         <td class="sticky left-0 z-10 bg-primary/5 px-3 py-2.5 text-foreground">
                             Total
                         </td>
-                        <td v-for="(total, i) in totals" :key="i"
+                        <td
+                            v-for="(total, i) in totals"
+                            :key="i"
                             class="px-3 py-2.5 text-center tabular-nums text-primary"
                             :class="visibleMonths[i].month === centerMonth && visibleMonths[i].year === centerYear ? 'bg-primary/10' : ''"
                         >
@@ -354,13 +415,19 @@ function nextMonth(): void {
             </table>
         </div>
 
-        <div v-if="filteredIncomes.length > 0" class="text-sm text-muted-foreground text-center">
+        <div
+            v-if="filteredIncomes.length > 0"
+            class="text-sm text-muted-foreground text-center"
+        >
             Clique em uma célula para editar o valor. Use o ícone
             <span class="font-bold text-xs">→</span>
             para preencher os próximos meses com o mesmo valor.
         </div>
 
-        <IncomeFormModal :open="showFormModal" @update:open="showFormModal = $event" />
+        <IncomeFormModal
+            :open="showFormModal"
+            @update:open="showFormModal = $event"
+        />
 
         <ConfirmDialog
             v-model:open="showDeleteDialog"
@@ -371,7 +438,10 @@ function nextMonth(): void {
         />
     </div>
 
-    <Dialog :open="fillDialog.open" @update:open="fillDialog.open = $event">
+    <Dialog
+        :open="fillDialog.open"
+        @update:open="fillDialog.open = $event"
+    >
         <DialogContent class="sm:max-w-xs">
             <DialogHeader>
                 <DialogTitle>Preencher meses</DialogTitle>
@@ -382,10 +452,19 @@ function nextMonth(): void {
                     {{ monthAbbrs[fillDialog.month - 1] }}/{{ fillDialog.year }} por quantos meses?
                 </p>
                 <div class="flex items-center gap-2">
-                    <Input v-model="fillCount" type="number" min="1" max="12" class="w-20" />
+                    <Input
+                        v-model="fillCount"
+                        type="number"
+                        min="1"
+                        max="12"
+                        class="w-20"
+                    />
                     <span class="text-sm text-muted-foreground">mês(es)</span>
                 </div>
-                <Button class="w-full" @click="confirmFill">
+                <Button
+                    class="w-full"
+                    @click="confirmFill"
+                >
                     Preencher
                 </Button>
             </div>
