@@ -7,6 +7,7 @@ return [
         'login.store',
         'register',
         'register.store',
+        'google.redirect',
         'dashboard',
         'logout',
         'verification.notice',

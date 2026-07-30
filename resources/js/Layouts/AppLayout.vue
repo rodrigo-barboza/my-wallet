@@ -61,7 +61,9 @@ const navLinks = [
             </div>
 
             <div class="flex items-center gap-2">
-                <UserDropdown class="hidden sm:inline-flex" />
+            <div class="hidden sm:inline-flex">
+                <UserDropdown />
+            </div>
 
                 <Sheet>
                     <SheetTrigger as-child>

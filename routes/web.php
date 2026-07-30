@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -22,6 +23,9 @@ Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
     Route::post('register', [RegisteredUserController::class, 'store'])->name('register.store')
         ->middleware('throttle:5,1');
+
+    Route::get('auth/google', [GoogleLoginController::class, 'redirect'])->name('google.redirect');
+    Route::get('auth/google/callback', [GoogleLoginController::class, 'callback'])->name('google.callback');
 });
 
 Route::middleware('auth')->group(function () {
