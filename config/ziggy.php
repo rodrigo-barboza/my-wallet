@@ -42,5 +42,6 @@ return [
         'profile.update-name',
         'profile.update-email',
         'profile.update-password',
+        'profile.destroy',
     ],
 ];

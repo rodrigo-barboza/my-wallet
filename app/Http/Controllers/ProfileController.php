@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\UpdateProfileRequest;
+use App\Notifications\AccountDeletionNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -83,5 +86,45 @@ final class ProfileController
             : 'Senha atualizada com sucesso!';
 
         return back()->with('toast', ['message' => $message, 'type' => 'success']);
+    }
+
+    public function destroy(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $confirmationUrl = URL::temporarySignedRoute(
+            'profile.confirm-destroy',
+            now()->addMinutes(60),
+            ['user' => $user->id],
+        );
+
+        $user->notify(new AccountDeletionNotification($confirmationUrl));
+
+        return back()->with('toast', [
+            'message' => 'Enviamos um e-mail de confirmação para excluir sua conta. Verifique sua caixa de entrada.',
+            'type' => 'success',
+        ]);
+    }
+
+    public function confirmDestroy(Request $request): RedirectResponse
+    {
+        if (! $request->hasValidSignature()) {
+            abort(401);
+        }
+
+        $user = $request->user();
+
+        if (! $user || (int) $request->route('user') !== $user->id) {
+            return to_route('profile');
+        }
+
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        $user->delete();
+
+        return to_route('home');
     }
 }

@@ -69,6 +69,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('profile/name', [ProfileController::class, 'updateName'])->name('profile.update-name');
     Route::patch('profile/email', [ProfileController::class, 'updateEmail'])->name('profile.update-email');
     Route::patch('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+    Route::post('profile/destroy', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('profile/confirm-destroy/{user}', [ProfileController::class, 'confirmDestroy'])->name('profile.confirm-destroy');
 
     Route::patch('/preferences', [PreferencesController::class, 'update'])->name('preferences.update');
 });

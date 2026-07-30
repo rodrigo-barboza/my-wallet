@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Head, useForm } from '@inertiajs/vue3'
+import { computed, ref } from 'vue'
+import { Head, router, useForm } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { CheckCircle, Lock, Mail, Shield, User } from '@lucide/vue'
+import { CheckCircle, Lock, Mail, Shield, Trash2, User } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import PasswordInput from '@/Components/PasswordInput.vue'
+import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 import { useToast } from '@/composables/useToast'
 
 defineOptions({ layout: AppLayout })
@@ -23,6 +24,8 @@ const props = defineProps<{
 }>()
 
 const { show: showToast } = useToast()
+
+const showDeleteDialog = ref(false)
 
 const nameForm = useForm({ name: props.user.name })
 const emailForm = useForm({ email: props.user.email })
@@ -50,6 +53,14 @@ function updatePassword(): void {
         onSuccess: () => { passwordForm.reset(); showToast('Senha atualizada com sucesso!', 'success') },
         onError: () => showToast('Erro ao atualizar senha.', 'error'),
     })
+}
+
+function deleteAccount(): void {
+    router.post(route('profile.destroy'), {}, {
+        onSuccess: () => showToast('E-mail de confirmação enviado!', 'success'),
+        onError: () => showToast('Erro ao enviar confirmação.', 'error'),
+    })
+    showDeleteDialog.value = false
 }
 </script>
 
@@ -153,5 +164,27 @@ function updatePassword(): void {
                 </form>
             </CardContent>
         </Card>
+
+        <Card class="border-destructive/30">
+            <CardHeader class="pb-2">
+                <CardTitle class="flex items-center gap-2 text-base font-semibold text-destructive">
+                    <Trash2 class="size-4" />Zona de perigo
+                </CardTitle>
+            </CardHeader>
+            <CardContent class="space-y-3">
+                <p class="text-sm text-muted-foreground">
+                    Excluir sua conta remove permanentemente todos os seus dados (cartões, compras, entradas, etc.).
+                </p>
+                <Button variant="destructive" size="sm" @click="showDeleteDialog = true">Excluir conta</Button>
+            </CardContent>
+        </Card>
+
+        <ConfirmDialog
+            v-model:open="showDeleteDialog"
+            title="Excluir conta"
+            description="Tem certeza? Enviaremos um e-mail de confirmação para excluir todos os seus dados permanentemente."
+            confirm-text="Enviar confirmação"
+            @confirm="deleteAccount"
+        />
     </div>
 </template>
