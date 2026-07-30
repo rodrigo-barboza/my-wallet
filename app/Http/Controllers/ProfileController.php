@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\UpdateProfileRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,11 +16,15 @@ final class ProfileController
 {
     public function index(): Response
     {
+        $user = auth()->user();
+
         return Inertia::render('Profile/Index', [
             'user' => [
-                'name' => auth()->user()->name,
-                'email' => auth()->user()->email,
-                'email_verified_at' => auth()->user()->email_verified_at?->toIso8601String(),
+                'name' => $user->name,
+                'email' => $user->email,
+                'email_verified_at' => $user->email_verified_at?->toIso8601String(),
+                'avatar' => $user->preferences['avatar'] ?? null,
+                'provider' => $user->preferences['provider'] ?? null,
             ],
         ]);
     }
@@ -37,6 +42,12 @@ final class ProfileController
 
     public function updateEmail(Request $request): RedirectResponse
     {
+        if ($request->user()->preferences['provider'] ?? null) {
+            throw ValidationException::withMessages([
+                'email' => 'Não é possível alterar o e-mail de uma conta vinculada ao Google.',
+            ]);
+        }
+
         $validated = $request->validate([
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $request->user()->id],
         ]);
@@ -51,15 +62,26 @@ final class ProfileController
 
     public function updatePassword(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'current_password' => ['required', 'string', 'current_password'],
+        $isGoogleUser = ($request->user()->preferences['provider'] ?? null) === 'google';
+
+        $rules = [
             'password' => ['required', 'string', 'min:12', 'confirmed', 'regex:/[a-zA-Z]/', 'regex:/[0-9]/'],
-        ]);
+        ];
+
+        if (! $isGoogleUser) {
+            $rules['current_password'] = ['required', 'string', 'current_password'];
+        }
+
+        $validated = $request->validate($rules);
 
         $request->user()->update([
             'password' => Hash::make($validated['password']),
         ]);
 
-        return back()->with('toast', ['message' => 'Senha atualizada com sucesso!', 'type' => 'success']);
+        $message = $isGoogleUser
+            ? 'Senha definida com sucesso! Agora você pode entrar com e-mail e senha.'
+            : 'Senha atualizada com sucesso!';
+
+        return back()->with('toast', ['message' => $message, 'type' => 'success']);
     }
 }

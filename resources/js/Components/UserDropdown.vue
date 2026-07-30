@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
     Popover,
     PopoverContent,
@@ -12,7 +12,8 @@ import { User, LogOut } from '@lucide/vue'
 const isOpen = ref(false)
 
 const page = usePage()
-const user = computed(() => (page.props as any).auth?.user ?? (page.props as any).user)
+const auth = computed(() => (page.props as any).auth ?? null)
+const user = computed(() => (auth.value as any)?.user ?? null)
 
 const initials = computed(() => {
     const name = user.value?.name ?? ''
@@ -27,6 +28,11 @@ const initials = computed(() => {
                 class="cursor-pointer flex items-center gap-2 rounded-full p-1 transition-colors hover:bg-muted"
             >
                 <Avatar class="size-8">
+                    <AvatarImage
+                        v-if="user?.avatar"
+                        :src="user.avatar"
+                        :alt="user?.name"
+                    />
                     <AvatarFallback class="bg-primary text-primary-foreground text-xs font-semibold">
                         {{ initials }}
                     </AvatarFallback>

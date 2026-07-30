@@ -366,7 +366,7 @@ function categoryColor(index: number, type: string): string {
                 <CardContent>
                     <div
                         v-if="upcomingPayments.length === 0"
-                        class="py-6 text-center text-sm text-muted-foreground"
+                        class="min-h-[140px] flex items-center justify-center text-sm text-muted-foreground"
                     >
                         Nenhum pagamento próximo.
                     </div>
@@ -426,7 +426,7 @@ function categoryColor(index: number, type: string): string {
                 <CardContent>
                     <div
                         v-if="!hasCategoryData"
-                        class="py-10 text-center text-sm text-muted-foreground"
+                        class="min-h-[140px] flex items-center justify-center text-sm text-muted-foreground"
                     >
                         Nenhuma despesa neste mês.
                     </div>

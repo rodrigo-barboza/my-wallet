@@ -40,6 +40,13 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'ziggy' => fn () => (new Ziggy)->toArray(),
             'preferences' => fn () => $request->user()?->preferences ?? [],
+            'auth' => fn () => $request->user() ? [
+                'user' => [
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'avatar' => $request->user()->preferences['avatar'] ?? null,
+                ],
+            ] : null,
         ];
     }
 }

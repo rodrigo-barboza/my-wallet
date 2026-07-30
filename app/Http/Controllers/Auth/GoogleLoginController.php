@@ -30,7 +30,14 @@ final class GoogleLoginController
                 'password' => bcrypt(Str::password()),
                 'email_verified_at' => now(),
             ]);
+        } else {
+            $user->update(['name' => $googleUser->getName()]);
         }
+
+        $user->update(['preferences' => array_merge($user->preferences ?? [], [
+            'avatar' => $googleUser->getAvatar(),
+            'provider' => 'google',
+        ])]);
 
         Auth::login($user);
 
