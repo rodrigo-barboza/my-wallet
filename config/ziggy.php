@@ -37,5 +37,9 @@ return [
         'incomes.fill-months',
         'incomes.duplicate',
         'incomes.delete-month',
+        'profile',
+        'profile.update-name',
+        'profile.update-email',
+        'profile.update-password',
     ],
 ];

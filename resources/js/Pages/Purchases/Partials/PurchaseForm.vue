@@ -25,7 +25,7 @@ const emit = defineEmits<{
     success: []
 }>()
 
-const isAddingMore = ref(false)
+const savingAndAddingMore = ref(false)
 
 const form = useForm<PurchaseFormData>({
     name: props.purchase?.name ?? '',
@@ -62,9 +62,20 @@ watch(() => form.type, (newType) => {
     }
 })
 
-function getXsrfToken(): string {
-    const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/)
-    return match ? decodeURIComponent(match[1]) : ''
+function resetForm(): void {
+    form.reset()
+    form.clearErrors()
+    form.name = ''
+    form.type = props.defaultCardId ? 'credit_card' : ''
+    form.payment_day = 15
+    form.is_recurring = false
+    form.card_id = props.defaultCardId ?? null
+    form.amount = 0
+    form.installments_total = null
+    form.start_date = new Date().toISOString().split('T')[0]
+    form.notes = ''
+    form.mark_as_paid = false
+    form.notify_due = false
 }
 
 function submit(): void {
@@ -74,59 +85,25 @@ function submit(): void {
     }
 
     form.post(route('purchases.store'), {
-        onSuccess: () => { emit('success') },
+        onSuccess: () => {
+            if (savingAndAddingMore.value) {
+                savingAndAddingMore.value = false
+                resetForm()
+                showToast('Compra criada com sucesso!', 'success')
+                return
+            }
+            emit('success')
+        },
+        onError: () => {
+            showToast('Erro ao criar compra. Verifique os dados.', 'error')
+        },
+        preserveState: savingAndAddingMore.value,
     })
 }
 
-async function submitAndAddMore(): Promise<void> {
-    isAddingMore.value = true
-
-    const payload = {
-        name: form.name,
-        type: form.type,
-        payment_day: form.payment_day,
-        is_recurring: form.is_recurring,
-        card_id: form.card_id,
-        amount: form.amount,
-        installments_total: form.installments_total,
-        start_date: form.start_date,
-        notes: form.notes,
-        notify_due: form.notify_due,
-        add_more: true,
-    }
-
-    try {
-        const response = await fetch(route('purchases.store'), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-XSRF-TOKEN': getXsrfToken(),
-            },
-            body: JSON.stringify(payload),
-            credentials: 'same-origin',
-        })
-
-        if (response.ok) {
-            showToast('Compra criada com sucesso!', 'success')
-            form.name = ''
-            form.amount = 0
-            form.installments_total = null
-            form.start_date = new Date().toISOString().split('T')[0]
-            form.notes = ''
-            form.mark_as_paid = false
-        } else {
-            const errorData = await response.json()
-            form.errors = errorData.errors || {}
-            showToast('Erro ao criar compra. Verifique os dados.', 'error')
-        }
-    } catch {
-        form.errors = { name: 'Erro ao salvar compra. Tente novamente.' }
-        showToast('Erro ao salvar compra. Tente novamente.', 'error')
-    } finally {
-        isAddingMore.value = false
-    }
+function submitAndAddMore(): void {
+    savingAndAddingMore.value = true
+    submit()
 }
 </script>
 
@@ -326,15 +303,15 @@ async function submitAndAddMore(): Promise<void> {
                 type="button"
                 variant="outline"
                 class="w-full"
-                :disabled="isAddingMore || form.processing"
+                :disabled="savingAndAddingMore || form.processing"
                 @click="submitAndAddMore"
             >
-                {{ isAddingMore ? 'Salvando...' : 'Salvar e adicionar outra' }}
+                {{ savingAndAddingMore ? 'Salvando...' : 'Salvar e adicionar outra' }}
             </Button>
             <Button
                 type="submit"
                 class="w-full"
-                :disabled="isAddingMore || form.processing"
+                :disabled="savingAndAddingMore || form.processing"
             >
                 {{ form.processing ? 'Salvando...' : purchase ? 'Salvar alterações' : 'Salvar' }}
             </Button>

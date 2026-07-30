@@ -1,0 +1,210 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { Head, useForm } from '@inertiajs/vue3'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { CheckCircle, Lock, Mail, User } from '@lucide/vue'
+import AppLayout from '@/Layouts/AppLayout.vue'
+import PasswordInput from '@/Components/PasswordInput.vue'
+import { useToast } from '@/composables/useToast'
+
+defineOptions({ layout: AppLayout })
+
+const props = defineProps<{
+    user: {
+        name: string
+        email: string
+        email_verified_at: string | null
+    }
+}>()
+
+const { show: showToast } = useToast()
+
+const nameForm = useForm({ name: props.user.name })
+const emailForm = useForm({ email: props.user.email })
+const passwordForm = useForm({
+    current_password: '',
+    password: '',
+    password_confirmation: '',
+})
+
+const emailVerified = computed(() => !!props.user.email_verified_at)
+
+function updateName(): void {
+    nameForm.patch(route('profile.update-name'), {
+        onSuccess: () => showToast('Nome atualizado!', 'success'),
+        onError: () => showToast('Erro ao atualizar nome.', 'error'),
+    })
+}
+
+function updateEmail(): void {
+    emailForm.patch(route('profile.update-email'), {
+        onSuccess: () => showToast('E-mail atualizado! Verifique seu novo endereço.', 'success'),
+        onError: () => showToast('Erro ao atualizar e-mail.', 'error'),
+    })
+}
+
+function updatePassword(): void {
+    passwordForm.patch(route('profile.update-password'), {
+        onSuccess: () => {
+            passwordForm.reset()
+            showToast('Senha atualizada com sucesso!', 'success')
+        },
+        onError: () => showToast('Erro ao atualizar senha.', 'error'),
+    })
+}
+</script>
+
+<template>
+    <div class="w-full max-w-2xl space-y-6">
+        <Head title="My Wallet - Meu Perfil" />
+
+        <h2 class="text-2xl font-bold">Meu Perfil</h2>
+
+        <!-- Dados pessoais -->
+        <Card>
+            <CardHeader class="pb-2">
+                <CardTitle class="flex items-center gap-2 text-base font-semibold">
+                    <User class="size-4" />
+                    Dados pessoais
+                </CardTitle>
+            </CardHeader>
+            <CardContent class="space-y-4">
+                <form
+                    class="space-y-3"
+                    @submit.prevent="updateName"
+                >
+                    <div class="space-y-1">
+                        <Label
+                            for="name"
+                            class="text-muted-foreground"
+                        >
+                            Nome
+                        </Label>
+                        <Input
+                            id="name"
+                            v-model="nameForm.name"
+                            placeholder="Seu nome"
+                        />
+                        <p
+                            v-if="nameForm.errors.name"
+                            class="text-xs text-destructive"
+                        >
+                            {{ nameForm.errors.name }}
+                        </p>
+                    </div>
+                    <Button
+                        type="submit"
+                        variant="outline"
+                        size="sm"
+                        :disabled="nameForm.processing"
+                    >
+                        Salvar nome
+                    </Button>
+                </form>
+            </CardContent>
+        </Card>
+
+        <!-- E-mail -->
+        <Card>
+            <CardHeader class="pb-2">
+                <CardTitle class="flex items-center gap-2 text-base font-semibold">
+                    <Mail class="size-4" />
+                    E-mail
+                </CardTitle>
+            </CardHeader>
+            <CardContent class="space-y-4">
+                <div
+                    v-if="emailVerified"
+                    class="flex items-center gap-2 rounded-md bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600"
+                >
+                    <CheckCircle class="size-4" />
+                    E-mail verificado
+                </div>
+                <form
+                    class="space-y-3"
+                    @submit.prevent="updateEmail"
+                >
+                    <div class="space-y-1">
+                        <Label
+                            for="email"
+                            class="text-muted-foreground"
+                        >
+                            E-mail
+                        </Label>
+                        <Input
+                            id="email"
+                            v-model="emailForm.email"
+                            type="email"
+                            placeholder="email@exemplo.com"
+                        />
+                        <p
+                            v-if="emailForm.errors.email"
+                            class="text-xs text-destructive"
+                        >
+                            {{ emailForm.errors.email }}
+                        </p>
+                    </div>
+                    <Button
+                        type="submit"
+                        variant="outline"
+                        size="sm"
+                        :disabled="emailForm.processing"
+                    >
+                        Salvar e-mail
+                    </Button>
+                </form>
+            </CardContent>
+        </Card>
+
+        <!-- Senha -->
+        <Card>
+            <CardHeader class="pb-2">
+                <CardTitle class="flex items-center gap-2 text-base font-semibold">
+                    <Lock class="size-4" />
+                    Senha
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <form
+                    class="space-y-3"
+                    @submit.prevent="updatePassword"
+                >
+                    <PasswordInput
+                        id="current_password"
+                        label="Senha atual"
+                        :model-value="passwordForm.current_password"
+                        placeholder="Sua senha atual"
+                        :error="passwordForm.errors.current_password"
+                        @update:model-value="passwordForm.current_password = $event"
+                    />
+                    <PasswordInput
+                        id="password"
+                        label="Nova senha"
+                        :model-value="passwordForm.password"
+                        placeholder="Mínimo 12 caracteres, com letra e número"
+                        :error="passwordForm.errors.password"
+                        @update:model-value="passwordForm.password = $event"
+                    />
+                    <PasswordInput
+                        id="password_confirmation"
+                        label="Confirmar nova senha"
+                        :model-value="passwordForm.password_confirmation"
+                        placeholder="Repita a nova senha"
+                        @update:model-value="passwordForm.password_confirmation = $event"
+                    />
+                    <Button
+                        type="submit"
+                        variant="outline"
+                        size="sm"
+                        :disabled="passwordForm.processing"
+                    >
+                        Atualizar senha
+                    </Button>
+                </form>
+            </CardContent>
+        </Card>
+    </div>
+</template>

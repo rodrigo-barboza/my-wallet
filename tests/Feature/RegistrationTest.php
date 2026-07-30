@@ -34,8 +34,8 @@ it('guests can register with valid data', function () {
     $response = post(route('register.store'), [
         'name' => 'João Silva',
         'email' => 'joao@example.com',
-        'password' => 'password123',
-        'password_confirmation' => 'password123',
+        'password' => 'SecurePass123!',
+        'password_confirmation' => 'SecurePass123!',
     ]);
 
     $response->assertRedirect(route('verification.notice'));
@@ -50,7 +50,7 @@ it('guests can register with valid data', function () {
 
     $user = User::where('email', 'joao@example.com')->first();
 
-    expect(Hash::check('password123', $user->password))->toBeTrue();
+    expect(Hash::check('SecurePass123!', $user->password))->toBeTrue();
 
     Notification::assertSentTo($user, VerifyEmailNotification::class);
 });
@@ -59,8 +59,8 @@ it('name is required', function () {
     $response = post(route('register.store'), [
         'name' => '',
         'email' => 'joao@example.com',
-        'password' => 'password123',
-        'password_confirmation' => 'password123',
+        'password' => 'SecurePass123!',
+        'password_confirmation' => 'SecurePass123!',
     ]);
 
     $response->assertSessionHasErrors('name');
@@ -73,8 +73,8 @@ it('email is required', function () {
     $response = post(route('register.store'), [
         'name' => 'João Silva',
         'email' => '',
-        'password' => 'password123',
-        'password_confirmation' => 'password123',
+        'password' => 'SecurePass123!',
+        'password_confirmation' => 'SecurePass123!',
     ]);
 
     $response->assertSessionHasErrors('email');
@@ -87,8 +87,8 @@ it('email must be valid', function () {
     $response = post(route('register.store'), [
         'name' => 'João Silva',
         'email' => 'not-an-email',
-        'password' => 'password123',
-        'password_confirmation' => 'password123',
+        'password' => 'SecurePass123!',
+        'password_confirmation' => 'SecurePass123!',
     ]);
 
     $response->assertSessionHasErrors('email');
@@ -102,8 +102,8 @@ it('email must be unique', function () {
     $response = post(route('register.store'), [
         'name' => 'João Silva',
         'email' => 'joao@example.com',
-        'password' => 'password123',
-        'password_confirmation' => 'password123',
+        'password' => 'SecurePass123!',
+        'password_confirmation' => 'SecurePass123!',
     ]);
 
     $response->assertSessionHasErrors('email');
@@ -141,7 +141,7 @@ it('password must be confirmed', function () {
     $response = post(route('register.store'), [
         'name' => 'João Silva',
         'email' => 'joao@example.com',
-        'password' => 'password123',
+        'password' => 'SecurePass123!',
         'password_confirmation' => 'different-password',
     ]);
 
@@ -154,8 +154,8 @@ it('email is stored in lowercase', function () {
     $response = post(route('register.store'), [
         'name' => 'João Silva',
         'email' => 'JoAo@ExAmPlE.CoM',
-        'password' => 'password123',
-        'password_confirmation' => 'password123',
+        'password' => 'SecurePass123!',
+        'password_confirmation' => 'SecurePass123!',
     ]);
 
     $response->assertRedirect();
@@ -178,8 +178,8 @@ it('authenticated users cannot register', function () {
     $response = post(route('register.store'), [
         'name' => 'Outro Usuário',
         'email' => 'outro@example.com',
-        'password' => 'password123',
-        'password_confirmation' => 'password123',
+        'password' => 'SecurePass123!',
+        'password_confirmation' => 'SecurePass123!',
     ]);
 
     $response->assertRedirect(route('dashboard'));
@@ -191,8 +191,8 @@ it('name has a maximum of 255 characters', function () {
     $response = post(route('register.store'), [
         'name' => str_repeat('a', 256),
         'email' => 'joao@example.com',
-        'password' => 'password123',
-        'password_confirmation' => 'password123',
+        'password' => 'SecurePass123!',
+        'password_confirmation' => 'SecurePass123!',
     ]);
 
     $response->assertSessionHasErrors('name');

@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PreferencesController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,7 +20,8 @@ Route::middleware('guest')->group(function () {
     Route::post('login', [LoginController::class, 'store'])->name('login.store');
 
     Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
-    Route::post('register', [RegisteredUserController::class, 'store'])->name('register.store');
+    Route::post('register', [RegisteredUserController::class, 'store'])->name('register.store')
+        ->middleware('throttle:5,1');
 });
 
 Route::middleware('auth')->group(function () {
@@ -58,6 +60,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/incomes/{income}/months/fill', [IncomeController::class, 'fillMonths'])->name('incomes.fill-months');
     Route::post('/incomes/{income}/duplicate', [IncomeController::class, 'duplicate'])->name('incomes.duplicate');
     Route::delete('/income-months/{incomeMonth}', [IncomeController::class, 'deleteMonth'])->name('incomes.delete-month');
+
+    Route::get('profile', [ProfileController::class, 'index'])->name('profile');
+    Route::patch('profile/name', [ProfileController::class, 'updateName'])->name('profile.update-name');
+    Route::patch('profile/email', [ProfileController::class, 'updateEmail'])->name('profile.update-email');
+    Route::patch('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
 
     Route::patch('/preferences', [PreferencesController::class, 'update'])->name('preferences.update');
 });

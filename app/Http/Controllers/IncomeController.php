@@ -9,6 +9,7 @@ use App\Models\Income;
 use App\Models\IncomeMonth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -80,9 +81,7 @@ final readonly class IncomeController
 
     public function update(Request $request, Income $income): RedirectResponse
     {
-        if ($income->user_id !== auth()->id()) {
-            abort(403);
-        }
+        Gate::authorize('update', $income);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -97,9 +96,7 @@ final readonly class IncomeController
 
     public function destroy(Income $income): RedirectResponse
     {
-        if ($income->user_id !== auth()->id()) {
-            abort(403);
-        }
+        Gate::authorize('delete', $income);
 
         $income->delete();
 
@@ -110,9 +107,7 @@ final readonly class IncomeController
 
     public function duplicate(Income $income): RedirectResponse
     {
-        if ($income->user_id !== auth()->id()) {
-            abort(403);
-        }
+        Gate::authorize('update', $income);
 
         $income->load('incomeMonths');
 
@@ -136,9 +131,7 @@ final readonly class IncomeController
 
     public function updateMonth(Request $request, IncomeMonth $incomeMonth): RedirectResponse
     {
-        if ($incomeMonth->income->user_id !== auth()->id()) {
-            abort(403);
-        }
+        Gate::authorize('update', $incomeMonth->income);
 
         $validated = $request->validate([
             'amount' => ['required', 'numeric', 'min:0'],
@@ -153,9 +146,7 @@ final readonly class IncomeController
 
     public function fillMonths(Request $request, Income $income): RedirectResponse
     {
-        if ($income->user_id !== auth()->id()) {
-            abort(403);
-        }
+        Gate::authorize('update', $income);
 
         $validated = $request->validate([
             'start_month' => ['required', 'integer', 'min:1', 'max:12'],
@@ -190,9 +181,7 @@ final readonly class IncomeController
 
     public function deleteMonth(IncomeMonth $incomeMonth): RedirectResponse
     {
-        if ($incomeMonth->income->user_id !== auth()->id()) {
-            abort(403);
-        }
+        Gate::authorize('update', $incomeMonth->income);
 
         $incomeMonth->delete();
 

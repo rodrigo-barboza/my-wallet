@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3'
+import { watch } from 'vue'
+import { Link, usePage } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
-import { Menu, LayoutDashboard, Banknote, ShoppingCart, CreditCard, LogOut } from '@lucide/vue'
+import { Menu, LayoutDashboard, Banknote, ShoppingCart, CreditCard, User, LogOut } from '@lucide/vue'
 import {
     Sheet,
     SheetContent,
@@ -12,23 +13,18 @@ import {
 } from '@/components/ui/sheet'
 import NavLink from '@/Components/NavLink.vue'
 import ToastContainer from '@/Components/ToastContainer.vue'
+import UserDropdown from '@/Components/UserDropdown.vue'
 import { useToast } from '@/composables/useToast'
 
 const { show } = useToast()
 
-router.on('flash', (event) => {
-    const flash = (event.detail as { flash?: { message?: string; type?: string } }).flash;
-    if (flash?.message) {
-        const type = flash.type ?? 'success';
-        if (type === 'success') {
-            show(flash.message, 'success')
-        } else if (type === 'error') {
-            show(flash.message, 'error')
-        } else {
-            show(flash.message, 'info')
-        }
+const page = usePage()
+
+watch(() => (page as any).flash?.toast, (toastData: any) => {
+    if (toastData?.message) {
+        show(toastData.message, toastData.type ?? 'success')
     }
-});
+}, { immediate: true })
 
 function isActive(name: string): boolean {
     return route().current(name);
@@ -65,9 +61,7 @@ const navLinks = [
             </div>
 
             <div class="flex items-center gap-2">
-                <Button variant="outline" as-child class="hidden sm:inline-flex">
-                    <Link :href="route('logout')" method="post" class="cursor-pointer">Sair</Link>
-                </Button>
+                <UserDropdown class="hidden sm:inline-flex" />
 
                 <Sheet>
                     <SheetTrigger as-child>
@@ -90,6 +84,15 @@ const navLinks = [
                                 >
                                     <component :is="link.icon" class="size-4" />
                                     {{ link.name }}
+                                </Link>
+                            </SheetClose>
+                            <SheetClose as-child>
+                                <Link
+                                    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    :href="route('profile')"
+                                >
+                                    <User class="size-4" />
+                                    Perfil
                                 </Link>
                             </SheetClose>
                             <SheetClose as-child>

@@ -185,6 +185,11 @@ final readonly class PurchaseController
         $month = (int) request()->input('month', now()->month);
         $year = (int) request()->input('year', now()->year);
 
+        $amount = (float) request()->input('amount', 0);
+        if ($purchase->card_id && ($amount <= 0 || ! is_numeric(request()->input('amount')))) {
+            abort(422, 'Valor inválido para pagamento.');
+        }
+
         if ($purchase->card_id) {
             $card = $purchase->card;
             $invoiceDate = Carbon::create($year, $month, 1);

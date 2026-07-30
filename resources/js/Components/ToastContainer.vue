@@ -22,7 +22,7 @@ const iconMap: Record<Toast['type'], string> = {
 </script>
 
 <template>
-    <div class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+    <div class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
         <div
             v-for="toast in toasts"
             :key="toast.id"
