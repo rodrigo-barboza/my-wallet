@@ -62,30 +62,17 @@ final class SendDueNotifications extends Command
     {
         $now = now();
 
-        $purchases = Purchase::query()
+        $candidates = Purchase::query()
             ->whereNull('card_id')
             ->where('payment_day', $now->day)
             ->where('notify_due', true)
-            ->where(function ($q) use ($now) {
-                $q->where('is_recurring', true)
-                    ->orWhere(function ($q) use ($now) {
-                        $q->where('is_recurring', false)
-                            ->where('start_date', '<=', $now->startOfDay())
-                            ->where(function ($q) use ($now) {
-                                $q->whereNull('installments_total')
-                                    ->orWhere(function ($q) use ($now) {
-                                        $startYear = (int) $now->format('Y');
-                                        $startMonth = (int) $now->format('m');
-                                        $q->where('installments_total', '>', 0)
-                                            ->whereRaw('(strftime("%Y", ?) - strftime("%Y", start_date)) * 12 + (strftime("%m", ?) - strftime("%m", start_date)) < installments_total', [$now, $now]);
-                                    });
-                            });
-                    });
-            })
             ->whereDoesntHave('payments', function ($q) use ($now) {
                 $q->where('month', $now->month)->where('year', $now->year);
             })
+            ->with('user')
             ->get();
+
+        $purchases = $candidates->filter(fn ($purchase) => $purchase->isActiveInMonth($now->year, $now->month));
 
         foreach ($purchases as $purchase) {
             $purchase->user->notify(new PurchasePaymentDueNotification($purchase));
