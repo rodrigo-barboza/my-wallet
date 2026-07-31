@@ -5,10 +5,14 @@ declare(strict_types=1);
 use App\Enums\PurchaseStatus;
 use App\Models\Purchase;
 
+beforeEach(function () {
+    $this->travelTo('2026-01-15');
+});
+
 it('returns atrasada status when payment_day has passed', function () {
     $purchase = Purchase::factory()->create([
         'status' => PurchaseStatus::Aberta,
-        'payment_day' => now()->subDay()->day,
+        'payment_day' => 10,
         'start_date' => now()->subMonth(),
     ]);
 
@@ -18,7 +22,7 @@ it('returns atrasada status when payment_day has passed', function () {
 it('returns aberta status when payment_day has not passed', function () {
     $purchase = Purchase::factory()->create([
         'status' => PurchaseStatus::Aberta,
-        'payment_day' => 29,
+        'payment_day' => 20,
         'start_date' => now()->subMonth(),
     ]);
 
@@ -33,16 +37,12 @@ it('falls back to start_date->day when payment_day is null', function () {
         'start_date' => $startDate,
     ]);
 
-    if (now()->day > $startDate->day) {
-        expect($purchase->status)->toBe(PurchaseStatus::Atrasada->value);
-    } else {
-        expect($purchase->status)->toBe(PurchaseStatus::Aberta->value);
-    }
+    expect($purchase->status)->toBe(PurchaseStatus::Atrasada->value);
 });
 
 it('returns aberta status as default when status attribute is missing', function () {
     $purchase = Purchase::factory()->create([
-        'payment_day' => 29,
+        'payment_day' => 20,
         'start_date' => now()->subMonth(),
     ]);
 
