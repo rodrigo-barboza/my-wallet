@@ -29,7 +29,7 @@ final readonly class EmailVerificationController
         /** @var User $user */
         $user = $request->user();
 
-        if ($user->getKey() !== $id) {
+        if ($user->getKey() !== (int) $id) {
             return to_route('home');
         }
 
