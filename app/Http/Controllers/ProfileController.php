@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Auth\UpdateProfileRequest;
 use App\Notifications\AccountDeletionNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,7 +53,7 @@ final class ProfileController
         }
 
         $validated = $request->validate([
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $request->user()->id],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$request->user()->id],
         ]);
 
         $request->user()->update([
