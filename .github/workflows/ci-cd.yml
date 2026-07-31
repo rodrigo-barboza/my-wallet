@@ -34,6 +34,9 @@ jobs:
       - name: Install PHP dependencies
         run: composer install --no-progress --no-interaction
 
+      - name: Copy .env.ci to .env
+        run: cp .env.ci .env
+
       - name: Check coding style (Pint)
         run: vendor/bin/pint --test --format agent
 
