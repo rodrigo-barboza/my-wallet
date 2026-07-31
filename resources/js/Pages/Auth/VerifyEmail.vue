@@ -2,10 +2,7 @@
 import { computed } from 'vue'
 import { Head, useForm, usePage } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
-import AppLayout from '@/Layouts/AppLayout.vue'
 import AuthCard from '@/Components/AuthCard.vue'
-
-defineOptions({ layout: AppLayout })
 
 const page = usePage()
 
