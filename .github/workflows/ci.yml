@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -33,12 +33,6 @@ jobs:
 
       - name: Install PHP dependencies
         run: composer install --no-progress --no-interaction
-
-      - name: Copy .env
-        run: cp .env.ci .env
-
-      - name: Generate app key
-        run: php artisan key:generate
 
       - name: Check coding style (Pint)
         run: vendor/bin/pint --test --format agent
@@ -81,3 +75,27 @@ jobs:
 
       - name: Build
         run: pnpm run build
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [laravel, frontend]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            git pull origin main
+            composer install --no-dev --no-interaction --optimize-autoloader
+            php artisan migrate --force
+            pnpm install --frozen-lockfile
+            pnpm run build
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan queue:restart
