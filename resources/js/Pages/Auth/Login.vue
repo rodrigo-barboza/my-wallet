@@ -51,10 +51,10 @@ function submit() {
             </div>
 
             <PasswordInput
+                v-model="form.password"
                 id="password"
                 label="Senha"
                 placeholder="Sua senha"
-                :model-value="form.password"
                 :error="form.errors.password"
                 @update:model-value="form.password = $event"
             />

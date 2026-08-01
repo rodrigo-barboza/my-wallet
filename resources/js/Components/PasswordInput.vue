@@ -4,16 +4,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Eye, EyeOff } from '@lucide/vue'
 
+const model = defineModel();
+
 const props = defineProps<{
     id: string
     label: string
     modelValue: string
     placeholder?: string
     error?: string
-}>()
-
-const emit = defineEmits<{
-    'update:modelValue': [value: string]
 }>()
 
 const showPassword = ref(false)
@@ -29,11 +27,11 @@ const showPassword = ref(false)
         </Label>
         <div class="relative">
             <Input
+                v-model="model"
                 :id="id"
                 :value="modelValue"
                 :type="showPassword ? 'text' : 'password'"
                 :placeholder="placeholder"
-                @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
             />
             <button
                 class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
