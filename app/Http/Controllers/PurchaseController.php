@@ -24,11 +24,18 @@ final readonly class PurchaseController
     {
         $month = (int) request()->input('month', now()->month);
         $year = (int) request()->input('year', now()->year);
+        $allMonths = request()->boolean('allMonths');
+        $search = request()->input('search');
 
         $purchases = Purchase::where('user_id', auth()->id())
             ->with(['card', 'payments'])
+            ->when(! $allMonths, fn ($q) => $q->where(fn ($q) => $q
+                ->whereHas('payments', fn ($pq) => $pq->where('month', $month)->where('year', $year))
+                ->orWhere('start_date', '<=', now()->setMonth($month)->setYear($year)->endOfMonth())
+            ))
+            ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
             ->get()
-            ->filter(fn ($p) => $p->isActiveInMonth($year, $month));
+            ->filter(fn ($p) => $allMonths || $p->isActiveInMonth($year, $month));
 
         $summary = $this->buildSummary($purchases, $month, $year);
 
@@ -100,6 +107,8 @@ final readonly class PurchaseController
             'month' => $month,
             'year' => $year,
             'cards' => $cards,
+            'allMonths' => $allMonths,
+            'search' => $search,
         ]);
     }
 
