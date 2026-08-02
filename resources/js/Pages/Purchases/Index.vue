@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { LayoutList, Plus, Search, Table as TableIcon } from '@lucide/vue'
+import { LayoutList, Plus, Receipt, Search, Table as TableIcon } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue'
 import MonthNavigator from '@/Components/MonthNavigator.vue'
@@ -82,6 +82,11 @@ const filteredSummary = computed(() => {
         item.items.some(p => p.name?.toLowerCase().includes(query))
     )
 })
+
+const tabs = [
+    { key: 'compras' as const, label: 'Visão geral', condition: true },
+    { key: 'pagamentos' as const, label: 'Pagamentos', icon: Receipt },
+]
 
 const viewModes = [
     { key: 'card' as const, icon: LayoutList, label: 'Visualização em cards' },
@@ -164,6 +169,21 @@ async function handleReorder(order: string[]): Promise<void> {
             :year="year"
             @navigate="goToMonth"
         />
+
+        <div class="flex justify-center">
+            <div class="flex items-center gap-1 rounded-lg bg-muted p-1">
+                <button
+                    v-for="tab in tabs"
+                    :key="tab.key"
+                    class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer flex items-center gap-1.5"
+                    :class="activeTab === tab.key ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                    @click="activeTab = tab.key"
+                >
+                    <component :is="tab.icon" v-if="tab.icon" class="size-3.5" />
+                    {{ tab.label }}
+                </button>
+            </div>
+        </div>
 
         <div class="grid gap-6 sm:grid-cols-2">
             <Card>
