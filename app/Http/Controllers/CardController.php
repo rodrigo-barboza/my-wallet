@@ -30,13 +30,16 @@ final readonly class CardController
 
         $month = (int) request()->input('month', now()->month);
         $year = (int) request()->input('year', now()->year);
+        $allMonths = request()->boolean('allMonths');
+        $search = request()->input('search');
 
-        $allPurchases = Purchase::where('user_id', auth()->id())
-            ->where('card_id', $card->id)
-            ->with('card')
+        $allPurchases = Purchase::where('card_id', $card->id)
+            ->where('user_id', auth()->id())
+            ->with(['card', 'payments'])
+            ->when($search, fn ($q) => $q->where('name', 'like', "%{$search}%"))
             ->get();
 
-        $purchases = $allPurchases->filter(fn ($p) => $p->isActiveInMonth($year, $month));
+        $purchases = $allPurchases->filter(fn ($p) => $allMonths || $p->isActiveInMonth($year, $month));
 
         $monthlyTotals = collect();
         for ($i = -3; $i <= 3; $i++) {
@@ -57,6 +60,8 @@ final readonly class CardController
             'month' => $month,
             'year' => $year,
             'cards' => $cards,
+            'allMonths' => $allMonths,
+            'search' => $search,
         ]);
     }
 
