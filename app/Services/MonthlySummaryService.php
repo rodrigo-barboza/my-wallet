@@ -7,6 +7,8 @@ namespace App\Services;
 use App\Enums\InvoiceStatus;
 use App\Models\IncomeMonth;
 use App\Models\Invoice;
+use App\Models\InvoicePayment;
+use App\Models\PurchasePayment;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -61,6 +63,22 @@ final readonly class MonthlySummaryService
             ->where('year', $year)
             ->whereHas('income', fn ($q) => $q->where('user_id', $user->id))
             ->sum('amount');
+    }
+
+    public function paidForMonth(User $user, int $year, int $month): float
+    {
+        $individualPaid = PurchasePayment::where('month', $month)
+            ->where('year', $year)
+            ->whereHas('purchase', fn ($q) => $q->where('user_id', $user->id))
+            ->sum('amount');
+
+        $cardPaid = InvoicePayment::whereHas('invoice', function ($q) use ($user, $month, $year) {
+            $q->where('month', $month)
+                ->where('year', $year)
+                ->where('user_id', $user->id);
+        })->sum('amount');
+
+        return (float) $individualPaid + (float) $cardPaid;
     }
 
     public function expensesByType(User $user, int $year, int $month): Collection

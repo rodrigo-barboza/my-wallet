@@ -16,6 +16,7 @@ export interface DashboardMatrixItem {
 export interface MonthlySummary {
     income: number
     expenses: number
+    paid: number
     balance: number
     month: number
     year: number

@@ -71,10 +71,12 @@ final readonly class DashboardController
             $income = $service->incomeForMonth($user, $y, $m);
             $items = $service->buildForMonth($user, $y, $m);
             $expenses = (float) $items->sum('total');
+            $paid = $service->paidForMonth($user, $y, $m);
 
             $monthlySummary->push([
                 'income' => $income,
                 'expenses' => $expenses,
+                'paid' => $paid,
                 'balance' => $income - $expenses,
                 'month' => $m,
                 'year' => $y,

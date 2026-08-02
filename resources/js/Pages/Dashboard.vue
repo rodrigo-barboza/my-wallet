@@ -140,6 +140,31 @@ function categoryColor(index: number, type: string): string {
         </div>
 
         <Card>
+            <CardContent class="py-4">
+                <div class="space-y-3">
+                    <div class="h-2 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                            class="h-full rounded-full bg-green-500 transition-all"
+                            :style="{ width: highlighted.expenses > 0 ? `${(highlighted.paid / highlighted.expenses) * 100}%` : '0%' }"
+                        />
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center gap-4">
+                            <span class="text-muted-foreground">Despesas: <span class="font-semibold text-foreground">{{ formatCurrency(highlighted.expenses) }}</span></span>
+                            <span class="text-muted-foreground">Pago: <span class="font-semibold text-green-600">{{ formatCurrency(highlighted.paid) }}</span></span>
+                        </div>
+                        <span
+                            class="font-semibold"
+                            :class="highlighted.expenses - highlighted.paid > 0 ? 'text-amber-500' : 'text-green-600'"
+                        >
+                            {{ highlighted.expenses - highlighted.paid > 0 ? `Faltam ${formatCurrency(highlighted.expenses - highlighted.paid)}` : 'Tudo pago' }}
+                        </span>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card>
             <CardHeader class="pb-2">
                 <CardTitle class="text-base font-semibold">Entradas vs Despesas</CardTitle>
             </CardHeader>
