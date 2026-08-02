@@ -84,7 +84,7 @@ function onEditPurchase(purchase: Purchase): void {
 </script>
 
 <template>
-    <div class="space-y-3">
+    <div ref="el" class="space-y-3">
         <div
             v-if="list.length === 0"
             class="text-center text-muted-foreground"
