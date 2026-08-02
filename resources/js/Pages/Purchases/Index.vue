@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { LayoutList, Plus, Receipt, Search, Table as TableIcon } from '@lucide/vue'
+import { LayoutList, Plus, Search, Table as TableIcon } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue'
 import MonthNavigator from '@/Components/MonthNavigator.vue'
@@ -82,11 +82,6 @@ const filteredSummary = computed(() => {
         item.items.some(p => p.name?.toLowerCase().includes(query))
     )
 })
-
-const tabs = [
-    { key: 'compras' as const, label: 'Visão geral', condition: true },
-    { key: 'pagamentos' as const, label: 'Pagamentos', icon: Receipt },
-]
 
 const viewModes = [
     { key: 'card' as const, icon: LayoutList, label: 'Visualização em cards' },
