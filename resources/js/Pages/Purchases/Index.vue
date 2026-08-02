@@ -2,11 +2,12 @@
 import { computed, ref, watch } from 'vue'
 import type { Purchase, PurchaseSummaryItem } from '@/types/purchase'
 import type { Card as CardType } from '@/types/card'
-import { Head } from '@inertiajs/vue3'
+import { Head, router } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { LayoutList, Plus, Receipt, Table as TableIcon } from '@lucide/vue'
+import { Input } from '@/components/ui/input'
+import { LayoutList, Plus, Receipt, Search, Table as TableIcon } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue'
 import MonthNavigator from '@/Components/MonthNavigator.vue'
@@ -37,6 +38,8 @@ const props = defineProps<{
     month: number
     year: number
     cards: CardType[]
+    allMonths?: boolean
+    search?: string
 }>()
 
 const storedViewMode = localStorage.getItem('purchases_view_mode') as 'card' | 'table' | null
@@ -52,7 +55,28 @@ const editingPurchase = ref<Purchase | undefined>()
 const selectedCardPurchase = ref<PurchaseSummaryItem | undefined>()
 const showCardDetailsModal = ref(false)
 
+const searchQuery = ref(props.search ?? '')
+const showAllMonths = ref(props.allMonths ?? false)
+
 const { goToMonth } = useMonthNavigation('purchases.index')
+
+function handleSearch(): void {
+    if (showAllMonths.value) {
+        router.get(route('purchases.index'), {
+            month: props.month,
+            year: props.year,
+            allMonths: true,
+            search: searchQuery.value,
+        }, { preserveState: true })
+    }
+}
+
+function toggleAllMonths(): void {
+    showAllMonths.value = !showAllMonths.value
+    if (showAllMonths.value) {
+        handleSearch()
+    }
+}
 
 const totalAmount = computed(() => props.summary.reduce((sum, item) => sum + parseFloat(String(item.total)), 0))
 
@@ -70,6 +94,15 @@ const pendingAmount = computed(() => {
 
 const hasOverdue = computed(() => props.summary.some((item) => item.status === 'atrasada'))
 const balance = computed(() => props.incomeTotal - totalAmount.value)
+
+const filteredSummary = computed(() => {
+    if (!searchQuery.value) return props.summary
+    const query = searchQuery.value.toLowerCase()
+    return props.summary.filter(item =>
+        item.name?.toLowerCase().includes(query) ||
+        item.items.some(p => p.name?.toLowerCase().includes(query))
+    )
+})
 
 const tabs = [
     { key: 'compras' as const, label: 'Visão geral', condition: true },
@@ -158,6 +191,25 @@ async function handleReorder(order: string[]): Promise<void> {
             @navigate="goToMonth"
         />
 
+        <div class="flex items-center gap-2">
+            <div class="relative flex-1">
+                <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                    v-model="searchQuery"
+                    placeholder="Buscar compra..."
+                    class="pl-9"
+                    @input="showAllMonths ? handleSearch() : undefined"
+                />
+            </div>
+            <Button
+                variant="outline"
+                :class="showAllMonths ? 'bg-primary text-primary-foreground' : ''"
+                @click="toggleAllMonths"
+            >
+                {{ showAllMonths ? 'Todos' : 'Mês atual' }}
+            </Button>
+        </div>
+
         <div class="flex justify-center">
             <div class="flex items-center gap-1 rounded-lg bg-muted p-1">
                 <button
@@ -234,7 +286,7 @@ async function handleReorder(order: string[]): Promise<void> {
         <template v-if="activeTab === 'compras'">
             <PurchaseSummary
                 v-if="viewMode === 'card'"
-                :items="summary"
+                :items="filteredSummary"
                 :month="month"
                 :year="year"
                 @reorder="handleReorder"
@@ -242,7 +294,7 @@ async function handleReorder(order: string[]): Promise<void> {
             />
             <PurchasesTableMode
                 v-else
-                :items="summary"
+                :items="filteredSummary"
                 :month="month"
                 :year="year"
                 @select="onTableSelect"
