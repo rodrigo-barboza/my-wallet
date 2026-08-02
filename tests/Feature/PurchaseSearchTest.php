@@ -8,6 +8,9 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
 
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\get;
+
 uses(RefreshDatabase::class);
 
 it('filters purchases by name when search is provided', function () {
@@ -18,13 +21,15 @@ it('filters purchases by name when search is provided', function () {
         'start_date' => now()->startOfMonth(),
     ]);
 
-    $this->actingAs($user)
-        ->getJson(route('purchases.index', ['search' => 'Netflix']))
-        ->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
-            ->has('summary', 1)
-            ->where('summary.0.name', 'Netflix')
-        );
+    actingAs($user);
+
+    $response = get(route('purchases.index', ['search' => 'Netflix']));
+
+    $response->assertOk();
+    $response->assertInertia(fn (AssertableInertia $page) => $page
+        ->has('summary', 1)
+        ->where('summary.0.name', 'Netflix')
+    );
 });
 
 it('returns all purchases when allMonths is true', function () {
@@ -40,12 +45,14 @@ it('returns all purchases when allMonths is true', function () {
         'start_date' => now()->subMonths(3)->startOfMonth(),
     ]);
 
-    $this->actingAs($user)
-        ->getJson(route('purchases.index', ['allMonths' => true]))
-        ->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
-            ->has('summary', 2)
-        );
+    actingAs($user);
+
+    $response = get(route('purchases.index', ['allMonths' => true]));
+
+    $response->assertOk();
+    $response->assertInertia(fn (AssertableInertia $page) => $page
+        ->has('summary', 2)
+    );
 });
 
 it('combines search and allMonths parameters', function () {
@@ -61,13 +68,15 @@ it('combines search and allMonths parameters', function () {
         'start_date' => now()->startOfMonth(),
     ]);
 
-    $this->actingAs($user)
-        ->getJson(route('purchases.index', ['allMonths' => true, 'search' => 'Netflix']))
-        ->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
-            ->has('summary', 1)
-            ->where('summary.0.name', 'Netflix')
-        );
+    actingAs($user);
+
+    $response = get(route('purchases.index', ['allMonths' => true, 'search' => 'Netflix']));
+
+    $response->assertOk();
+    $response->assertInertia(fn (AssertableInertia $page) => $page
+        ->has('summary', 1)
+        ->where('summary.0.name', 'Netflix')
+    );
 });
 
 it('filters card purchases by name when search is provided', function () {
@@ -80,11 +89,13 @@ it('filters card purchases by name when search is provided', function () {
         'start_date' => now()->startOfMonth(),
     ]);
 
-    $this->actingAs($user)
-        ->getJson(route('cards.purchases', ['card' => $card->id, 'search' => 'Ifood']))
-        ->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
-            ->has('purchases', 1)
-            ->where('purchases.0.name', 'Ifood')
-        );
+    actingAs($user);
+
+    $response = get(route('cards.purchases', ['card' => $card->id, 'search' => 'Ifood']));
+
+    $response->assertOk();
+    $response->assertInertia(fn (AssertableInertia $page) => $page
+        ->has('purchases', 1)
+        ->where('purchases.0.name', 'Ifood')
+    );
 });
