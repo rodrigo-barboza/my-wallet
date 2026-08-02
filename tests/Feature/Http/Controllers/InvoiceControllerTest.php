@@ -49,7 +49,7 @@ it('sets invoice status to fechada when created after closing date', function ()
         'due_day' => 10,
     ]);
 
-    Carbon::setTestNow(Carbon::create(2024, 7, 7));
+    Carbon::setTestNow(Carbon::create(2024, 8, 7));
 
     post(route('purchases.store'), [
         'name' => 'Compra teste',

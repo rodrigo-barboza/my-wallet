@@ -207,6 +207,9 @@ final readonly class PurchaseController
 
             if ($card->closing_day > $card->due_day) {
                 $dueDate->addMonth();
+            } else {
+                $closingDate->addMonth();
+                $dueDate->addMonth();
             }
 
             $invoice = Invoice::firstOrCreate(
@@ -338,10 +341,14 @@ final readonly class PurchaseController
         $card = $purchase->card;
         $startDate = $purchase->start_date;
 
-        $closingDate = $startDate->copy()->day($card->closing_day);
-        $dueDate = $startDate->copy()->day($card->due_day);
+        $invoiceDate = Carbon::create($startDate->year, $startDate->month, 1);
+        $closingDate = $invoiceDate->copy()->day($card->closing_day);
+        $dueDate = $invoiceDate->copy()->day($card->due_day);
 
         if ($card->closing_day > $card->due_day) {
+            $dueDate->addMonth();
+        } else {
+            $closingDate->addMonth();
             $dueDate->addMonth();
         }
 
