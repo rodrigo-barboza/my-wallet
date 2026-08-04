@@ -115,7 +115,7 @@ function hasPayment(): boolean {
                         :style="{ color: purchaseSummary.items[0].card.color }"
                     />
                     <DialogTitle>{{ purchaseSummary?.name }}</DialogTitle>
-                    <StatusBadge v-if="purchaseSummary?.status" :status="purchaseSummary.status" />
+                    <StatusBadge v-if="purchaseSummary?.status" :status="purchaseSummary.status" :base-status="purchaseSummary.base_status" />
                 </div>
                 <DialogDescription>
                     <span v-if="purchaseSummary?.dates && !Array.isArray(purchaseSummary.dates)">

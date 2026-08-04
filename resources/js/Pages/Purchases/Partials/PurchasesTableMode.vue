@@ -158,7 +158,7 @@ function handleRowClick(item: PurchaseSummaryItem): void {
                         {{ getDates(item) }}
                     </TableCell>
                     <TableCell class="py-2.5">
-                        <StatusBadge :status="item.status ?? 'aberta'" />
+                        <StatusBadge :status="item.status ?? 'aberta'" :base-status="item.base_status" />
                     </TableCell>
                     <TableCell class="py-2.5 text-right font-medium">
                         <template v-if="item.paid_amount && item.paid_amount < item.total">

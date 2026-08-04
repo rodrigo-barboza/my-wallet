@@ -65,4 +65,17 @@ class Invoice extends Model
 
         return InvoiceStatus::Aberta->value;
     }
+
+    public function getBaseStatusAttribute(): string
+    {
+        if (now()->gte($this->due_date)) {
+            return InvoiceStatus::Atrasada->value;
+        }
+
+        if (now()->gte($this->closing_date)) {
+            return InvoiceStatus::Fechada->value;
+        }
+
+        return InvoiceStatus::Aberta->value;
+    }
 }

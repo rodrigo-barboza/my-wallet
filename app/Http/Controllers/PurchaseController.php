@@ -405,6 +405,7 @@ final readonly class PurchaseController
                 'total' => $originalTotal,
                 'dates' => ['closing' => $card->closing_day, 'due' => $card->due_day],
                 'status' => $status,
+                'base_status' => $invoice?->base_status ?? null,
                 'paid_at' => $invoice?->paid_at?->toISOString(),
                 'paid_amount' => $paidAmount !== null ? (float) $paidAmount : null,
                 'items' => $items->values(),

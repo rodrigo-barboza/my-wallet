@@ -115,6 +115,7 @@ function onEditPurchase(purchase: Purchase): void {
                         <StatusBadge
                             v-if="item.status"
                             :status="item.status"
+                            :base-status="item.base_status"
                         />
                     </CardTitle>
                 </CardHeader>
@@ -167,6 +168,7 @@ function onEditPurchase(purchase: Purchase): void {
                         <StatusBadge
                             v-if="item.status"
                             :status="item.status"
+                            :base-status="item.base_status"
                         />
                     </CardTitle>
                 </CardHeader>

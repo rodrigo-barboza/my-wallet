@@ -25,6 +25,7 @@ export interface PurchaseSummaryItem {
     total: number;
     dates: number[] | { closing: number; due: number };
     status?: string;
+    base_status?: string;
     paid_at?: string | null;
     paid_amount?: number | null;
     items: Purchase[];
