@@ -5,7 +5,7 @@ import { router, Head } from '@inertiajs/vue3'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertCircle, ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Wallet } from '@lucide/vue'
+import { AlertCircle, Calendar, ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Wallet } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DashboardBarChart from '@/Components/DashboardBarChart.vue'
 import SummaryCard from '@/Components/SummaryCard.vue'
@@ -52,6 +52,12 @@ const canGoBack = computed(() => {
     return !(first.year === now.getFullYear() && first.month === now.getMonth() + 1)
 })
 
+const isCurrentMonth = computed(() => {
+    const first = props.window[0]
+    const now = new Date()
+    return first.year === now.getFullYear() && first.month === now.getMonth() + 1
+})
+
 const columnTotals = computed(() => {
     return Array.from({ length: visibleCount.value }, (_, i) =>
         visibleMatrix.value.reduce((sum, row) => sum + (row.totals[i] || 0), 0)
@@ -83,6 +89,11 @@ function goForward(): void {
     let m = first.month + 1, y = first.year
     if (m > 12) { m = 1; y++ }
     goToMonth(m, y)
+}
+
+function goToCurrentMonth(): void {
+    const now = new Date()
+    goToMonth(now.getMonth() + 1, now.getFullYear())
 }
 
 function typeLabel(type: string): string {
@@ -189,6 +200,16 @@ function categoryColor(index: number, type: string): string {
                 <div class="flex items-center justify-between">
                     <CardTitle class="text-base font-semibold">Gastos por mês</CardTitle>
                     <div class="flex items-center gap-1">
+                        <Button
+                            v-if="!isCurrentMonth"
+                            variant="outline"
+                            size="sm"
+                            class="h-8 gap-1.5 text-xs mr-1"
+                            @click="goToCurrentMonth"
+                        >
+                            <Calendar class="size-3" />
+                            Mês atual
+                        </Button>
                         <Button
                             variant="outline"
                             size="icon"

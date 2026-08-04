@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight } from '@lucide/vue'
+import { ChevronLeft, ChevronRight, Calendar } from '@lucide/vue'
 import { monthNames } from '@/lib/constants'
 
 const props = defineProps<{
@@ -14,6 +14,12 @@ const props = defineProps<{
 const emit = defineEmits<{
     navigate: [month: number, year: number]
 }>()
+
+const now = new Date()
+const currentMonth = now.getMonth() + 1
+const currentYear = now.getFullYear()
+
+const isCurrentMonth = computed(() => props.month === currentMonth && props.year === currentYear)
 
 const currentMonthName = computed(() => monthNames[props.month - 1])
 
@@ -35,6 +41,10 @@ function nextMonth(): void {
     if (newMonth > 12) { newMonth = 1; newYear++ }
     emit('navigate', newMonth, newYear)
 }
+
+function goToCurrentMonth(): void {
+    emit('navigate', currentMonth, currentYear)
+}
 </script>
 
 <template>
@@ -42,8 +52,20 @@ function nextMonth(): void {
         <Button variant="outline" size="icon" :disabled="!canGoBack" @click="previousMonth">
             <ChevronLeft class="size-4" />
         </Button>
-        <div class="text-lg font-medium">
-            {{ currentMonthName }} {{ year }}
+        <div class="flex items-center gap-2">
+            <div class="text-lg font-medium">
+                {{ currentMonthName }} {{ year }}
+            </div>
+            <Button
+                v-if="!isCurrentMonth"
+                variant="outline"
+                size="sm"
+                class="h-7 gap-1.5 text-xs"
+                @click="goToCurrentMonth"
+            >
+                <Calendar class="size-3" />
+                Mês atual
+            </Button>
         </div>
         <Button variant="outline" size="icon" @click="nextMonth">
             <ChevronRight class="size-4" />
