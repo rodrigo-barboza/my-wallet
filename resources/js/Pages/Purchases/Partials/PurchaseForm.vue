@@ -80,11 +80,12 @@ function resetForm(): void {
 
 function submit(): void {
     if (props.purchase) {
-        form.put(route('purchases.update', props.purchase.id), { onSuccess: () => emit('success') })
+        form.put(route('purchases.update', props.purchase.id), { preserveState: true, onSuccess: () => emit('success') })
         return
     }
 
     form.post(route('purchases.store'), {
+        preserveState: true,
         onSuccess: () => {
             if (savingAndAddingMore.value) {
                 savingAndAddingMore.value = false
@@ -97,7 +98,6 @@ function submit(): void {
         onError: () => {
             showToast('Erro ao criar compra. Verifique os dados.', 'error')
         },
-        preserveState: savingAndAddingMore.value,
     })
 }
 
