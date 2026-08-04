@@ -47,7 +47,7 @@ const isCreditCard = computed(() => form.type === 'credit_card')
 const showNotifyDue = computed(() => form.type === 'bill' || form.type === 'financing')
 
 const installmentValue = computed(() => {
-    if (!isCreditCard.value || !form.installments_total || form.installments_total <= 0 || !form.amount) return null
+    if (!form.installments_total || form.installments_total <= 0 || !form.amount) return null
     return form.amount / form.installments_total
 })
 

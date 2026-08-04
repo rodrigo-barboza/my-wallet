@@ -18,6 +18,8 @@ export interface Purchase {
     updated_at: string;
     card?: Card;
     notify_due?: boolean;
+    current_installment?: number | null;
+    installment_value?: number | null;
 }
 
 export interface PurchaseSummaryItem {
@@ -28,6 +30,9 @@ export interface PurchaseSummaryItem {
     base_status?: string;
     paid_at?: string | null;
     paid_amount?: number | null;
+    current_installment?: number | null;
+    installments_total?: number | null;
+    installment_value?: number | null;
     items: Purchase[];
 }
 

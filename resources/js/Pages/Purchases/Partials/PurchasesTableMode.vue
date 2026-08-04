@@ -153,6 +153,12 @@ function handleRowClick(item: PurchaseSummaryItem): void {
                                 </Tooltip>
                             </TooltipProvider>
                         </div>
+                        <p
+                            v-if="item.current_installment && item.installments_total"
+                            class="text-xs text-muted-foreground"
+                        >
+                            Parcela {{ item.current_installment }} de {{ item.installments_total }}
+                        </p>
                     </TableCell>
                     <TableCell class="py-2.5 text-muted-foreground hidden sm:table-cell">
                         {{ getDates(item) }}
@@ -164,10 +170,10 @@ function handleRowClick(item: PurchaseSummaryItem): void {
                         <template v-if="item.paid_amount && item.paid_amount < item.total">
                             {{ formatCurrency(item.paid_amount) }}
                             <span class="text-xs text-muted-foreground"> / </span>
-                            {{ formatCurrency(item.total) }}
+                            {{ formatCurrency(item.installment_value ?? item.total) }}
                         </template>
                         <template v-else>
-                            {{ formatCurrency(item.total) }}
+                            {{ formatCurrency(item.installment_value ?? item.total) }}
                         </template>
                     </TableCell>
                 </TableRow>

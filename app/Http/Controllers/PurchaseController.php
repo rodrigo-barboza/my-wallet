@@ -41,6 +41,14 @@ final readonly class PurchaseController
 
         $cards = auth()->user()->cards()->latest()->get();
 
+        $purchasesWithInstallments = $purchases->values()->map(fn (Purchase $p) => [
+            ...$p->toArray(),
+            'current_installment' => $p->getCurrentInstallment($year, $month),
+            'installment_value' => $p->installments_total
+                ? round($p->amount / $p->installments_total, 2)
+                : null,
+        ]);
+
         $individualPayments = PurchasePayment::where('month', $month)
             ->where('year', $year)
             ->whereHas('purchase', fn ($q) => $q->where('user_id', auth()->id()))
@@ -100,7 +108,7 @@ final readonly class PurchaseController
             ->sum('amount');
 
         return Inertia::render('Purchases/Index', [
-            'purchases' => $purchases->values(),
+            'purchases' => $purchasesWithInstallments,
             'summary' => $summary,
             'paymentHistory' => $paymentHistory,
             'incomeTotal' => $incomeTotal,
@@ -419,10 +427,17 @@ final readonly class PurchaseController
 
             $summary[] = [
                 'name' => $purchase->name,
-                'total' => $purchase->amount,
+                'total' => $purchase->installments_total
+                    ? round($purchase->amount / $purchase->installments_total, 2)
+                    : $purchase->amount,
                 'dates' => [$paymentDay],
                 'status' => $status,
                 'paid_at' => $payment?->paid_at?->toISOString(),
+                'current_installment' => $purchase->getCurrentInstallment($year, $month),
+                'installments_total' => $purchase->installments_total,
+                'installment_value' => $purchase->installments_total
+                    ? round($purchase->amount / $purchase->installments_total, 2)
+                    : null,
                 'items' => [$purchase],
             ];
         });

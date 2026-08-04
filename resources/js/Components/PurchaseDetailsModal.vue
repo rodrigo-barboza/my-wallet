@@ -104,7 +104,15 @@ function unmarkAsPaid(): void {
                     </div>
                     <div>
                         <div class="text-muted-foreground">Valor</div>
-                        <div class="font-medium">{{ formatCurrency(purchase.amount) }}</div>
+                        <div class="font-medium">
+                            {{ formatCurrency(purchase.installment_value ?? purchase.amount) }}
+                            <span
+                                v-if="purchase.installment_value"
+                                class="text-xs text-muted-foreground"
+                            >
+                                ({{ formatCurrency(purchase.amount) }} total)
+                            </span>
+                        </div>
                     </div>
                     <div>
                         <div class="text-muted-foreground">Data de início</div>
@@ -120,7 +128,14 @@ function unmarkAsPaid(): void {
                     </div>
                     <div v-if="purchase.installments_total">
                         <div class="text-muted-foreground">Parcelas</div>
-                        <div class="font-medium">{{ purchase.installments_total }}x</div>
+                        <div class="font-medium">
+                            <template v-if="purchase.current_installment">
+                                Parcela {{ purchase.current_installment }} de {{ purchase.installments_total }}
+                            </template>
+                            <template v-else>
+                                {{ purchase.installments_total }}x
+                            </template>
+                        </div>
                     </div>
                     <div>
                         <div class="text-muted-foreground">Recorrente</div>

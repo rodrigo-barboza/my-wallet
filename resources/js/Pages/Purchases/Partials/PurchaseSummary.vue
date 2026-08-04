@@ -153,17 +153,27 @@ function onEditPurchase(purchase: Purchase): void {
                                 class="size-5"
                                 :style="{ color: typeColors[item.items[0].type] ?? '#6b7280' }"
                             />
-                            {{ item.name ? toTitleCase(item.name) : 'Sem nome' }}
-                            <TooltipProvider v-if="item.items[0].notify_due">
-                                <Tooltip>
-                                    <TooltipTrigger as-child>
-                                        <Bell class="size-3.5 text-amber-500" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Notificação de vencimento ativa</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    {{ item.name ? toTitleCase(item.name) : 'Sem nome' }}
+                                    <TooltipProvider v-if="item.items[0].notify_due">
+                                        <Tooltip>
+                                            <TooltipTrigger as-child>
+                                                <Bell class="size-3.5 text-amber-500" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Notificação de vencimento ativa</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                                <p
+                                    v-if="item.current_installment && item.installments_total"
+                                    class="text-xs text-muted-foreground"
+                                >
+                                    Parcela {{ item.current_installment }} de {{ item.installments_total }}
+                                </p>
+                            </div>
                         </div>
                         <StatusBadge
                             v-if="item.status"
@@ -177,7 +187,7 @@ function onEditPurchase(purchase: Purchase): void {
                         <span class="text-muted-foreground">
                             Dia {{ getPaymentDay(item) }}
                         </span>
-                        <span class="font-semibold">{{ formatCurrency(item.total) }}</span>
+                        <span class="font-semibold">{{ formatCurrency(item.installment_value ?? item.total) }}</span>
                     </div>
                 </CardContent>
             </CardComponent>
