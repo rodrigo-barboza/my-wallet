@@ -96,6 +96,7 @@ function submit(): void {
             emit('success')
         },
         onError: () => {
+            savingAndAddingMore.value = false
             showToast('Erro ao criar compra. Verifique os dados.', 'error')
         },
     })
