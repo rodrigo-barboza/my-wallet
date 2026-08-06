@@ -43,12 +43,12 @@ it('renders dashboard with custom start month', function () {
     );
 });
 
-it('clamps start month to current month', function () {
+it('allows navigating to past months', function () {
     $response = get(route('dashboard', ['month' => 5, 'year' => 2026]));
 
     $response->assertSuccessful();
     $response->assertInertia(fn ($page) => $page
-        ->where('window.0.month', 7)
+        ->where('window.0.month', 5)
     );
 });
 
