@@ -47,7 +47,9 @@ final readonly class MonthlySummaryService
                 'id' => "purchase_{$purchase->id}",
                 'name' => $purchase->name,
                 'type' => $purchase->type->value,
-                'total' => (float) $purchase->amount,
+                'total' => (float) ($purchase->installments_total
+                    ? $purchase->amount / $purchase->installments_total
+                    : $purchase->amount),
                 'purchase_id' => (int) $purchase->id,
                 'payment_day' => $purchase->payment_day ?? $purchase->start_date->day,
                 'is_recurring' => $purchase->is_recurring,
