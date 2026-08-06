@@ -13,6 +13,7 @@ import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue'
 import MonthNavigator from '@/Components/MonthNavigator.vue'
 import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue'
 import PurchaseFormModal from '@/Components/PurchaseFormModal.vue'
+import SelectionStatsBar from '@/Components/SelectionStatsBar.vue'
 import PaymentHistory from '@/Pages/Purchases/Partials/PaymentHistory.vue'
 import PurchasesTableMode from '@/Pages/Purchases/Partials/PurchasesTableMode.vue'
 import PurchaseSummary from '@/Pages/Purchases/Partials/PurchaseSummary.vue'
@@ -357,32 +358,14 @@ async function handleReorder(order: string[]): Promise<void> {
             @update:open="onCloseForm"
         />
 
-        <Transition
-            enter-active-class="transition duration-200 ease-out"
-            enter-from-class="translate-y-full opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition duration-150 ease-in"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="translate-y-full opacity-0"
-        >
-            <div
-                v-if="hasSelection && selectionStats"
-                class="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-            >
-                <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-4 px-4 py-3 text-sm">
-                    <span class="font-medium text-muted-foreground">
-                        {{ selectionStats.count }} selecionado(s)
-                    </span>
-                    <span class="text-muted-foreground">·</span>
-                    <span>Total: <span class="font-semibold text-foreground">{{ formatCurrency(selectionStats.total) }}</span></span>
-                    <span class="text-muted-foreground">·</span>
-                    <span>Média: <span class="font-semibold text-foreground">{{ formatCurrency(selectionStats.avg) }}</span></span>
-                    <span class="text-muted-foreground">·</span>
-                    <span>Max: <span class="font-semibold text-foreground">{{ formatCurrency(selectionStats.max) }}</span></span>
-                    <span class="text-muted-foreground">·</span>
-                    <span>Min: <span class="font-semibold text-foreground">{{ formatCurrency(selectionStats.min) }}</span></span>
-                </div>
-            </div>
-        </Transition>
+        <SelectionStatsBar
+            :count="selectionStats?.count ?? 0"
+            :items="[
+                { label: 'Total', value: selectionStats?.total ?? 0 },
+                { label: 'Média', value: selectionStats?.avg ?? 0 },
+                { label: 'Max', value: selectionStats?.max ?? 0 },
+                { label: 'Min', value: selectionStats?.min ?? 0 },
+            ]"
+        />
     </div>
 </template>
