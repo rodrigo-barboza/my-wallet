@@ -46,11 +46,7 @@ const categoryBars = computed(() =>
 const categoryBarMax = computed(() => Math.max(1, ...categoryBars.value.map((d) => d.value), 1))
 const hasCategoryData = computed(() => props.categoryDistribution.some((d) => d.total > 0))
 
-const canGoBack = computed(() => {
-    const first = props.window[0]
-    const now = new Date()
-    return !(first.year === now.getFullYear() && first.month === now.getMonth() + 1)
-})
+const canGoBack = computed(() => true)
 
 const isCurrentMonth = computed(() => {
     const first = props.window[0]

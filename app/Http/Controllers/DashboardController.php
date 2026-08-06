@@ -21,12 +21,6 @@ final readonly class DashboardController
         $startMonth = (int) $request->input('month', $currentMonth);
         $startYear = (int) $request->input('year', $currentYear);
 
-        // Clamp: never go before current month
-        if ($startYear < $currentYear || ($startYear === $currentYear && $startMonth < $currentMonth)) {
-            $startMonth = $currentMonth;
-            $startYear = $currentYear;
-        }
-
         $user = auth()->user();
         $monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
             'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
