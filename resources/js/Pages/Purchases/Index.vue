@@ -57,6 +57,51 @@ const searchQuery = ref('')
 
 const { goToMonth } = useMonthNavigation('purchases.index')
 
+function getItemKey(item: PurchaseSummaryItem): string {
+    const first = item.items[0]
+    return first?.card_id ? `card_${first.card_id}` : `purchase_${first?.id}`
+}
+
+const selectedIds = ref<Set<string>>(new Set())
+
+function toggleSelect(key: string): void {
+    const next = new Set(selectedIds.value)
+    if (next.has(key)) {
+        next.delete(key)
+    } else {
+        next.add(key)
+    }
+    selectedIds.value = next
+}
+
+function selectAll(): void {
+    if (selectedIds.value.size === filteredSummary.value.length) {
+        selectedIds.value = new Set()
+    } else {
+        selectedIds.value = new Set(filteredSummary.value.map(getItemKey))
+    }
+}
+
+const hasSelection = computed(() => selectedIds.value.size > 0)
+
+const selectedItems = computed(() =>
+    filteredSummary.value.filter(item => selectedIds.value.has(getItemKey(item)))
+)
+
+const selectionStats = computed(() => {
+    const items = selectedItems.value
+    if (items.length === 0) return null
+    const values = items.map(i => i.installment_value ?? i.total)
+    const total = values.reduce((sum, v) => sum + v, 0)
+    return {
+        total,
+        avg: total / values.length,
+        max: Math.max(...values),
+        min: Math.min(...values),
+        count: values.length,
+    }
+})
+
 const totalAmount = computed(() => props.summary.reduce((sum, item) => sum + parseFloat(String(item.total)), 0))
 
 const paidAmount = computed(() => props.summary.reduce((sum, item) => {
@@ -244,29 +289,59 @@ async function handleReorder(order: string[]): Promise<void> {
         </div>
 
         <template v-if="activeTab === 'compras'">
-            <div class="relative">
-                <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input
-                    v-model="searchQuery"
-                    placeholder="Buscar compra..."
-                    class="pl-9"
-                />
+            <div class="flex items-center gap-3">
+                <div class="relative flex-1">
+                    <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input
+                        v-model="searchQuery"
+                        placeholder="Buscar compra..."
+                        class="pl-9"
+                    />
+                </div>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    class="shrink-0"
+                    @click="selectAll"
+                >
+                    {{ selectedIds.size === filteredSummary.length && filteredSummary.length > 0 ? 'Desmarcar' : 'Selecionar' }}
+                </Button>
+            </div>
+            <div
+                v-if="hasSelection && selectionStats"
+                class="flex flex-wrap items-center gap-4 rounded-lg border bg-muted/30 px-4 py-2.5 text-sm"
+            >
+                <span class="font-medium text-muted-foreground">
+                    {{ selectionStats.count }} selecionado(s)
+                </span>
+                <span class="text-muted-foreground">·</span>
+                <span>Total: <span class="font-semibold text-foreground">{{ formatCurrency(selectionStats.total) }}</span></span>
+                <span class="text-muted-foreground">·</span>
+                <span>Média: <span class="font-semibold text-foreground">{{ formatCurrency(selectionStats.avg) }}</span></span>
+                <span class="text-muted-foreground">·</span>
+                <span>Max: <span class="font-semibold text-foreground">{{ formatCurrency(selectionStats.max) }}</span></span>
+                <span class="text-muted-foreground">·</span>
+                <span>Min: <span class="font-semibold text-foreground">{{ formatCurrency(selectionStats.min) }}</span></span>
             </div>
             <PurchaseSummary
                 v-if="viewMode === 'card'"
                 :items="filteredSummary"
                 :month="month"
                 :year="year"
+                :selected-ids="selectedIds"
                 @reorder="handleReorder"
                 @edit-purchase="onEditPurchase"
+                @toggle-select="toggleSelect"
             />
             <PurchasesTableMode
                 v-else
                 :items="filteredSummary"
                 :month="month"
                 :year="year"
+                :selected-ids="selectedIds"
                 @select="onTableSelect"
                 @card-select="onTableCardSelect"
+                @toggle-select="toggleSelect"
             />
         </template>
 

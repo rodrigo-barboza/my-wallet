@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import type { PurchaseSummaryItem } from '@/types/purchase'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Bell, CreditCard, ShoppingCart } from '@lucide/vue'
 import StatusBadge from '@/Components/StatusBadge.vue'
@@ -14,11 +15,13 @@ const props = defineProps<{
     items: PurchaseSummaryItem[]
     month: number
     year: number
+    selectedIds?: Set<string>
 }>()
 
 const emit = defineEmits<{
     select: [item: PurchaseSummaryItem]
     cardSelect: [item: PurchaseSummaryItem]
+    toggleSelect: [key: string]
 }>()
 
 const page = usePage()
@@ -84,6 +87,11 @@ function isCardGroup(item: PurchaseSummaryItem): boolean {
     return !!item.items[0]?.card_id
 }
 
+function getItemKey(item: PurchaseSummaryItem): string {
+    const first = item.items[0]
+    return first?.card_id ? `card_${first.card_id}` : `purchase_${first?.id}`
+}
+
 function handleRowClick(item: PurchaseSummaryItem): void {
     if (isCardGroup(item)) {
         emit('cardSelect', item)
@@ -99,7 +107,6 @@ function handleRowClick(item: PurchaseSummaryItem): void {
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead class="w-10">#</TableHead>
                     <TableHead class="w-10" />
                     <TableHead
                         class="cursor-pointer select-none"
@@ -129,6 +136,14 @@ function handleRowClick(item: PurchaseSummaryItem): void {
                     class="cursor-pointer"
                     @click="handleRowClick(item)"
                 >
+                    <TableCell class="py-2.5">
+                        <Checkbox
+                            :checked="selectedIds?.has(getItemKey(item))"
+                            class="cursor-pointer"
+                            @click.stop
+                            @update:checked="emit('toggleSelect', getItemKey(item))"
+                        />
+                    </TableCell>
                     <TableCell class="py-2.5 text-muted-foreground text-xs tabular-nums">
                         {{ index + 1 }}
                     </TableCell>

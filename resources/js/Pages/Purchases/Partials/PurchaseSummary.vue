@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import type { Purchase, PurchaseSummaryItem } from '@/types/purchase'
 import { Card as CardComponent, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Bell, CreditCard, ShoppingCart } from '@lucide/vue'
 import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue'
@@ -16,11 +17,13 @@ const props = defineProps<{
     items: PurchaseSummaryItem[]
     month: number
     year: number
+    selectedIds?: Set<string>
 }>()
 
 const emit = defineEmits<{
     reorder: [order: string[]]
     editPurchase: [purchase: Purchase]
+    toggleSelect: [key: string]
 }>()
 
 const selectedPurchase = ref<Purchase | undefined>()
@@ -106,6 +109,12 @@ function onEditPurchase(purchase: Purchase): void {
                 <CardHeader class="pb-2">
                     <CardTitle class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
+                            <Checkbox
+                                :checked="selectedIds?.has(getItemKey(item))"
+                                class="cursor-pointer"
+                                @click.stop
+                                @update:checked="emit('toggleSelect', getItemKey(item))"
+                            />
                             <CreditCard
                                 class="size-5"
                                 :style="{ color: item.items[0].card?.color ?? '#6b7280' }"
@@ -148,6 +157,12 @@ function onEditPurchase(purchase: Purchase): void {
                 <CardHeader class="pb-2">
                     <CardTitle class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
+                            <Checkbox
+                                :checked="selectedIds?.has(getItemKey(item))"
+                                class="cursor-pointer"
+                                @click.stop
+                                @update:checked="emit('toggleSelect', getItemKey(item))"
+                            />
                             <component
                                 :is="typeIcons[item.items[0].type] ?? ShoppingCart"
                                 class="size-5"

@@ -2,6 +2,7 @@
 import { computed, ref, watchEffect } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Check, ChevronLeft, ChevronRight, Copy, Plus, Trash2, X } from '@lucide/vue'
@@ -179,6 +180,38 @@ function toggleShowAll(checked: boolean): void {
     showAll.value = checked
 }
 
+const selectedIds = ref<Set<number>>(new Set())
+
+function toggleSelect(id: number): void {
+    const next = new Set(selectedIds.value)
+    if (next.has(id)) {
+        next.delete(id)
+    } else {
+        next.add(id)
+    }
+    selectedIds.value = next
+}
+
+function selectAll(): void {
+    if (selectedIds.value.size === sortedIncomes.value.length) {
+        selectedIds.value = new Set()
+    } else {
+        selectedIds.value = new Set(sortedIncomes.value.map(i => i.id))
+    }
+}
+
+const selectedTotals = computed(() => {
+    return visibleMonths.value.map(m => {
+        let total = 0
+        for (const income of props.incomes) {
+            if (!selectedIds.value.has(income.id)) continue
+            const val = income.months[m.year]?.[m.month]?.amount ?? 0
+            total += val
+        }
+        return total
+    })
+})
+
 function previousMonth(): void {
     centerMonth.value--
     if (centerMonth.value < 1) {
@@ -250,8 +283,14 @@ function nextMonth(): void {
                             class="sticky left-0 z-10 bg-muted/50 px-3 py-2.5 text-left font-medium text-muted-foreground min-w-[140px] cursor-pointer select-none"
                             @click="sortAsc = !sortAsc"
                         >
-                            Nome
-                            <span class="text-xs ml-1">{{ sortAsc ? '▲' : '▼' }}</span>
+                            <div class="flex items-center gap-2">
+                                <Checkbox
+                                    :checked="selectedIds.size === sortedIncomes.length && sortedIncomes.length > 0"
+                                    @update:checked="selectAll"
+                                />
+                                Nome
+                                <span class="text-xs ml-1">{{ sortAsc ? '▲' : '▼' }}</span>
+                            </div>
                         </th>
                         <th
                             v-for="m in visibleMonths"
@@ -277,40 +316,47 @@ function nextMonth(): void {
                         class="border-b last:border-b-0 hover:bg-muted/30"
                     >
                         <td class="sticky left-0 z-10 bg-background px-3 py-2.5 font-medium">
-                            <div
-                                v-if="editingName?.incomeId === income.id"
-                                class="flex items-center gap-1"
-                            >
-                                <Input
-                                    v-model="editingName.value"
-                                    class="h-7 text-sm"
-                                    @keydown.enter="saveName"
-                                    @keydown.esc="cancelEditName"
+                            <div class="flex items-center gap-2">
+                                <Checkbox
+                                    :checked="selectedIds.has(income.id)"
+                                    @click.stop
+                                    @update:checked="toggleSelect(income.id)"
                                 />
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    class="size-6 shrink-0"
-                                    @click="saveName"
+                                <div
+                                    v-if="editingName?.incomeId === income.id"
+                                    class="flex items-center gap-1"
                                 >
-                                    <Check class="size-3" />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    class="size-6 shrink-0"
-                                    @click="cancelEditName"
+                                    <Input
+                                        v-model="editingName.value"
+                                        class="h-7 text-sm"
+                                        @keydown.enter="saveName"
+                                        @keydown.esc="cancelEditName"
+                                    />
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        class="size-6 shrink-0"
+                                        @click="saveName"
+                                    >
+                                        <Check class="size-3" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        class="size-6 shrink-0"
+                                        @click="cancelEditName"
+                                    >
+                                        <X class="size-3" />
+                                    </Button>
+                                </div>
+                                <span
+                                    v-else
+                                    class="cursor-pointer hover:text-primary"
+                                    @click="startEditName(income)"
                                 >
-                                    <X class="size-3" />
-                                </Button>
+                                    {{ income.name }}
+                                </span>
                             </div>
-                            <span
-                                v-else
-                                class="cursor-pointer hover:text-primary"
-                                @click="startEditName(income)"
-                            >
-                                {{ income.name }}
-                            </span>
                         </td>
                         <td
                             v-for="m in visibleMonths"
@@ -388,7 +434,7 @@ function nextMonth(): void {
                         class="border-b last:border-b-0"
                     >
                         <td
-                            :colspan="visibleMonths.length + 2"
+                            :colspan="visibleMonths.length + 3"
                             class="h-24 text-center text-muted-foreground"
                         >
                             Nenhuma entrada registrada. Clique em "Nova entrada" para adicionar.
@@ -396,6 +442,23 @@ function nextMonth(): void {
                     </tr>
                 </tbody>
                 <tfoot v-if="filteredIncomes.length > 0">
+                    <tr
+                        v-if="selectedIds.size > 0"
+                        class="border-t-2 border-amber-500/30 bg-amber-500/5 font-semibold"
+                    >
+                        <td class="sticky left-0 z-10 bg-amber-500/5 px-3 py-2.5 text-foreground">
+                            Selecionado
+                        </td>
+                        <td
+                            v-for="(total, i) in selectedTotals"
+                            :key="i"
+                            class="px-3 py-2.5 text-center tabular-nums text-amber-600"
+                            :class="visibleMonths[i].month === centerMonth && visibleMonths[i].year === centerYear ? 'bg-amber-500/10' : ''"
+                        >
+                            {{ total > 0 ? formatCurrency(total) : '-' }}
+                        </td>
+                        <td class="px-3 py-2.5" />
+                    </tr>
                     <tr class="border-t-2 border-primary/20 bg-primary/5 font-semibold">
                         <td class="sticky left-0 z-10 bg-primary/5 px-3 py-2.5 text-foreground">
                             Total
