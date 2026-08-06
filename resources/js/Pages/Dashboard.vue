@@ -70,10 +70,23 @@ function isToday(dateStr: string): boolean {
     return dateStr === todayStr
 }
 
+function isTomorrow(dateStr: string): boolean {
+    const now = new Date()
+    now.setDate(now.getDate() + 1)
+    const tomorrowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    return dateStr === tomorrowStr
+}
+
 function isOverdue(dateStr: string): boolean {
     const now = new Date()
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
     return dateStr < todayStr
+}
+
+function paymentDateLabel(dateStr: string): string {
+    if (isToday(dateStr)) return 'hoje'
+    if (isTomorrow(dateStr)) return 'amanhã'
+    return formatDate(dateStr)
 }
 
 function goToMonth(month: number, year: number): void {
@@ -430,14 +443,15 @@ function categoryColor(index: number, type: string): string {
                             class="flex items-center justify-between rounded-lg border px-3 py-2.5 transition-colors"
                             :class="{
                                 'border-amber-500/40 bg-amber-500/5': isToday(payment.dueDate),
+                                'border-blue-500/40 bg-blue-500/5': isTomorrow(payment.dueDate),
                                 'border-destructive/40 bg-destructive/5': isOverdue(payment.dueDate),
-                                'hover:bg-muted/50': !isToday(payment.dueDate) && !isOverdue(payment.dueDate),
+                                'hover:bg-muted/50': !isToday(payment.dueDate) && !isTomorrow(payment.dueDate) && !isOverdue(payment.dueDate),
                             }"
                         >
                             <div class="flex flex-col min-w-0 mr-2">
                                 <span class="text-sm font-medium truncate">{{ payment.name }}</span>
                                 <span class="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5 flex-wrap">
-                                    {{ formatDate(payment.dueDate) }}
+                                    {{ paymentDateLabel(payment.dueDate) }}
                                     <Badge
                                         variant="secondary"
                                         class="text-[10px] px-1.5 py-0 h-4 leading-none"
@@ -457,6 +471,13 @@ function categoryColor(index: number, type: string): string {
                                         class="border-amber-500 text-amber-600 text-[10px] px-1.5 py-0 h-4 leading-none"
                                     >
                                         hoje
+                                    </Badge>
+                                    <Badge
+                                        v-else-if="isTomorrow(payment.dueDate)"
+                                        variant="outline"
+                                        class="border-blue-500 text-blue-600 text-[10px] px-1.5 py-0 h-4 leading-none"
+                                    >
+                                        amanhã
                                     </Badge>
                                 </span>
                             </div>
