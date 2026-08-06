@@ -83,8 +83,6 @@ function selectAll(): void {
     }
 }
 
-const hasSelection = computed(() => selectedIds.value.size > 0)
-
 const selectedItems = computed(() =>
     filteredSummary.value.filter(item => selectedIds.value.has(getItemKey(item)))
 )
