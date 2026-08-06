@@ -1,7 +1,7 @@
 <script setup lang="ts">
 defineProps<{
     count: number
-    items: { label: string; value: number }[]
+    items: { label: string; value: string }[]
 }>()
 </script>
 
@@ -23,8 +23,8 @@ defineProps<{
                     {{ count }} selecionado(s)
                 </span>
                 <template v-for="(item, i) in items" :key="i">
-                    <span v-if="item.value > 0" class="text-muted-foreground">·</span>
-                    <span v-if="item.value > 0">
+                    <span class="text-muted-foreground">·</span>
+                    <span>
                         {{ item.label }}:
                         <span class="font-semibold text-foreground">{{ item.value }}</span>
                     </span>

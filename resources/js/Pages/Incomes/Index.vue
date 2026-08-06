@@ -201,24 +201,20 @@ function selectAll(): void {
     }
 }
 
-const selectedTotals = computed(() => {
-    return visibleMonths.value.map(m => {
-        let total = 0
-        for (const income of props.incomes) {
-            if (!selectedIds.value.has(income.id)) continue
-            const val = income.months[m.year]?.[m.month]?.amount ?? 0
-            total += val
+const selectedTotal = computed(() => {
+    let total = 0
+    for (const income of props.incomes) {
+        if (!selectedIds.value.has(income.id)) continue
+        for (const m of visibleMonths.value) {
+            total += income.months[m.year]?.[m.month]?.amount ?? 0
         }
-        return total
-    })
+    }
+    return total
 })
 
-const selectedItems = computed(() =>
-    visibleMonths.value.map((m, i) => ({
-        label: monthAbbrs[m.month - 1],
-        value: selectedTotals.value[i],
-    }))
-)
+const selectionBarItems = computed(() => [
+    { label: 'Total', value: formatCurrency(selectedTotal.value) },
+])
 
 function previousMonth(): void {
     centerMonth.value--
@@ -450,23 +446,6 @@ function nextMonth(): void {
                     </tr>
                 </tbody>
                 <tfoot v-if="filteredIncomes.length > 0">
-                    <tr
-                        v-if="selectedIds.size > 0"
-                        class="border-t-2 border-amber-500/30 bg-amber-500/5 font-semibold"
-                    >
-                        <td class="sticky left-0 z-10 bg-amber-500/5 px-3 py-2.5 text-foreground">
-                            Selecionado
-                        </td>
-                        <td
-                            v-for="(total, i) in selectedTotals"
-                            :key="i"
-                            class="px-3 py-2.5 text-center tabular-nums text-amber-600"
-                            :class="visibleMonths[i].month === centerMonth && visibleMonths[i].year === centerYear ? 'bg-amber-500/10' : ''"
-                        >
-                            {{ total > 0 ? formatCurrency(total) : '-' }}
-                        </td>
-                        <td class="px-3 py-2.5" />
-                    </tr>
                     <tr class="border-t-2 border-primary/20 bg-primary/5 font-semibold">
                         <td class="sticky left-0 z-10 bg-primary/5 px-3 py-2.5 text-foreground">
                             Total
@@ -509,7 +488,7 @@ function nextMonth(): void {
 
         <SelectionStatsBar
             :count="selectedIds.size"
-            :items="selectedItems"
+            :items="selectionBarItems"
         />
     </div>
 

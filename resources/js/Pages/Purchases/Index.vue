@@ -75,14 +75,6 @@ function toggleSelect(key: string): void {
     selectedIds.value = next
 }
 
-function selectAll(): void {
-    if (selectedIds.value.size === filteredSummary.value.length) {
-        selectedIds.value = new Set()
-    } else {
-        selectedIds.value = new Set(filteredSummary.value.map(getItemKey))
-    }
-}
-
 const selectedItems = computed(() =>
     filteredSummary.value.filter(item => selectedIds.value.has(getItemKey(item)))
 )
@@ -99,6 +91,17 @@ const selectionStats = computed(() => {
         min: Math.min(...values),
         count: values.length,
     }
+})
+
+const selectionBarItems = computed(() => {
+    const s = selectionStats.value
+    if (!s) return []
+    return [
+        { label: 'Total', value: formatCurrency(s.total) },
+        { label: 'Média', value: formatCurrency(s.avg) },
+        { label: 'Max', value: formatCurrency(s.max) },
+        { label: 'Min', value: formatCurrency(s.min) },
+    ]
 })
 
 const totalAmount = computed(() => props.summary.reduce((sum, item) => sum + parseFloat(String(item.total)), 0))
@@ -288,23 +291,13 @@ async function handleReorder(order: string[]): Promise<void> {
         </div>
 
         <template v-if="activeTab === 'compras'">
-            <div class="flex items-center gap-3">
-                <div class="relative flex-1">
-                    <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <Input
-                        v-model="searchQuery"
-                        placeholder="Buscar compra..."
-                        class="pl-9"
-                    />
-                </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    class="shrink-0"
-                    @click="selectAll"
-                >
-                    {{ selectedIds.size === filteredSummary.length && filteredSummary.length > 0 ? 'Desmarcar' : 'Selecionar' }}
-                </Button>
+            <div class="relative">
+                <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                    v-model="searchQuery"
+                    placeholder="Buscar compra..."
+                    class="pl-9"
+                />
             </div>
             <PurchaseSummary
                 v-if="viewMode === 'card'"
@@ -358,12 +351,7 @@ async function handleReorder(order: string[]): Promise<void> {
 
         <SelectionStatsBar
             :count="selectionStats?.count ?? 0"
-            :items="[
-                { label: 'Total', value: selectionStats?.total ?? 0 },
-                { label: 'Média', value: selectionStats?.avg ?? 0 },
-                { label: 'Max', value: selectionStats?.max ?? 0 },
-                { label: 'Min', value: selectionStats?.min ?? 0 },
-            ]"
+            :items="selectionBarItems"
         />
     </div>
 </template>
