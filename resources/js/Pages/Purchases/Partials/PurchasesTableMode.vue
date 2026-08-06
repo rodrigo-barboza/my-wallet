@@ -108,6 +108,7 @@ function handleRowClick(item: PurchaseSummaryItem): void {
             <TableHeader>
                 <TableRow>
                     <TableHead class="w-10" />
+                    <TableHead class="w-10" />
                     <TableHead
                         class="cursor-pointer select-none"
                         @click="toggleSort('name')"
@@ -147,15 +148,13 @@ function handleRowClick(item: PurchaseSummaryItem): void {
                     <TableCell class="py-2.5 text-muted-foreground text-xs tabular-nums">
                         {{ index + 1 }}
                     </TableCell>
-                    <TableCell class="py-2.5">
-                        <component
-                            :is="getIcon(item)"
-                            class="size-4"
-                            :style="{ color: getIconColor(item) }"
-                        />
-                    </TableCell>
                     <TableCell class="py-2.5 font-medium">
                         <div class="flex items-center gap-1.5">
+                            <component
+                                :is="getIcon(item)"
+                                class="size-4 shrink-0"
+                                :style="{ color: getIconColor(item) }"
+                            />
                             {{ getName(item) }}
                             <TooltipProvider v-if="item.items[0]?.notify_due">
                                 <Tooltip>
