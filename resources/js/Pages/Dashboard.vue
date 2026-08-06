@@ -80,8 +80,6 @@ function isOverdue(dateStr: string): boolean {
 }
 
 function paymentDateLabel(dateStr: string): string {
-    if (isToday(dateStr)) return 'hoje'
-    if (isTomorrow(dateStr)) return 'amanhã'
     return formatDate(dateStr)
 }
 
