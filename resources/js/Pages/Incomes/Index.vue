@@ -2,7 +2,7 @@
 import { computed, ref, watchEffect } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
+import Checkbox from '@/Components/Checkbox.vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Check, ChevronLeft, ChevronRight, Copy, Plus, Trash2, X } from '@lucide/vue'
