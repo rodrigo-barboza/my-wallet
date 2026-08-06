@@ -72,9 +72,11 @@ final readonly class MonthlySummaryService
             ->whereHas('purchase', fn ($q) => $q->where('user_id', $user->id))
             ->with('purchase:amount,installments_total,type')
             ->get()
-            ->sum(fn ($payment) => $payment->purchase->type === 'credit_card' && $payment->purchase->installments_total
-                ? (float) $payment->purchase->amount / $payment->purchase->installments_total
-                : (float) $payment->purchase->amount
+            ->sum(fn ($payment) => $payment->purchase
+                ? ($payment->purchase->type === 'credit_card' && $payment->purchase->installments_total
+                    ? (float) $payment->purchase->amount / $payment->purchase->installments_total
+                    : (float) $payment->purchase->amount)
+                : 0
             );
 
         $cardPaid = InvoicePayment::whereHas('invoice', function ($q) use ($user, $month, $year) {

@@ -54,6 +54,7 @@ final readonly class PurchaseController
             ->whereHas('purchase', fn ($q) => $q->where('user_id', auth()->id()))
             ->with('purchase:id,name,amount,installments_total,type')
             ->get()
+            ->filter(fn ($payment) => $payment->purchase !== null)
             ->map(fn ($payment) => [
                 'id' => $payment->id,
                 'name' => $payment->purchase->name,
