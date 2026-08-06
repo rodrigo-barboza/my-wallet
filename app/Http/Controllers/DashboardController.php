@@ -110,7 +110,7 @@ final readonly class DashboardController
         $matrix = $allItems->values();
 
         $categoryDistribution = $service->expensesByType($user, $startYear, $startMonth);
-        $upcomingPayments = $service->upcomingPayments($user, $startYear, $startMonth, 7);
+        $upcomingPayments = $service->upcomingPayments($user, $startYear, $startMonth, 5);
 
         return Inertia::render('Dashboard', [
             'window' => $window,

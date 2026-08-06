@@ -117,7 +117,7 @@ final readonly class MonthlySummaryService
             ->values();
     }
 
-    public function upcomingPayments(User $user, int $year, int $month, int $limit = 7): Collection
+    public function upcomingPayments(User $user, int $year, int $month, int $limit = 5): Collection
     {
         $now = Carbon::now();
         $payments = collect();
@@ -164,7 +164,7 @@ final readonly class MonthlySummaryService
                 if (! $isPaid && $dueDate->gte($now->startOfDay())) {
                     $payments->push([
                         'name' => $card->name,
-                        'dueDate' => $dueDate->toISOString(),
+                        'dueDate' => $dueDate->format('Y-m-d'),
                         'amount' => $total,
                         'type' => 'credit_card',
                     ]);
@@ -213,8 +213,8 @@ final readonly class MonthlySummaryService
                 if (! $isPaid && $dueDate->gte($now->startOfDay())) {
                     $payments->push([
                         'name' => $purchase->name,
-                        'dueDate' => $dueDate->toISOString(),
-                        'amount' => (float) $purchase->amount,
+                        'dueDate' => $dueDate->format('Y-m-d'),
+                        'amount' => (float) ($purchase->installments_total ? $purchase->amount / $purchase->installments_total : $purchase->amount),
                         'type' => $purchase->type->value,
                     ]);
                     $found = true;
