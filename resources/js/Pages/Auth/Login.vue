@@ -59,17 +59,25 @@ function submit() {
                 @update:model-value="form.password = $event"
             />
 
-            <div class="flex items-center gap-2">
-                <Checkbox
-                    :checked="form.remember"
-                    @update:checked="(v: boolean) => form.remember = v"
-                />
-                <Label
-                    class="text-sm text-muted-foreground"
-                    for="remember"
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <Checkbox
+                        :checked="form.remember"
+                        @update:checked="(v: boolean) => form.remember = v"
+                    />
+                    <Label
+                        class="text-sm text-muted-foreground"
+                        for="remember"
+                    >
+                        Lembrar de mim
+                    </Label>
+                </div>
+                <Link
+                    class="text-xs font-medium text-primary hover:underline"
+                    :href="route('password.request')"
                 >
-                    Lembrar de mim
-                </Label>
+                    Esqueceu a senha?
+                </Link>
             </div>
 
             <Button

@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\GoogleLoginController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncomeController;
@@ -23,6 +25,11 @@ Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
     Route::post('register', [RegisteredUserController::class, 'store'])->name('register.store')
         ->middleware('throttle:5,1');
+
+    Route::get('forgot-password', [ForgotPasswordController::class, 'create'])->name('password.request');
+    Route::post('forgot-password', [ForgotPasswordController::class, 'store'])->name('password.email');
+    Route::get('reset-password/{token}', [ResetPasswordController::class, 'create'])->name('password.reset');
+    Route::post('reset-password', [ResetPasswordController::class, 'store'])->name('password.store');
 
     Route::get('auth/google', [GoogleLoginController::class, 'redirect'])->name('google.redirect');
     Route::get('auth/google/callback', [GoogleLoginController::class, 'callback'])->name('google.callback');
