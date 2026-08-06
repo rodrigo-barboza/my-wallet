@@ -1,7 +1,13 @@
 <script setup lang="ts">
+import { Button } from '@/components/ui/button'
+
 defineProps<{
     count: number
     items: { label: string; value: string }[]
+}>()
+
+const emit = defineEmits<{
+    clear: []
 }>()
 </script>
 
@@ -29,6 +35,15 @@ defineProps<{
                         <span class="font-semibold text-foreground">{{ item.value }}</span>
                     </span>
                 </template>
+                <span class="text-muted-foreground">·</span>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    class="h-7 text-xs"
+                    @click="emit('clear')"
+                >
+                    Desmarcar
+                </Button>
             </div>
         </div>
     </Transition>

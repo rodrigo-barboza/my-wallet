@@ -82,7 +82,7 @@ const selectedItems = computed(() =>
 const selectionStats = computed(() => {
     const items = selectedItems.value
     if (items.length === 0) return null
-    const values = items.map(i => i.installment_value ?? i.total)
+    const values = items.map(i => parseFloat(String(i.installment_value ?? i.total)) || 0)
     const total = values.reduce((sum, v) => sum + v, 0)
     return {
         total,
@@ -352,6 +352,7 @@ async function handleReorder(order: string[]): Promise<void> {
         <SelectionStatsBar
             :count="selectionStats?.count ?? 0"
             :items="selectionBarItems"
+            @clear="selectedIds = new Set()"
         />
     </div>
 </template>

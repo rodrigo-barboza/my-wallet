@@ -205,9 +205,7 @@ const selectedTotal = computed(() => {
     let total = 0
     for (const income of props.incomes) {
         if (!selectedIds.value.has(income.id)) continue
-        for (const m of visibleMonths.value) {
-            total += income.months[m.year]?.[m.month]?.amount ?? 0
-        }
+        total += income.months[centerYear.value]?.[centerMonth.value]?.amount ?? 0
     }
     return total
 })
@@ -489,6 +487,7 @@ function nextMonth(): void {
         <SelectionStatsBar
             :count="selectedIds.size"
             :items="selectionBarItems"
+            @clear="selectedIds = new Set()"
         />
     </div>
 
