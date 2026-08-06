@@ -10,7 +10,7 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import DashboardBarChart from '@/Components/DashboardBarChart.vue'
 import SummaryCard from '@/Components/SummaryCard.vue'
 import { chartPalette, colors, typeColors } from '@/lib/colors'
-import { formatCurrency, formatDate, formatShortCurrency } from '@/lib/format'
+import { formatCurrency, formatDate } from '@/lib/format'
 import type { CategoryDistribution, DashboardMatrixItem, DashboardWindowMonth, MonthlySummary, UpcomingPayment } from '@/types/dashboard'
 
 defineOptions({ layout: AppLayout })
@@ -299,7 +299,7 @@ function categoryColor(index: number, type: string): string {
                                         'bg-muted/20': !visibleWindow[ti]?.isHighlighted && ri % 2 === 1,
                                     }"
                                 >
-                                    <span v-if="total > 0">{{ formatShortCurrency(total) }}</span>
+                                    <span v-if="total > 0">{{ formatCurrency(total) }}</span>
                                     <span
                                         v-else
                                         class="text-muted-foreground/40"
@@ -318,7 +318,7 @@ function categoryColor(index: number, type: string): string {
                                     class="px-3 py-2.5 text-center text-sm font-bold tabular-nums"
                                     :class="visibleWindow[ti]?.isHighlighted ? 'bg-primary/5' : ''"
                                 >
-                                    {{ total > 0 ? formatShortCurrency(total) : '—' }}
+                                    {{ total > 0 ? formatCurrency(total) : '—' }}
                                 </td>
                             </tr>
                         </tfoot>
@@ -368,7 +368,7 @@ function categoryColor(index: number, type: string): string {
                             >
                                 <div class="text-[10px] font-medium mb-0.5">{{ month.label.slice(0, 3) }}</div>
                                 <div class="text-xs tabular-nums font-semibold">
-                                    <span v-if="row.totals[mi] > 0">{{ formatShortCurrency(row.totals[mi]) }}</span>
+                                    <span v-if="row.totals[mi] > 0">{{ formatCurrency(row.totals[mi]) }}</span>
                                     <span
                                         v-else
                                         class="text-muted-foreground/40"
@@ -390,7 +390,7 @@ function categoryColor(index: number, type: string): string {
                                 class="text-center rounded-md py-1.5 px-1 text-xs font-bold tabular-nums"
                                 :class="visibleWindow[ti]?.isHighlighted ? 'bg-primary/10 text-primary' : 'text-foreground'"
                             >
-                                {{ total > 0 ? formatShortCurrency(total) : '—' }}
+                                {{ total > 0 ? formatCurrency(total) : '—' }}
                             </div>
                         </div>
                     </div>
