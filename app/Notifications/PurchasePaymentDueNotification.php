@@ -26,11 +26,14 @@ final class PurchasePaymentDueNotification extends Notification implements Shoul
     public function toMail(object $notifiable): MailMessage
     {
         $now = now();
+        $valor = $this->purchase->installments_total
+            ? round($this->purchase->amount / $this->purchase->installments_total, 2)
+            : $this->purchase->amount;
 
         return (new MailMessage)
             ->subject("Pagamento de {$this->purchase->name} vence hoje")
             ->greeting("Olá, {$notifiable->name}!")
-            ->line("O pagamento de **{$this->purchase->name}** no valor de R$ ".number_format((float) $this->purchase->amount, 2, ',', '.')." vence hoje ({$this->purchase->payment_day}/{$now->format('m/Y')}).")
+            ->line("O pagamento de **{$this->purchase->name}** no valor de R$ ".number_format($valor, 2, ',', '.')." vence hoje ({$this->purchase->payment_day}/{$now->format('m/Y')}).")
             ->action('Ver detalhes', route('purchases.show', $this->purchase))
             ->line('Acesse sua carteira para mais detalhes.');
     }
