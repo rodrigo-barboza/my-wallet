@@ -126,7 +126,7 @@ function categoryColor(index: number, type: string): string {
 
         <h2 class="text-2xl font-bold">Dashboard</h2>
 
-        <div class="grid gap-3 sm:grid-cols-3">
+        <div class="grid gap-3 sm:grid-cols-3 items-start">
             <SummaryCard
                 title="Despesas"
                 :description="`${window[highlightedIndex].label} ${window[highlightedIndex].year}`"

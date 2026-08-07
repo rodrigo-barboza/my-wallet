@@ -7,7 +7,6 @@ namespace App\Services;
 use App\Enums\InvoiceStatus;
 use App\Models\IncomeMonth;
 use App\Models\Invoice;
-use App\Models\InvoicePayment;
 use App\Models\PurchasePayment;
 use App\Models\User;
 use Carbon\Carbon;
@@ -71,21 +70,19 @@ final readonly class MonthlySummaryService
     {
         $individualPaid = PurchasePayment::where('month', $month)
             ->where('year', $year)
-            ->whereHas('purchase', fn ($q) => $q->where('user_id', $user->id))
+            ->whereHas('purchase', fn ($q) => $q->where('user_id', $user->id)->whereNull('card_id'))
             ->with('purchase:amount,installments_total,type')
             ->get()
             ->sum(fn ($payment) => $payment->purchase
-                ? ($payment->purchase->type === 'credit_card' && $payment->purchase->installments_total
-                    ? round((float) $payment->purchase->amount / $payment->purchase->installments_total, 2)
-                    : (float) $payment->purchase->amount)
+                ? round((float) $payment->purchase->amount / ($payment->purchase->installments_total ?? 1), 2)
                 : 0
             );
 
-        $cardPaid = InvoicePayment::whereHas('invoice', function ($q) use ($user, $month, $year) {
-            $q->where('month', $month)
-                ->where('year', $year)
-                ->where('user_id', $user->id);
-        })->sum('amount');
+        $cardPaid = Invoice::where('month', $month)
+            ->where('year', $year)
+            ->where('user_id', $user->id)
+            ->whereNotNull('paid_amount')
+            ->sum('paid_amount');
 
         return (float) $individualPaid + (float) $cardPaid;
     }
