@@ -31,7 +31,7 @@ final readonly class MonthlySummaryService
 
         foreach ($grouped as $cardId => $items) {
             $card = $items->first()->card;
-            $originalTotal = (float) $items->sum(fn ($p) => $p->installments_total ? ($p->amount / $p->installments_total) : $p->amount);
+            $originalTotal = (float) $items->sum(fn ($p) => $p->installments_total ? round($p->amount / $p->installments_total, 2) : $p->amount);
 
             $summary->push([
                 'id' => "card_{$cardId}",
@@ -48,7 +48,7 @@ final readonly class MonthlySummaryService
                 'name' => $purchase->name,
                 'type' => $purchase->type->value,
                 'total' => (float) ($purchase->installments_total
-                    ? $purchase->amount / $purchase->installments_total
+                    ? round($purchase->amount / $purchase->installments_total, 2)
                     : $purchase->amount),
                 'purchase_id' => (int) $purchase->id,
                 'payment_day' => $purchase->payment_day ?? $purchase->start_date->day,
@@ -76,7 +76,7 @@ final readonly class MonthlySummaryService
             ->get()
             ->sum(fn ($payment) => $payment->purchase
                 ? ($payment->purchase->type === 'credit_card' && $payment->purchase->installments_total
-                    ? (float) $payment->purchase->amount / $payment->purchase->installments_total
+                    ? round((float) $payment->purchase->amount / $payment->purchase->installments_total, 2)
                     : (float) $payment->purchase->amount)
                 : 0
             );
@@ -106,7 +106,7 @@ final readonly class MonthlySummaryService
         return $purchases
             ->groupBy(fn ($p) => $p->type->value)
             ->map(function ($items, $type) use ($typeLabels) {
-                $total = (float) $items->sum(fn ($p) => $p->installments_total ? ($p->amount / $p->installments_total) : $p->amount);
+                $total = (float) $items->sum(fn ($p) => $p->installments_total ? round($p->amount / $p->installments_total, 2) : $p->amount);
 
                 return [
                     'type' => $type,
@@ -145,7 +145,7 @@ final readonly class MonthlySummaryService
                     continue;
                 }
 
-                $total = (float) $active->sum(fn ($p) => $p->installments_total ? ($p->amount / $p->installments_total) : $p->amount);
+                $total = (float) $active->sum(fn ($p) => $p->installments_total ? round($p->amount / $p->installments_total, 2) : $p->amount);
                 $dueDate = Carbon::create($checkYear, $checkMonth, (int) $card->due_day);
 
                 $invoice = Invoice::where('card_id', $card->id)
@@ -214,7 +214,7 @@ final readonly class MonthlySummaryService
                     $payments->push([
                         'name' => $purchase->name,
                         'dueDate' => $dueDate->format('Y-m-d'),
-                        'amount' => (float) ($purchase->installments_total ? $purchase->amount / $purchase->installments_total : $purchase->amount),
+                        'amount' => (float) ($purchase->installments_total ? round($purchase->amount / $purchase->installments_total, 2) : $purchase->amount),
                         'type' => $purchase->type->value,
                     ]);
                     $found = true;
