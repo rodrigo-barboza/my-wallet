@@ -3,7 +3,7 @@ import { watch } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import { useOnboarding } from '@/composables/useOnboarding'
 
-const { shouldShowTour, startTour, startTourOnPage } = useOnboarding()
+const { shouldShowTour, startTourOnPage } = useOnboarding()
 
 const page = usePage()
 

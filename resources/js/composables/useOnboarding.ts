@@ -206,11 +206,6 @@ export function useOnboarding() {
         return (page as any).component as string
     }
 
-    function isPageVisited(pageName: string): boolean {
-        const state = getTourState()
-        return state?.visitedPages.includes(pageName) ?? false
-    }
-
     function shouldShowTour(): boolean {
         if (onboardingCompleted.value) {
             return false
