@@ -71,7 +71,7 @@ final readonly class MonthlySummaryService
         $individualPaid = PurchasePayment::where('month', $month)
             ->where('year', $year)
             ->whereHas('purchase', fn ($q) => $q->where('user_id', $user->id)->whereNull('card_id'))
-            ->with('purchase:amount,installments_total,type')
+            ->with('purchase')
             ->get()
             ->sum(fn ($payment) => $payment->purchase
                 ? round((float) $payment->purchase->amount / ($payment->purchase->installments_total ?? 1), 2)
