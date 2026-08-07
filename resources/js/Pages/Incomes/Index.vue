@@ -238,14 +238,14 @@ function nextMonth(): void {
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold">Entradas</h2>
             <div class="flex items-center gap-2">
-                <Button @click="showFormModal = true">
+                <Button id="onboarding-incomes-add" @click="showFormModal = true">
                     <Plus class="mr-2 size-4" />
                     Nova entrada
                 </Button>
             </div>
         </div>
 
-        <div class="flex items-center justify-center gap-4">
+        <div id="onboarding-incomes-month" class="flex items-center justify-center gap-4">
             <Button
                 variant="outline"
                 size="icon"
@@ -277,7 +277,7 @@ function nextMonth(): void {
             </Button>
         </div>
 
-        <div class="overflow-x-auto rounded-md border">
+        <div id="onboarding-incomes-list" class="overflow-x-auto rounded-md border">
             <table class="w-full border-collapse text-sm">
                 <thead>
                     <tr class="border-b bg-muted/50">

@@ -126,7 +126,7 @@ function categoryColor(index: number, type: string): string {
 
         <h2 class="text-2xl font-bold">Dashboard</h2>
 
-        <div class="grid gap-3 sm:grid-cols-3 items-start">
+        <div id="onboarding-summary-cards" class="grid gap-3 sm:grid-cols-3 items-start">
             <SummaryCard
                 title="Despesas"
                 :description="`${window[highlightedIndex].label} ${window[highlightedIndex].year}`"
@@ -161,7 +161,7 @@ function categoryColor(index: number, type: string): string {
             />
         </div>
 
-        <Card>
+        <Card id="onboarding-progress">
             <CardContent class="py-4">
                 <div class="space-y-3">
                     <div class="h-2 w-full overflow-hidden rounded-full bg-muted">
@@ -210,7 +210,7 @@ function categoryColor(index: number, type: string): string {
             <CardHeader class="pb-3 px-4 pt-4">
                 <div class="flex items-center justify-between">
                     <CardTitle class="text-base font-semibold">Gastos por mês</CardTitle>
-                    <div class="flex items-center gap-1">
+                    <div class="flex items-center gap-1" id="onboarding-month-nav">
                         <Button
                             v-if="!isCurrentMonth"
                             variant="outline"
@@ -410,7 +410,7 @@ function categoryColor(index: number, type: string): string {
         </Card>
 
         <div class="grid gap-6 lg:grid-cols-2">
-            <Card>
+            <Card id="onboarding-upcoming">
                 <CardHeader class="pb-2">
                     <CardTitle class="flex items-center gap-2 text-base font-semibold">
                         <AlertCircle

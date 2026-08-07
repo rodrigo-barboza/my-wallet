@@ -71,7 +71,7 @@ function handleBulkDelete(ids: number[]): void {
 
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold">Cartões</h2>
-            <div class="flex items-center gap-2">
+            <div id="onboarding-cards-viewmode" class="flex items-center gap-2">
                 <TooltipProvider>
                     <Tooltip
                         v-for="mode in viewModes"
@@ -95,7 +95,7 @@ function handleBulkDelete(ids: number[]): void {
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
-                <Button @click="openCreateModal">
+                <Button id="onboarding-cards-add" @click="openCreateModal">
                     <Plus class="mr-2 size-4" />
                     Novo cartão
                 </Button>
@@ -123,6 +123,7 @@ function handleBulkDelete(ids: number[]): void {
 
         <CardsSectionGridMode
             v-else-if="viewMode === 'grid'"
+            id="onboarding-cards-list"
             :cards="cards"
             @delete="handleDelete"
             @edit="openEditModal"
@@ -130,6 +131,7 @@ function handleBulkDelete(ids: number[]): void {
 
         <CardsSectionTableMode
             v-else
+            id="onboarding-cards-list"
             :cards="cards"
             @bulk-delete="handleBulkDelete"
             @delete="handleDelete"

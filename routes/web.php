@@ -11,6 +11,7 @@ use App\Http\Controllers\CardController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PreferencesController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
@@ -80,4 +81,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('profile/confirm-destroy/{user}', [ProfileController::class, 'confirmDestroy'])->name('profile.confirm-destroy');
 
     Route::patch('/preferences', [PreferencesController::class, 'update'])->name('preferences.update');
+
+    Route::post('onboarding/complete', [OnboardingController::class, 'complete'])->name('onboarding.complete');
+    Route::post('onboarding/reset', [OnboardingController::class, 'reset'])->name('onboarding.reset');
 });

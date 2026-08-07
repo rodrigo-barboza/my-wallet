@@ -12,6 +12,7 @@ import {
     SheetClose,
 } from '@/components/ui/sheet'
 import NavLink from '@/Components/NavLink.vue'
+import OnboardingProvider from '@/Components/OnboardingProvider.vue'
 import ToastContainer from '@/Components/ToastContainer.vue'
 import UserDropdown from '@/Components/UserDropdown.vue'
 import { useToast } from '@/composables/useToast'
@@ -40,15 +41,16 @@ const navLinks = [
 
 <template>
     <div class="flex min-h-screen flex-col bg-muted/30">
+        <OnboardingProvider />
         <ToastContainer />
 
         <header class="flex items-center justify-between border-b bg-background px-4 py-3 sm:px-6 lg:px-8">
             <div class="flex items-center gap-6">
-                <Link :href="route('purchases.index')">
+                <Link id="onboarding-logo" :href="route('dashboard')">
                     <img src="/images/my-wallet.png" alt="Minha Carteira" class="h-8" />
                 </Link>
 
-                <nav class="hidden items-center gap-1 sm:flex">
+                <nav id="onboarding-nav" class="hidden items-center gap-1 sm:flex">
                     <NavLink
                         v-for="link in navLinks"
                         :key="link.route"

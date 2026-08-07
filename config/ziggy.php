@@ -47,5 +47,7 @@ return [
         'profile.update-email',
         'profile.update-password',
         'profile.destroy',
+        'onboarding.complete',
+        'onboarding.reset',
     ],
 ];

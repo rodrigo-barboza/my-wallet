@@ -7,9 +7,12 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover'
-import { User, LogOut } from '@lucide/vue'
+import { User, LogOut, Play } from '@lucide/vue'
+import { useOnboarding } from '@/composables/useOnboarding'
 
 const isOpen = ref(false)
+
+const { onboardingCompleted, resetTour } = useOnboarding()
 
 const page = usePage()
 const auth = computed(() => (page.props as any).auth ?? null)
@@ -45,6 +48,14 @@ const initials = computed(() => {
             side="bottom"
         >
             <div class="flex flex-col gap-1">
+                <button
+                    v-if="onboardingCompleted"
+                    class="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted cursor-pointer"
+                    @click="resetTour(); isOpen = false"
+                >
+                    <Play class="size-4" />
+                    Ver tour novamente
+                </button>
                 <Link
                     class="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted"
                     :href="route('profile')"

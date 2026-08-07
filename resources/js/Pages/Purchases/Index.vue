@@ -185,39 +185,43 @@ async function handleReorder(order: string[]): Promise<void> {
             <h2 class="text-2xl font-bold">Compras</h2>
             <div class="flex items-center gap-2">
                 <template v-if="activeTab === 'compras'">
-                    <TooltipProvider>
-                        <Tooltip
-                            v-for="mode in viewModes"
-                            :key="mode.key"
-                        >
-                            <TooltipTrigger as-child>
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    :class="viewMode === mode.key ? 'bg-primary text-primary-foreground' : ''"
-                                    @click="viewMode = mode.key"
-                                >
-                                    <component :is="mode.icon" class="size-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{{ mode.label }}</TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
+                    <div id="onboarding-purchases-viewmode">
+                        <TooltipProvider>
+                            <Tooltip
+                                v-for="mode in viewModes"
+                                :key="mode.key"
+                            >
+                                <TooltipTrigger as-child>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        :class="viewMode === mode.key ? 'bg-primary text-primary-foreground' : ''"
+                                        @click="viewMode = mode.key"
+                                    >
+                                        <component :is="mode.icon" class="size-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{{ mode.label }}</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
                 </template>
-                <Button @click="showFormModal = true">
+                <Button id="onboarding-purchases-add" @click="showFormModal = true">
                     <Plus class="mr-2 size-4" />
                     Nova compra
                 </Button>
             </div>
         </div>
 
-        <MonthNavigator
-            :month="month"
-            :year="year"
-            @navigate="goToMonth"
-        />
+        <div id="onboarding-purchases-month">
+            <MonthNavigator
+                :month="month"
+                :year="year"
+                @navigate="goToMonth"
+            />
+        </div>
 
-        <div class="flex justify-center">
+        <div id="onboarding-purchases-tabs" class="flex justify-center">
             <div class="flex items-center gap-1 rounded-lg bg-muted p-1">
                 <button
                     v-for="tab in tabs"
@@ -232,7 +236,7 @@ async function handleReorder(order: string[]): Promise<void> {
             </div>
         </div>
 
-        <div class="grid gap-6 sm:grid-cols-2">
+        <div id="onboarding-purchases-summary" class="grid gap-6 sm:grid-cols-2">
             <Card>
                 <CardHeader class="pb-2">
                     <CardTitle class="text-sm font-semibold text-muted-foreground">Total do Mês</CardTitle>
@@ -291,7 +295,7 @@ async function handleReorder(order: string[]): Promise<void> {
         </div>
 
         <template v-if="activeTab === 'compras'">
-            <div class="relative">
+            <div id="onboarding-purchases-filters" class="relative">
                 <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <Input
                     v-model="searchQuery"
@@ -299,7 +303,8 @@ async function handleReorder(order: string[]): Promise<void> {
                     class="pl-9"
                 />
             </div>
-            <PurchaseSummary
+            <div id="onboarding-purchases-list">
+                <PurchaseSummary
                 v-if="viewMode === 'card'"
                 :items="filteredSummary"
                 :month="month"
@@ -319,6 +324,7 @@ async function handleReorder(order: string[]): Promise<void> {
                 @card-select="onTableCardSelect"
                 @toggle-select="toggleSelect"
             />
+            </div>
         </template>
 
         <PaymentHistory
