@@ -116,4 +116,3 @@ jobs:
             php artisan route:cache
             php artisan view:cache
             php artisan queue:restart
-            sudo systemctl restart php8.3-fpm
