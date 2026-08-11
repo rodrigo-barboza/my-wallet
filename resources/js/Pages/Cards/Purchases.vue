@@ -7,9 +7,11 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ArrowLeft, CreditCard, Pencil, Plus, Search, Trash2 } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import Checkbox from '@/Components/Checkbox.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 import MonthNavigator from '@/Components/MonthNavigator.vue'
 import PurchaseFormModal from '@/Components/PurchaseFormModal.vue'
+import SelectionStatsBar from '@/Components/SelectionStatsBar.vue'
 import { formatCurrency } from '@/lib/format'
 import { monthAbbrs } from '@/lib/constants'
 import { useTableSort } from '@/composables/useTableSort'
@@ -42,6 +44,7 @@ const showDeleteDialog = ref(false)
 const deletingPurchase = ref<Purchase | undefined>()
 const isMobile = ref(false)
 const searchQuery = ref('')
+const selectedIds = ref<Set<number>>(new Set())
 
 const maxBarHeight = 100
 
@@ -82,6 +85,53 @@ const filteredPurchases = computed(() => {
     return sortedPurchases.value.filter(p =>
         p.name.toLowerCase().includes(query)
     )
+})
+
+function toggleSelect(id: number): void {
+    const next = new Set(selectedIds.value)
+    if (next.has(id)) {
+        next.delete(id)
+    } else {
+        next.add(id)
+    }
+    selectedIds.value = next
+}
+
+function toggleSelectAll(): void {
+    if (selectedIds.value.size === filteredPurchases.value.length) {
+        selectedIds.value = new Set()
+    } else {
+        selectedIds.value = new Set(filteredPurchases.value.map(p => p.id))
+    }
+}
+
+const allSelected = computed(() =>
+    filteredPurchases.value.length > 0 && selectedIds.value.size === filteredPurchases.value.length
+)
+
+const selectionStats = computed(() => {
+    const items = filteredPurchases.value.filter(p => selectedIds.value.has(p.id))
+    if (items.length === 0) return null
+    const values = items.map(p => installmentValue(p))
+    const total = values.reduce((sum, v) => sum + v, 0)
+    return {
+        total,
+        avg: total / values.length,
+        max: Math.max(...values),
+        min: Math.min(...values),
+        count: values.length,
+    }
+})
+
+const selectionBarItems = computed(() => {
+    const s = selectionStats.value
+    if (!s) return []
+    return [
+        { label: 'Total', value: formatCurrency(s.total) },
+        { label: 'Média', value: formatCurrency(s.avg) },
+        { label: 'Max', value: formatCurrency(s.max) },
+        { label: 'Min', value: formatCurrency(s.min) },
+    ]
 })
 
 function normalizeDate(dateStr: string): string {
@@ -256,6 +306,12 @@ onBeforeUnmount(() => {
             <Table>
                 <TableHeader>
                     <TableRow>
+                        <TableHead class="w-10">
+                            <Checkbox
+                                :checked="allSelected"
+                                @update:checked="toggleSelectAll"
+                            />
+                        </TableHead>
                         <TableHead class="w-10">#</TableHead>
                         <TableHead
                             class="cursor-pointer select-none"
@@ -290,6 +346,12 @@ onBeforeUnmount(() => {
                         v-for="(purchase, index) in filteredPurchases"
                         :key="purchase.id"
                     >
+                        <TableCell class="py-2.5">
+                            <Checkbox
+                                :checked="selectedIds.has(purchase.id)"
+                                @update:checked="toggleSelect(purchase.id)"
+                            />
+                        </TableCell>
                         <TableCell class="py-2.5 text-muted-foreground text-xs tabular-nums">
                             {{ index + 1 }}
                         </TableCell>
@@ -329,7 +391,7 @@ onBeforeUnmount(() => {
                     </TableRow>
                     <TableRow v-if="purchases.length === 0">
                         <TableCell
-                            colspan="7"
+                            colspan="8"
                             class="h-24 text-center text-muted-foreground"
                         >
                             Nenhuma compra neste mês
@@ -353,6 +415,12 @@ onBeforeUnmount(() => {
             description="Tem certeza que deseja excluir esta compra? Esta ação não pode ser desfeita."
             confirm-text="Excluir"
             @confirm="deletePurchase"
+        />
+
+        <SelectionStatsBar
+            :count="selectionStats?.count ?? 0"
+            :items="selectionBarItems"
+            @clear="selectedIds = new Set()"
         />
     </div>
 </template>
