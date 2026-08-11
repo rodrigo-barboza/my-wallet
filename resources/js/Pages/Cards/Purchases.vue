@@ -112,7 +112,7 @@ const allSelected = computed(() =>
 const selectionStats = computed(() => {
     const items = filteredPurchases.value.filter(p => selectedIds.value.has(p.id))
     if (items.length === 0) return null
-    const values = items.map(p => installmentValue(p))
+    const values = items.map(p => parseFloat(String(installmentValue(p))))
     const total = values.reduce((sum, v) => sum + v, 0)
     return {
         total,
@@ -139,8 +139,8 @@ function normalizeDate(dateStr: string): string {
 }
 
 function installmentValue(purchase: Purchase): number {
-    if (!purchase.installments_total || purchase.installments_total === 0) return purchase.amount
-    return purchase.amount / purchase.installments_total
+    if (!purchase.installments_total || purchase.installments_total === 0) return parseFloat(String(purchase.amount))
+    return parseFloat(String(purchase.amount)) / purchase.installments_total
 }
 
 function barHeight(total: number): number {
