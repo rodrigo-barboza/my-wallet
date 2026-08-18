@@ -39,6 +39,7 @@ return [
         'incomes.update',
         'incomes.destroy',
         'incomes.update-month',
+        'incomes.store-month',
         'incomes.fill-months',
         'incomes.duplicate',
         'incomes.delete-month',

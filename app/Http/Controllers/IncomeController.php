@@ -144,6 +144,29 @@ final readonly class IncomeController
         return back();
     }
 
+    public function storeMonth(Request $request, Income $income): RedirectResponse
+    {
+        Gate::authorize('update', $income);
+
+        $validated = $request->validate([
+            'month' => ['required', 'integer', 'min:1', 'max:12'],
+            'year' => ['required', 'integer', 'min:2020', 'max:2100'],
+            'amount' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $income->incomeMonths()->updateOrCreate(
+            [
+                'month' => $validated['month'],
+                'year' => $validated['year'],
+            ],
+            ['amount' => $validated['amount']],
+        );
+
+        Inertia::flash('toast', ['message' => 'Valor atualizado!', 'type' => 'success']);
+
+        return back();
+    }
+
     public function fillMonths(Request $request, Income $income): RedirectResponse
     {
         Gate::authorize('update', $income);

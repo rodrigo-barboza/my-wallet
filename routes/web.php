@@ -69,6 +69,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/incomes/{income}', [IncomeController::class, 'update'])->name('incomes.update');
     Route::delete('/incomes/{income}', [IncomeController::class, 'destroy'])->name('incomes.destroy');
     Route::patch('/income-months/{incomeMonth}', [IncomeController::class, 'updateMonth'])->name('incomes.update-month');
+    Route::post('/incomes/{income}/months', [IncomeController::class, 'storeMonth'])->name('incomes.store-month');
     Route::post('/incomes/{income}/months/fill', [IncomeController::class, 'fillMonths'])->name('incomes.fill-months');
     Route::post('/incomes/{income}/duplicate', [IncomeController::class, 'duplicate'])->name('incomes.duplicate');
     Route::delete('/income-months/{incomeMonth}', [IncomeController::class, 'deleteMonth'])->name('incomes.delete-month');

@@ -103,18 +103,28 @@ function startEdit(income: Income, month: number, year: number): void {
 function saveCell(): void {
     if (!editingCell.value) return
     const { incomeId, month, year } = editingCell.value
-    const monthId = getMonthId(props.incomes.find(i => i.id === incomeId)!, month, year)
+    const income = props.incomes.find(i => i.id === incomeId)
+    if (!income) return
+
+    const monthId = getMonthId(income, month, year)
     const amount = parseFloat(editingValue.value.replace(',', '.'))
 
-    if (monthId !== null && !isNaN(amount)) {
-        router.patch(route('incomes.update-month', monthId), { amount }, {
-            preserveScroll: true,
-            onSuccess: () => { editingCell.value = null },
-        })
+    if (isNaN(amount)) {
+        editingCell.value = null
         return
     }
 
-    editingCell.value = null
+    const options = {
+        preserveScroll: true,
+        onSuccess: () => { editingCell.value = null },
+    }
+
+    if (monthId !== null) {
+        router.patch(route('incomes.update-month', monthId), { amount }, options)
+        return
+    }
+
+    router.post(route('incomes.store-month', income.id), { month, year, amount }, options)
 }
 
 function cancelEdit(): void {

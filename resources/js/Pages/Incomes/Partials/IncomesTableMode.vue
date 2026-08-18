@@ -43,12 +43,12 @@ function getAmount(income: Income, month: number, year: number): number | null {
     return income.months[year]?.[month]?.amount ?? null
 }
 
-function updateEditingValue(event: Event): void {
-    emit('update:editingValue', (event.target as HTMLInputElement).value)
+function updateEditingValue(value: string): void {
+    emit('update:editingValue', value)
 }
 
-function updateEditingNameValue(event: Event): void {
-    emit('update:editingNameValue', (event.target as HTMLInputElement).value)
+function updateEditingNameValue(value: string): void {
+    emit('update:editingNameValue', value)
 }
 
 function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
@@ -112,9 +112,9 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                                 class="flex items-center gap-1"
                             >
                                 <Input
-                                    :value="editingName.value"
+                                    :model-value="editingName.value"
                                     class="h-7 text-sm"
-                                    @input="updateEditingNameValue"
+                                    @update:model-value="updateEditingNameValue"
                                     @keydown.enter="emit('saveName')"
                                     @keydown.esc="emit('cancelEditName')"
                                 />
@@ -156,11 +156,11 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                             class="flex items-center justify-center gap-0.5"
                         >
                             <Input
-                                :value="editingValue"
+                                :model-value="editingValue"
                                 class="h-6 w-20 py-0 text-center text-sm tabular-nums"
                                 type="text"
                                 inputmode="decimal"
-                                @input="updateEditingValue"
+                                @update:model-value="updateEditingValue"
                                 @keydown.enter="emit('saveCell')"
                                 @keydown.esc="emit('cancelEdit')"
                                 @blur="emit('delayedCancelEdit')"

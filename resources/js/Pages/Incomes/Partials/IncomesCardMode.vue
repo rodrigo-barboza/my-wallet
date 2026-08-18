@@ -45,12 +45,12 @@ function isEditingCell(income: Income): boolean {
         && props.editingCell?.year === currentMonth.year
 }
 
-function updateEditingValue(event: Event): void {
-    emit('update:editingValue', (event.target as HTMLInputElement).value)
+function updateEditingValue(value: string): void {
+    emit('update:editingValue', value)
 }
 
-function updateEditingNameValue(event: Event): void {
-    emit('update:editingNameValue', (event.target as HTMLInputElement).value)
+function updateEditingNameValue(value: string): void {
+    emit('update:editingNameValue', value)
 }
 
 function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
@@ -80,9 +80,9 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                     />
                     <div v-if="editingName?.incomeId === income.id" class="flex flex-1 items-center gap-1 min-w-0">
                         <Input
-                            :value="editingName.value"
+                            :model-value="editingName.value"
                             class="h-7 text-sm"
-                            @input="updateEditingNameValue"
+                            @update:model-value="updateEditingNameValue"
                             @keydown.enter="emit('saveName')"
                             @keydown.esc="emit('cancelEditName')"
                         />
@@ -127,11 +127,11 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                     <span class="text-sm text-muted-foreground">Valor</span>
                     <div v-if="isEditingCell(income)" class="flex items-center gap-0.5">
                         <Input
-                            :value="editingValue"
+                            :model-value="editingValue"
                             class="h-8 w-28 py-0 text-right text-sm tabular-nums"
                             type="text"
                             inputmode="decimal"
-                            @input="updateEditingValue"
+                            @update:model-value="updateEditingValue"
                             @keydown.enter="emit('saveCell')"
                             @keydown.esc="emit('cancelEdit')"
                             @blur="emit('delayedCancelEdit')"
