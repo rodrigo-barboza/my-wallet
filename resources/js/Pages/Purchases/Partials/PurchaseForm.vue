@@ -298,7 +298,7 @@ function submitAndAddMore(): void {
             </Label>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid gap-3 sm:grid-cols-2">
             <Button
                 v-if="!purchase"
                 type="button"

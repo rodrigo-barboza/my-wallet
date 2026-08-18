@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import type { Purchase } from '@/types/purchase';
 import type { Card } from '@/types/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import ResponsiveModal from '@/Components/ResponsiveModal.vue';
 import PurchaseForm from '@/Pages/Purchases/Partials/PurchaseForm.vue';
 
 const props = defineProps<{
@@ -23,20 +17,17 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <Dialog :open="open" @update:open="emit('update:open', $event)">
-        <DialogContent class="sm:max-w-md">
-            <DialogHeader>
-                <DialogTitle>{{ purchase ? 'Editar compra' : 'Nova compra' }}</DialogTitle>
-                <DialogDescription>
-                    {{ purchase ? 'Edite os dados da compra.' : 'Preencha os dados para criar uma nova compra.' }}
-                </DialogDescription>
-            </DialogHeader>
-            <PurchaseForm
-                :purchase="purchase"
-                :cards="cards"
-                :default-card-id="defaultCardId"
-                @success="emit('update:open', false)"
-            />
-        </DialogContent>
-    </Dialog>
+    <ResponsiveModal
+        :open="open"
+        :title="purchase ? 'Editar compra' : 'Nova compra'"
+        :description="purchase ? 'Edite os dados da compra.' : 'Preencha os dados para criar uma nova compra.'"
+        @update:open="emit('update:open', $event)"
+    >
+        <PurchaseForm
+            :purchase="purchase"
+            :cards="cards"
+            :default-card-id="defaultCardId"
+            @success="emit('update:open', false)"
+        />
+    </ResponsiveModal>
 </template>

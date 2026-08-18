@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 defineProps<{
     title: string
@@ -15,17 +15,15 @@ defineProps<{
 
 <template>
     <Card :style="{ backgroundColor: bgColor, borderColor: borderColor }">
-        <CardHeader class="pb-2">
-            <CardTitle class="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                <component :is="icon" v-if="icon" class="size-4" :style="{ color: iconColor }" />
+        <CardHeader class="pb-1">
+            <CardTitle class="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                <component :is="icon" v-if="icon" class="size-3.5" :style="{ color: iconColor }" />
                 {{ title }}
             </CardTitle>
-            <CardDescription v-if="description" class="text-xs">
-                {{ description }}
-            </CardDescription>
         </CardHeader>
-        <CardContent>
-            <div class="text-2xl font-bold" :class="valueColor">{{ value }}</div>
+        <CardContent class="space-y-0.5">
+            <div class="text-xl font-bold leading-tight" :class="valueColor">{{ value }}</div>
+            <div v-if="description" class="text-[11px] text-muted-foreground">{{ description }}</div>
         </CardContent>
     </Card>
 </template>

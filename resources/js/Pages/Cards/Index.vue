@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button'
 import { Card as CardComponent, CardContent } from '@/components/ui/card'
 import { CreditCard, LayoutGrid, List, Plus } from '@lucide/vue'
 import { Head, router } from '@inertiajs/vue3'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useIsMobile } from '@/composables/useIsMobile'
 import { useLocalStorage } from '@/composables/useLocalStorage'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import CardFormModal from '@/Components/CardFormModal.vue'
@@ -26,7 +27,14 @@ const viewModes = [
     { key: 'table' as const, icon: List, label: 'Visualização em tabela' },
 ]
 
-const viewMode = useLocalStorage<'grid' | 'table'>('cards_view_mode', 'table')
+const isMobile = useIsMobile()
+const rawViewMode = useLocalStorage<'grid' | 'table'>('cards_view_mode', 'table')
+const viewMode = computed<'grid' | 'table'>(() => isMobile.value ? 'grid' : rawViewMode.value)
+
+function setViewMode(mode: 'grid' | 'table'): void {
+    rawViewMode.value = mode
+}
+
 const showModal = ref(false)
 const editingCard = ref<Card | null>(null)
 const showConfirm = ref(false)
@@ -72,7 +80,7 @@ function handleBulkDelete(ids: number[]): void {
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold">Cartões</h2>
             <div id="onboarding-cards-viewmode" class="flex items-center gap-2">
-                <TooltipProvider>
+                <TooltipProvider v-if="!isMobile">
                     <Tooltip
                         v-for="mode in viewModes"
                         :key="mode.key"
@@ -82,7 +90,7 @@ function handleBulkDelete(ids: number[]): void {
                                 :class="viewMode === mode.key ? 'bg-primary text-primary-foreground' : ''"
                                 variant="outline"
                                 size="icon"
-                                @click="viewMode = mode.key"
+                                @click="setViewMode(mode.key)"
                             >
                                 <component
                                     :is="mode.icon"

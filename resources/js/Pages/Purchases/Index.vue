@@ -17,8 +17,9 @@ import SelectionStatsBar from '@/Components/SelectionStatsBar.vue'
 import PaymentHistory from '@/Pages/Purchases/Partials/PaymentHistory.vue'
 import PurchasesTableMode from '@/Pages/Purchases/Partials/PurchasesTableMode.vue'
 import PurchaseSummary from '@/Pages/Purchases/Partials/PurchaseSummary.vue'
-import { formatCurrency } from '@/lib/format'
+import { useIsMobile } from '@/composables/useIsMobile'
 import { useMonthNavigation } from '@/composables/useMonthNavigation'
+import { formatCurrency } from '@/lib/format'
 
 interface PaymentHistoryItem {
     id: number
@@ -41,10 +42,16 @@ const props = defineProps<{
     cards: CardType[]
 }>()
 
+const isMobile = useIsMobile()
 const storedViewMode = localStorage.getItem('purchases_view_mode') as 'card' | 'table' | null
-const viewMode = ref<'card' | 'table'>(storedViewMode ?? 'card')
+const rawViewMode = ref<'card' | 'table'>(storedViewMode ?? 'card')
+const viewMode = computed<'card' | 'table'>(() => isMobile.value ? 'card' : rawViewMode.value)
 
-watch(viewMode, (mode) => localStorage.setItem('purchases_view_mode', mode))
+function setViewMode(mode: 'card' | 'table'): void {
+    rawViewMode.value = mode
+}
+
+watch(rawViewMode, (mode) => localStorage.setItem('purchases_view_mode', mode))
 
 const activeTab = ref<'compras' | 'pagamentos'>('compras')
 const showFormModal = ref(false)
@@ -178,13 +185,16 @@ async function handleReorder(order: string[]): Promise<void> {
 </script>
 
 <template>
-    <div class="w-full space-y-6">
+    <div
+        class="w-full space-y-6"
+        :class="selectedIds.size > 0 ? 'pb-36 md:pb-20' : ''"
+    >
         <Head title="My Wallet - Compras" />
 
         <div class="flex items-center justify-between">
             <h2 class="text-2xl font-bold">Compras</h2>
             <div class="flex items-center gap-2">
-                <template v-if="activeTab === 'compras'">
+                <template v-if="activeTab === 'compras' && !isMobile">
                     <div id="onboarding-purchases-viewmode">
                         <TooltipProvider>
                             <Tooltip
@@ -196,7 +206,7 @@ async function handleReorder(order: string[]): Promise<void> {
                                         variant="outline"
                                         size="icon"
                                         :class="viewMode === mode.key ? 'bg-primary text-primary-foreground' : ''"
-                                        @click="viewMode = mode.key"
+                                        @click="setViewMode(mode.key)"
                                     >
                                         <component :is="mode.icon" class="size-4" />
                                     </Button>

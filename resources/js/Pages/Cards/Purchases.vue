@@ -1,17 +1,18 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Head, router, usePage } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Card as CardComponent, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ArrowLeft, CreditCard, Pencil, Plus, Search, Trash2 } from '@lucide/vue'
+import { ArrowLeft, CreditCard, Plus, Search } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import Checkbox from '@/Components/Checkbox.vue'
+import CardPurchasesListMode from '@/Pages/Cards/Partials/CardPurchasesListMode.vue'
+import CardPurchasesTableMode from '@/Pages/Cards/Partials/CardPurchasesTableMode.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 import MonthNavigator from '@/Components/MonthNavigator.vue'
 import PurchaseFormModal from '@/Components/PurchaseFormModal.vue'
 import SelectionStatsBar from '@/Components/SelectionStatsBar.vue'
+import { useIsMobile } from '@/composables/useIsMobile'
 import { formatCurrency } from '@/lib/format'
 import { monthAbbrs } from '@/lib/constants'
 import { useTableSort } from '@/composables/useTableSort'
@@ -32,7 +33,7 @@ const props = defineProps<{
 const initialPrefs = (usePage().props.preferences as Record<string, any>) ?? {}
 const storedSort = initialPrefs.card_purchases_table_sort ?? null
 
-const { sortKey, sortDir, toggleSort, sortIcon } = useTableSort(
+const { sortKey, sortDir, toggleSort } = useTableSort(
     (storedSort?.key ?? 'start_date') as string,
     storedSort?.dir ?? 'asc',
     'card_purchases_table_sort'
@@ -42,9 +43,10 @@ const showFormModal = ref(false)
 const editingPurchase = ref<Purchase | undefined>()
 const showDeleteDialog = ref(false)
 const deletingPurchase = ref<Purchase | undefined>()
-const isMobile = ref(false)
 const searchQuery = ref('')
 const selectedIds = ref<Set<number>>(new Set())
+
+const isMobile = useIsMobile()
 
 const maxBarHeight = 100
 
@@ -105,10 +107,6 @@ function toggleSelectAll(): void {
     }
 }
 
-const allSelected = computed(() =>
-    filteredPurchases.value.length > 0 && selectedIds.value.size === filteredPurchases.value.length
-)
-
 const selectionStats = computed(() => {
     const items = filteredPurchases.value.filter(p => selectedIds.value.has(p.id))
     if (items.length === 0) return null
@@ -152,19 +150,6 @@ function isCurrentMonth(m: { month: number; year: number }): boolean {
     return m.month === props.month && m.year === props.year
 }
 
-function formatDate(value: string): string {
-    const date = value.includes('T') ? value : value.split(' ')[0] + 'T00:00:00'
-    return new Date(date).toLocaleDateString('pt-BR')
-}
-
-function currentInstallment(purchase: Purchase): string {
-    if (purchase.is_recurring) return 'Recorrente'
-    if (!purchase.installments_total) return 'À vista'
-    const [startYear, startMonth] = purchase.start_date.split(/[-/]/).map(Number)
-    const monthsDiff = (props.year - startYear) * 12 + (props.month - startMonth)
-    return `${monthsDiff + 1} de ${purchase.installments_total}`
-}
-
 function openNewPurchase(): void {
     editingPurchase.value = undefined
     showFormModal.value = true
@@ -198,41 +183,35 @@ function deletePurchase(): void {
 function goToMonth(month: number, year: number): void {
     router.get(route('cards.purchases', { card: props.card.id, month, year }))
 }
-
-function checkMobile(): void {
-    isMobile.value = window.innerWidth < 768
-}
-
-if (typeof window !== 'undefined') {
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-}
-
-onBeforeUnmount(() => {
-    window.removeEventListener('resize', checkMobile)
-})
 </script>
 
 <template>
-    <div class="w-full space-y-6">
+    <div
+        class="w-full space-y-6"
+        :class="selectedIds.size > 0 ? 'pb-36 md:pb-20' : ''"
+    >
         <Head title="My Wallet - Compras do cartão" />
 
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
+        <div class="flex items-center justify-between gap-3 flex-col sm:flex-row sm:items-center">
+            <div class="flex w-full min-w-0 items-center gap-2 sm:w-auto">
                 <Button
                     variant="ghost"
                     size="icon"
+                    class="shrink-0"
                     @click="router.visit(route('purchases.index', { month, year }))"
                 >
                     <ArrowLeft class="size-5" />
                 </Button>
-                <h2 class="text-2xl font-bold">{{ card.name }}</h2>
+                <h2 class="min-w-0 truncate text-lg font-bold sm:text-2xl">{{ card.name }}</h2>
                 <CreditCard
-                    class="size-6"
+                    class="size-5 shrink-0 sm:size-6"
                     :style="{ color: card.color }"
                 />
             </div>
-            <Button @click="openNewPurchase">
+            <Button
+                class="w-full shrink-0 sm:w-auto"
+                @click="openNewPurchase"
+            >
                 <Plus class="mr-2 size-4" />
                 Nova compra
             </Button>
@@ -242,23 +221,27 @@ onBeforeUnmount(() => {
             <CardContent class="p-4 pb-3">
                 <div
                     class="flex items-end justify-between gap-1"
-                    style="height: 140px"
+                    :style="{ height: isMobile ? '110px' : '140px' }"
                 >
                     <div
                         v-for="m in visibleTotals"
                         :key="`${m.month}-${m.year}`"
-                        class="flex flex-1 flex-col items-center cursor-pointer self-stretch transition-all hover:opacity-80"
+                        class="relative flex flex-1 flex-col items-center cursor-pointer self-stretch transition-all hover:opacity-80"
                         @click="goToMonth(m.month, m.year)"
                     >
-                        <div class="flex-1 w-full flex flex-col justify-end">
+                        <div class="relative flex-1 w-full flex flex-col justify-end">
                             <span
-                                class="text-[10px] leading-none tabular-nums text-center"
-                                :class="isCurrentMonth(m) ? 'font-semibold text-foreground' : 'text-muted-foreground'"
+                                v-if="isCurrentMonth(m) || !isMobile"
+                                class="absolute bottom-full left-0 right-0 mb-0.5 leading-none tabular-nums text-center"
+                                :class="[
+                                    isCurrentMonth(m) ? 'font-semibold text-foreground' : 'text-muted-foreground',
+                                    isMobile ? 'text-[8px]' : 'text-[10px]',
+                                ]"
                             >
                                 {{ m.total > 0 ? formatCurrency(m.total) : '' }}
                             </span>
                             <div
-                                class="w-full rounded-t transition-all mt-0.5"
+                                class="w-full rounded-t transition-all"
                                 :style="{
                                     height: barHeight(m.total) + 'px',
                                     backgroundColor: card.color,
@@ -302,104 +285,31 @@ onBeforeUnmount(() => {
             />
         </div>
 
-        <div class="rounded-md border">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead class="w-10">
-                            <Checkbox
-                                :checked="allSelected"
-                                @update:checked="toggleSelectAll"
-                            />
-                        </TableHead>
-                        <TableHead class="w-10">#</TableHead>
-                        <TableHead
-                            class="cursor-pointer select-none"
-                            @click="toggleSort('name')"
-                        >
-                            Nome<span class="text-muted-foreground">{{ sortIcon('name') }}</span>
-                        </TableHead>
-                        <TableHead
-                            class="cursor-pointer select-none"
-                            @click="toggleSort('amount')"
-                        >
-                            Valor<span class="text-muted-foreground">{{ sortIcon('amount') }}</span>
-                        </TableHead>
-                        <TableHead
-                            class="hidden sm:table-cell cursor-pointer select-none"
-                            @click="toggleSort('installment_value')"
-                        >
-                            Valor parcela<span class="text-muted-foreground">{{ sortIcon('installment_value') }}</span>
-                        </TableHead>
-                        <TableHead
-                            class="hidden sm:table-cell cursor-pointer select-none"
-                            @click="toggleSort('start_date')"
-                        >
-                            Data<span class="text-muted-foreground">{{ sortIcon('start_date') }}</span>
-                        </TableHead>
-                        <TableHead class="hidden sm:table-cell">Parcela</TableHead>
-                        <TableHead class="text-right">Ações</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    <TableRow
-                        v-for="(purchase, index) in filteredPurchases"
-                        :key="purchase.id"
-                    >
-                        <TableCell class="py-2.5">
-                            <Checkbox
-                                :checked="selectedIds.has(purchase.id)"
-                                @update:checked="toggleSelect(purchase.id)"
-                            />
-                        </TableCell>
-                        <TableCell class="py-2.5 text-muted-foreground text-xs tabular-nums">
-                            {{ index + 1 }}
-                        </TableCell>
-                        <TableCell class="py-2.5 font-medium">
-                            {{ purchase.name }}
-                        </TableCell>
-                        <TableCell class="py-2.5 font-medium">
-                            {{ formatCurrency(purchase.amount) }}
-                        </TableCell>
-                        <TableCell class="py-2.5 text-muted-foreground hidden sm:table-cell">
-                            {{ purchase.installments_total ? formatCurrency(installmentValue(purchase)) : '-' }}
-                        </TableCell>
-                        <TableCell class="py-2.5 text-muted-foreground hidden sm:table-cell">
-                            {{ formatDate(purchase.start_date) }}
-                        </TableCell>
-                        <TableCell class="py-2.5 text-muted-foreground hidden sm:table-cell">
-                            {{ currentInstallment(purchase) }}
-                        </TableCell>
-                        <TableCell class="py-2.5 text-right">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                class="size-7 cursor-pointer"
-                                @click="openEdit(purchase)"
-                            >
-                                <Pencil class="size-3.5" />
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                class="size-7 cursor-pointer text-destructive"
-                                @click="confirmDelete(purchase)"
-                            >
-                                <Trash2 class="size-3.5" />
-                            </Button>
-                        </TableCell>
-                    </TableRow>
-                    <TableRow v-if="purchases.length === 0">
-                        <TableCell
-                            colspan="8"
-                            class="h-24 text-center text-muted-foreground"
-                        >
-                            Nenhuma compra neste mês
-                        </TableCell>
-                    </TableRow>
-                </TableBody>
-            </Table>
-        </div>
+        <CardPurchasesTableMode
+            v-if="!isMobile"
+            :purchases="filteredPurchases"
+            :selected-ids="selectedIds"
+            :month="month"
+            :year="year"
+            :sort-key="sortKey"
+            :sort-dir="sortDir"
+            @toggle-select="toggleSelect"
+            @toggle-select-all="toggleSelectAll"
+            @toggle-sort="toggleSort"
+            @edit="openEdit"
+            @delete="confirmDelete"
+        />
+
+        <CardPurchasesListMode
+            v-else
+            :purchases="filteredPurchases"
+            :selected-ids="selectedIds"
+            :month="month"
+            :year="year"
+            @toggle-select="toggleSelect"
+            @edit="openEdit"
+            @delete="confirmDelete"
+        />
 
         <PurchaseFormModal
             :open="showFormModal"

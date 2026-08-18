@@ -115,9 +115,12 @@ function deleteAccount(): void {
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <div class="flex items-center gap-2 rounded-md bg-blue-500/10 px-3 py-2 text-sm text-blue-600">
-                    <Shield class="size-4 shrink-0" />
-                    Vinculado ao Google: <span class="font-medium">{{ user.email }}</span>
+                <div class="flex items-start gap-2 rounded-md bg-blue-500/10 px-3 py-2 text-sm text-blue-600">
+                    <Shield class="mt-0.5 size-4 shrink-0" />
+                    <div class="min-w-0">
+                        <span>Vinculado ao Google</span>
+                        <div class="break-all font-medium">{{ user.email }}</div>
+                    </div>
                 </div>
                 <p class="mt-2 text-xs text-muted-foreground">O e-mail é gerenciado pela sua conta Google.</p>
             </CardContent>

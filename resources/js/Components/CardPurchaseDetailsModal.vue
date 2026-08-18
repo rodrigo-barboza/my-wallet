@@ -1,16 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import type { PurchaseSummaryItem } from '@/types/purchase';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Undo2, ExternalLink } from '@lucide/vue';
 import { router } from '@inertiajs/vue3';
+import ResponsiveModal from '@/Components/ResponsiveModal.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import CurrencyInput from '@/Components/CurrencyInput.vue';
 import { formatCurrency, formatDateRange } from '@/lib/format';
@@ -105,50 +99,67 @@ function hasPayment(): boolean {
 </script>
 
 <template>
-    <Dialog :open="open" @update:open="emit('update:open', $event)">
-        <DialogContent class="sm:max-w-md">
-            <DialogHeader>
-                <div class="flex items-center gap-2">
-                    <CreditCard
-                        v-if="purchaseSummary?.items[0].card"
-                        class="size-5"
-                        :style="{ color: purchaseSummary.items[0].card.color }"
-                    />
-                    <DialogTitle>{{ purchaseSummary?.name }}</DialogTitle>
-                    <StatusBadge v-if="purchaseSummary?.status" :status="purchaseSummary.status" :base-status="purchaseSummary.base_status" />
-                </div>
-                <DialogDescription>
-                    <span v-if="purchaseSummary?.dates && !Array.isArray(purchaseSummary.dates)">
-                        {{ formatDateRange(purchaseSummary.dates.closing, purchaseSummary.dates.due) }}
-                    </span>
-                </DialogDescription>
-            </DialogHeader>
+    <ResponsiveModal
+        :open="open"
+        :title="purchaseSummary?.name"
+        @update:open="emit('update:open', $event)"
+    >
+        <div
+            v-if="purchaseSummary"
+            class="space-y-4"
+        >
+            <div class="flex items-center gap-2">
+                <CreditCard
+                    v-if="purchaseSummary.items[0].card"
+                    class="size-5"
+                    :style="{ color: purchaseSummary.items[0].card.color }"
+                />
+                <StatusBadge
+                    v-if="purchaseSummary.status"
+                    :status="purchaseSummary.status"
+                    :base-status="purchaseSummary.base_status"
+                />
+            </div>
+            <p
+                v-if="purchaseSummary.dates && !Array.isArray(purchaseSummary.dates)"
+                class="text-sm text-muted-foreground"
+            >
+                {{ formatDateRange(purchaseSummary.dates.closing, purchaseSummary.dates.due) }}
+            </p>
 
-            <div v-if="purchaseSummary" class="space-y-4">
-                <div class="flex items-center justify-between text-sm">
-                    <span class="text-muted-foreground">
-                        {{ itemCount }} {{ itemCount === 1 ? 'compra' : 'compras' }} nesta fatura
-                    </span>
-                    <Button variant="outline" size="sm" class="cursor-pointer" @click="navigateToCardPurchases">
-                        Ver detalhes da fatura
-                        <ExternalLink class="ml-1 size-3.5" />
-                    </Button>
-                </div>
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-muted-foreground">
+                    {{ itemCount }} {{ itemCount === 1 ? 'compra' : 'compras' }} nesta fatura
+                </span>
+                <Button variant="outline" size="sm" class="cursor-pointer" @click="navigateToCardPurchases">
+                    Ver detalhes da fatura
+                    <ExternalLink class="ml-1 size-3.5" />
+                </Button>
+            </div>
 
-                <div class="flex items-center justify-between border-t pt-3">
-                    <span class="text-sm font-medium text-muted-foreground">Total</span>
-                    <span class="text-lg font-bold">{{ formatCurrency(purchaseSummary.total) }}</span>
-                </div>
+            <div class="flex items-center justify-between border-t pt-3">
+                <span class="text-sm font-medium text-muted-foreground">Total</span>
+                <span class="text-lg font-bold">{{ formatCurrency(purchaseSummary.total) }}</span>
+            </div>
 
-                <div v-if="isPartiallyPaid() && purchaseSummary.paid_amount" class="text-sm text-muted-foreground">
-                    Pago {{ formatCurrency(purchaseSummary.paid_amount) }} de {{ formatCurrency(originalTotal) }}
-                </div>
+            <div
+                v-if="isPartiallyPaid() && purchaseSummary.paid_amount"
+                class="text-sm text-muted-foreground"
+            >
+                Pago {{ formatCurrency(purchaseSummary.paid_amount) }} de {{ formatCurrency(originalTotal) }}
+            </div>
 
-                <div v-if="isFullyPaid() && purchaseSummary.paid_at" class="text-sm text-muted-foreground">
-                    Pago {{ formatCurrency(purchaseSummary.paid_amount ?? 0) }} em {{ formatDateTime(purchaseSummary.paid_at) }}
-                </div>
+            <div
+                v-if="isFullyPaid() && purchaseSummary.paid_at"
+                class="text-sm text-muted-foreground"
+            >
+                Pago {{ formatCurrency(purchaseSummary.paid_amount ?? 0) }} em {{ formatDateTime(purchaseSummary.paid_at) }}
+            </div>
+        </div>
 
-                <template v-if="!isFullyPaid()">
+        <template #footer>
+            <div class="grid w-full gap-2">
+                <template v-if="purchaseSummary && !isFullyPaid()">
                     <div class="flex items-center gap-2">
                         <CurrencyInput v-model="paymentAmount" class="flex-1 min-w-0" />
                         <Button class="cursor-pointer" @click="markAsPaid">
@@ -158,7 +169,7 @@ function hasPayment(): boolean {
                 </template>
 
                 <Button
-                    v-if="hasPayment()"
+                    v-else-if="purchaseSummary && hasPayment()"
                     variant="outline"
                     class="w-full cursor-pointer"
                     @click="unmarkAsPaid"
@@ -167,6 +178,6 @@ function hasPayment(): boolean {
                     Desmarcar pagamento
                 </Button>
             </div>
-        </DialogContent>
-    </Dialog>
+        </template>
+    </ResponsiveModal>
 </template>

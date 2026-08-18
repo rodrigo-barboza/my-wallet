@@ -1,17 +1,11 @@
 <script setup lang="ts">
 import type { Purchase } from '@/types/purchase';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Trash2, Check, Undo2 } from '@lucide/vue';
 import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
+import ResponsiveModal from '@/Components/ResponsiveModal.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { formatCurrency } from '@/lib/format';
 
@@ -83,76 +77,88 @@ function unmarkAsPaid(): void {
         onSuccess: close,
     });
 }
+
+function edit(): void {
+    if (!props.purchase) return;
+    emit('edit', props.purchase);
+    close();
+}
 </script>
 
 <template>
-    <Dialog :open="open" @update:open="emit('update:open', $event)">
-        <DialogContent class="sm:max-w-md">
-            <DialogHeader>
-                <div class="flex items-center gap-2">
-                    <DialogTitle>{{ purchase?.name }}</DialogTitle>
-                    <StatusBadge v-if="purchase?.status" :status="purchase.status" />
-                </div>
-                <DialogDescription>Detalhes da compra</DialogDescription>
-            </DialogHeader>
+    <ResponsiveModal
+        :open="open"
+        :title="purchase?.name"
+        description="Detalhes da compra"
+        @update:open="emit('update:open', $event)"
+    >
+        <div
+            v-if="purchase"
+            class="space-y-4"
+        >
+            <StatusBadge
+                v-if="purchase.status"
+                :status="purchase.status"
+            />
 
-            <div v-if="purchase" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <div class="text-muted-foreground">Tipo</div>
-                        <div class="font-medium">{{ typeLabels[purchase.type] ?? purchase.type }}</div>
-                    </div>
-                    <div>
-                        <div class="text-muted-foreground">Valor</div>
-                        <div class="font-medium">
-                            {{ formatCurrency(purchase.installment_value ?? purchase.amount) }}
-                            <span
-                                v-if="purchase.installment_value"
-                                class="text-xs text-muted-foreground"
-                            >
-                                ({{ formatCurrency(purchase.amount) }} total)
-                            </span>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="text-muted-foreground">Data de início</div>
-                        <div class="font-medium">{{ formatDate(purchase.start_date) }}</div>
-                    </div>
-                    <div v-if="purchase.payment_day">
-                        <div class="text-muted-foreground">Dia de pagamento</div>
-                        <div class="font-medium">Dia {{ purchase.payment_day }}</div>
-                    </div>
-                    <div v-if="purchase.card">
-                        <div class="text-muted-foreground">Cartão</div>
-                        <div class="font-medium">{{ purchase.card.name }}</div>
-                    </div>
-                    <div v-if="purchase.installments_total">
-                        <div class="text-muted-foreground">Parcelas</div>
-                        <div class="font-medium">
-                            <template v-if="purchase.current_installment">
-                                Parcela {{ purchase.current_installment }} de {{ purchase.installments_total }}
-                            </template>
-                            <template v-else>
-                                {{ purchase.installments_total }}x
-                            </template>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="text-muted-foreground">Recorrente</div>
-                        <div class="font-medium">{{ purchase.is_recurring ? 'Sim' : 'Não' }}</div>
-                    </div>
-                    <div v-if="purchase.paid_at">
-                        <div class="text-muted-foreground">Pago em</div>
-                        <div class="font-medium">{{ formatDateTime(purchase.paid_at) }}</div>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <div class="text-muted-foreground">Tipo</div>
+                    <div class="font-medium">{{ typeLabels[purchase.type] ?? purchase.type }}</div>
+                </div>
+                <div>
+                    <div class="text-muted-foreground">Valor</div>
+                    <div class="font-medium">
+                        {{ formatCurrency(purchase.installment_value ?? purchase.amount) }}
+                        <span
+                            v-if="purchase.installment_value"
+                            class="text-xs text-muted-foreground"
+                        >
+                            ({{ formatCurrency(purchase.amount) }} total)
+                        </span>
                     </div>
                 </div>
-
-                <div v-if="purchase.notes">
-                    <div class="text-sm text-muted-foreground">Observações</div>
-                    <div class="text-sm font-medium">{{ purchase.notes }}</div>
+                <div>
+                    <div class="text-muted-foreground">Data de início</div>
+                    <div class="font-medium">{{ formatDate(purchase.start_date) }}</div>
                 </div>
+                <div v-if="purchase.payment_day">
+                    <div class="text-muted-foreground">Dia de pagamento</div>
+                    <div class="font-medium">Dia {{ purchase.payment_day }}</div>
+                </div>
+                <div v-if="purchase.card">
+                    <div class="text-muted-foreground">Cartão</div>
+                    <div class="font-medium">{{ purchase.card.name }}</div>
+                </div>
+                <div v-if="purchase.installments_total">
+                    <div class="text-muted-foreground">Parcelas</div>
+                    <div class="font-medium">
+                        <template v-if="purchase.current_installment">
+                            Parcela {{ purchase.current_installment }} de {{ purchase.installments_total }}
+                        </template>
+                        <template v-else>
+                            {{ purchase.installments_total }}x
+                        </template>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-muted-foreground">Recorrente</div>
+                    <div class="font-medium">{{ purchase.is_recurring ? 'Sim' : 'Não' }}</div>
+                </div>
+                <div v-if="purchase.paid_at">
+                    <div class="text-muted-foreground">Pago em</div>
+                    <div class="font-medium">{{ formatDateTime(purchase.paid_at) }}</div>
+                </div>
+            </div>
 
-                <div class="space-y-1">
+            <div v-if="purchase.notes">
+                <div class="text-sm text-muted-foreground">Observações</div>
+                <div class="text-sm font-medium">{{ purchase.notes }}</div>
+            </div>
+        </div>
+
+        <template #footer>
+            <div class="grid w-full gap-2">
                 <Button
                     v-if="purchase?.status !== 'paga'"
                     variant="outline"
@@ -164,7 +170,7 @@ function unmarkAsPaid(): void {
                 </Button>
 
                 <Button
-                    v-if="purchase?.status === 'paga'"
+                    v-else
                     variant="outline"
                     class="w-full cursor-pointer"
                     @click="unmarkAsPaid"
@@ -174,22 +180,25 @@ function unmarkAsPaid(): void {
                 </Button>
 
                 <Button
-                    v-if="!purchase.card_id"
+                    v-if="!purchase?.card_id"
                     variant="outline"
                     class="w-full cursor-pointer"
-                    @click="emit('edit', purchase); close()"
+                    @click="edit"
                 >
                     Editar
                 </Button>
 
-                <Button variant="destructive" class="w-full cursor-pointer" @click="showDeleteDialog = true">
+                <Button
+                    variant="destructive"
+                    class="w-full cursor-pointer"
+                    @click="showDeleteDialog = true"
+                >
                     <Trash2 class="mr-2 size-4" />
                     Excluir
                 </Button>
             </div>
-        </div>
-        </DialogContent>
-    </Dialog>
+        </template>
+    </ResponsiveModal>
 
     <ConfirmDialog
         v-model:open="showDeleteDialog"

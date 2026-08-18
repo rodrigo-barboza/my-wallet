@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useMediaQuery } from '@vueuse/core'
 import { router, Head } from '@inertiajs/vue3'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -9,6 +8,7 @@ import { AlertCircle, Calendar, ChevronLeft, ChevronRight, TrendingDown, Trendin
 import AppLayout from '@/Layouts/AppLayout.vue'
 import DashboardBarChart from '@/Components/DashboardBarChart.vue'
 import SummaryCard from '@/Components/SummaryCard.vue'
+import { useIsMobile } from '@/composables/useIsMobile'
 import { chartPalette, colors, typeColors } from '@/lib/colors'
 import { formatCurrency, formatDate } from '@/lib/format'
 import type { CategoryDistribution, DashboardMatrixItem, DashboardWindowMonth, MonthlySummary, UpcomingPayment } from '@/types/dashboard'
@@ -23,17 +23,21 @@ const props = defineProps<{
     upcomingPayments: UpcomingPayment[]
 }>()
 
-const isMobile = useMediaQuery('(max-width: 767px)')
+const isMobile = useIsMobile()
 const visibleCount = computed(() => isMobile.value ? 3 : 6)
 
 const visibleWindow = computed(() => props.window.slice(0, visibleCount.value))
 const visibleMonthlySummary = computed(() => props.monthlySummary.slice(0, visibleCount.value))
-const visibleMatrix = computed(() =>
-    props.matrix.map(row => ({ ...row, totals: row.totals.slice(0, visibleCount.value) }))
-)
 
 const highlightedIndex = computed(() => Math.max(0, props.window.findIndex((m) => m.isHighlighted)))
 const highlighted = computed(() => (props.monthlySummary[highlightedIndex.value] ?? props.monthlySummary[0]) as MonthlySummary)
+
+const highlightedExpenses = computed(() =>
+    props.matrix.map((row) => ({ ...row, total: row.totals[highlightedIndex.value] ?? 0 }))
+)
+const highlightedColumnTotal = computed(() =>
+    highlightedExpenses.value.reduce((sum, row) => sum + row.total, 0)
+)
 
 const hasData = computed(() => visibleMonthlySummary.value.some((ms) => ms.income > 0 || ms.expenses > 0))
 
@@ -52,12 +56,6 @@ const isCurrentMonth = computed(() => {
     const first = props.window[0]
     const now = new Date()
     return first.year === now.getFullYear() && first.month === now.getMonth() + 1
-})
-
-const columnTotals = computed(() => {
-    return Array.from({ length: visibleCount.value }, (_, i) =>
-        visibleMatrix.value.reduce((sum, row) => sum + (row.totals[i] || 0), 0)
-    )
 })
 
 function isToday(dateStr: string): boolean {
@@ -201,6 +199,7 @@ function categoryColor(index: number, type: string): string {
                     <DashboardBarChart
                         :monthly-summary="visibleMonthlySummary"
                         :window="visibleWindow"
+                        :is-mobile="isMobile"
                     />
                 </div>
             </CardContent>
@@ -240,107 +239,9 @@ function categoryColor(index: number, type: string): string {
                 </div>
             </CardHeader>
 
-            <!-- Desktop table -->
-            <CardContent class="hidden p-0 md:block">
-                <div class="overflow-x-auto rounded-b-xl">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="border-b bg-muted/40">
-                                <th class="sticky left-0 z-10 bg-muted/40 pl-4 pr-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground rounded-tl-xl">
-                                    Descrição
-                                </th>
-                                <th
-                                    v-for="(month, index) in visibleWindow"
-                                    :key="index"
-                                    class="px-3 py-2.5 text-center text-[11px] cursor-pointer select-none transition-colors"
-                                    :class="month.isHighlighted ? 'bg-primary/10 font-bold text-primary border-b-2 border-primary' : 'font-medium text-muted-foreground hover:bg-muted/30'"
-                                    @click="goToMonth(month.month, month.year)"
-                                >
-                                    <div class="uppercase tracking-wider leading-tight">{{ month.label.slice(0, 3) }}</div>
-                                    <div class="text-[10px] font-normal text-muted-foreground/60 leading-tight">{{ month.year }}</div>
-                                    <Badge
-                                        v-if="month.isCurrent && !month.isHighlighted"
-                                        variant="secondary"
-                                        class="mt-0.5 text-[10px] px-1 py-0 h-3.5 leading-none rounded-sm"
-                                    >
-                                        atual
-                                    </Badge>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-if="visibleMatrix.length === 0">
-                                <td
-                                    :colspan="visibleWindow.length + 1"
-                                    class="py-16 text-center text-muted-foreground text-sm"
-                                >
-                                    Nenhuma despesa prevista para este período.
-                                </td>
-                            </tr>
-                            <tr
-                                v-for="(row, ri) in visibleMatrix"
-                                :key="row.id"
-                                class="transition-colors"
-                                :class="ri % 2 === 0 ? 'bg-background' : 'bg-muted/20'"
-                            >
-                                <td
-                                    class="sticky left-0 z-10 pl-4 pr-3 py-2.5 text-sm"
-                                    :class="ri % 2 === 0 ? 'bg-background' : 'bg-muted/20'"
-                                >
-                                    <div class="flex items-center gap-2.5">
-                                        <div
-                                            class="h-5 w-1 rounded-full shrink-0"
-                                            :style="{ backgroundColor: typeColor(row.type) }"
-                                        />
-                                        <span class="font-medium truncate">{{ row.name }}</span>
-                                        <Badge
-                                            variant="outline"
-                                            class="text-[10px] px-1.5 py-0 h-4 leading-none shrink-0 border-muted-foreground/20 text-muted-foreground"
-                                        >
-                                            {{ typeLabel(row.type) }}
-                                        </Badge>
-                                    </div>
-                                </td>
-                                <td
-                                    v-for="(total, ti) in row.totals"
-                                    :key="ti"
-                                    class="px-3 py-2.5 text-center text-sm tabular-nums transition-colors"
-                                    :class="{
-                                        'bg-primary/5 font-semibold': visibleWindow[ti]?.isHighlighted,
-                                        'bg-muted/20': !visibleWindow[ti]?.isHighlighted && ri % 2 === 1,
-                                    }"
-                                >
-                                    <span v-if="total > 0">{{ formatCurrency(total) }}</span>
-                                    <span
-                                        v-else
-                                        class="text-muted-foreground/40"
-                                    >&mdash;</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr class="border-t-2 bg-muted/30">
-                                <td class="sticky left-0 z-10 bg-muted/30 pl-4 pr-3 py-2.5 text-sm font-bold text-foreground">
-                                    Total
-                                </td>
-                                <td
-                                    v-for="(total, ti) in columnTotals"
-                                    :key="ti"
-                                    class="px-3 py-2.5 text-center text-sm font-bold tabular-nums"
-                                    :class="visibleWindow[ti]?.isHighlighted ? 'bg-primary/5' : ''"
-                                >
-                                    {{ total > 0 ? formatCurrency(total) : '—' }}
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </CardContent>
-
-            <!-- Mobile cards -->
-            <CardContent class="p-0 md:hidden">
+            <CardContent class="p-0">
                 <div
-                    v-if="visibleMatrix.length === 0"
+                    v-if="highlightedExpenses.length === 0"
                     class="py-16 text-center text-muted-foreground text-sm"
                 >
                     Nenhuma despesa prevista para este período.
@@ -350,11 +251,11 @@ function categoryColor(index: number, type: string): string {
                     class="divide-y divide-muted/30"
                 >
                     <div
-                        v-for="(row) in visibleMatrix"
+                        v-for="row in highlightedExpenses"
                         :key="row.id"
-                        class="px-4 py-3"
+                        class="flex items-center justify-between gap-3 px-4 py-3"
                     >
-                        <div class="flex items-center gap-2 mb-2">
+                        <div class="flex items-center gap-2.5 min-w-0">
                             <div
                                 class="h-4 w-1 rounded-full shrink-0"
                                 :style="{ backgroundColor: typeColor(row.type) }"
@@ -362,48 +263,25 @@ function categoryColor(index: number, type: string): string {
                             <span class="font-medium text-sm truncate">{{ row.name }}</span>
                             <Badge
                                 variant="outline"
-                                class="text-[10px] px-1 py-0 h-3.5 leading-none shrink-0 border-muted-foreground/20 text-muted-foreground"
+                                class="text-[10px] px-1.5 py-0 h-4 leading-none shrink-0 border-muted-foreground/20 text-muted-foreground"
                             >
                                 {{ typeLabel(row.type) }}
                             </Badge>
                         </div>
-                        <div
-                            class="grid gap-2"
-                            :style="{ gridTemplateColumns: `repeat(${visibleWindow.length}, minmax(0, 1fr))` }"
-                        >
-                            <div
-                                v-for="(month, mi) in visibleWindow"
-                                :key="mi"
-                                class="text-center rounded-md py-1.5 px-1"
-                                :class="month.isHighlighted ? 'bg-primary/10 font-bold text-primary' : 'text-muted-foreground'"
-                            >
-                                <div class="text-[10px] font-medium mb-0.5">{{ month.label.slice(0, 3) }}</div>
-                                <div class="text-xs tabular-nums font-semibold">
-                                    <span v-if="row.totals[mi] > 0">{{ formatCurrency(row.totals[mi]) }}</span>
-                                    <span
-                                        v-else
-                                        class="text-muted-foreground/40"
-                                    >&mdash;</span>
-                                </div>
-                            </div>
-                        </div>
+                        <span class="text-sm font-semibold tabular-nums shrink-0">
+                            <span v-if="row.total > 0">{{ formatCurrency(row.total) }}</span>
+                            <span
+                                v-else
+                                class="text-muted-foreground/40"
+                            >&mdash;</span>
+                        </span>
                     </div>
 
-                    <div class="px-4 py-3 bg-muted/30">
-                        <div class="font-bold text-sm mb-2">Total</div>
-                        <div
-                            class="grid gap-2"
-                            :style="{ gridTemplateColumns: `repeat(${visibleWindow.length}, minmax(0, 1fr))` }"
-                        >
-                            <div
-                                v-for="(total, ti) in columnTotals"
-                                :key="ti"
-                                class="text-center rounded-md py-1.5 px-1 text-xs font-bold tabular-nums"
-                                :class="visibleWindow[ti]?.isHighlighted ? 'bg-primary/10 text-primary' : 'text-foreground'"
-                            >
-                                {{ total > 0 ? formatCurrency(total) : '—' }}
-                            </div>
-                        </div>
+                    <div class="flex items-center justify-between gap-3 px-4 py-3 bg-muted/30">
+                        <span class="font-bold text-sm">Total</span>
+                        <span class="font-bold text-sm tabular-nums">
+                            {{ highlightedColumnTotal > 0 ? formatCurrency(highlightedColumnTotal) : '—' }}
+                        </span>
                     </div>
                 </div>
             </CardContent>
@@ -505,7 +383,8 @@ function categoryColor(index: number, type: string): string {
                             class="flex items-center gap-3"
                         >
                             <span
-                                class="text-xs text-muted-foreground w-[70px] shrink-0 text-right truncate"
+                                class="text-xs text-muted-foreground shrink-0 text-right truncate"
+                                :class="isMobile ? 'w-[56px]' : 'w-[70px]'"
                                 :title="entry.name"
                             >
                                 {{ entry.name }}
@@ -522,7 +401,8 @@ function categoryColor(index: number, type: string): string {
                                 />
                             </div>
                             <span
-                                class="text-sm font-semibold tabular-nums w-[85px] shrink-0"
+                                class="text-sm font-semibold tabular-nums shrink-0"
+                                :class="isMobile ? 'w-[70px]' : 'w-[85px]'"
                                 :title="formatCurrency(entry.value)"
                             >
                                 {{ formatCurrency(entry.value) }}

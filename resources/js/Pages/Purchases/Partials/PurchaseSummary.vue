@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useSortable } from '@vueuse/integrations/useSortable'
 import type { Purchase, PurchaseSummaryItem } from '@/types/purchase'
-import { Card as CardComponent, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card as CardComponent, CardContent } from '@/components/ui/card'
 import Checkbox from '@/Components/Checkbox.vue'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Bell, CreditCard, ShoppingCart } from '@lucide/vue'
 import CardPurchaseDetailsModal from '@/Components/CardPurchaseDetailsModal.vue'
 import PurchaseDetailsModal from '@/Components/PurchaseDetailsModal.vue'
 import StatusBadge from '@/Components/StatusBadge.vue'
+import { useIsMobile } from '@/composables/useIsMobile'
 import { formatCurrency, formatDateRange, toTitleCase } from '@/lib/format'
 import { typeColors } from '@/lib/colors'
 import { typeIcons } from '@/lib/constants'
@@ -41,7 +42,9 @@ function getItemKey(item: PurchaseSummaryItem): string {
     return first?.card_id ? `card_${first.card_id}` : `purchase_${first?.id}`
 }
 
-useSortable(el, list, {
+const isMobile = useIsMobile()
+
+const sortable = useSortable(el, list, {
     animation: 200,
     onUpdate: (e) => {
         const { oldIndex, newIndex } = e
@@ -54,6 +57,13 @@ useSortable(el, list, {
         emit('reorder', order)
     },
 })
+
+function applyDragDisabled(): void {
+    sortable.option('disabled', isMobile.value)
+}
+
+onMounted(applyDragDisabled)
+watch(isMobile, applyDragDisabled)
 
 function getClosingDate(item: PurchaseSummaryItem): number {
     return !Array.isArray(item.dates) ? item.dates.closing : 0
@@ -98,7 +108,8 @@ function onEditPurchase(purchase: Purchase): void {
         <template v-for="(item) in list" :key="getItemKey(item)">
             <CardComponent
                 v-if="item.items[0].card_id"
-                class="relative cursor-grab active:cursor-grabbing overflow-hidden transition-colors hover:bg-muted/30"
+                class="relative overflow-hidden transition-colors hover:bg-muted/30"
+                :class="isMobile ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'"
                 :style="{ borderRadius: '0 var(--radius) var(--radius) 0' }"
                 @click="openCardDetails(item)"
             >
@@ -106,47 +117,50 @@ function onEditPurchase(purchase: Purchase): void {
                     class="absolute inset-y-0 left-0 w-1"
                     :style="{ backgroundColor: item.items[0].card?.color ?? typeColors.credit_card }"
                 />
-                <CardHeader class="pb-2">
-                    <CardTitle class="flex items-center justify-between">
+                <CardContent class="flex items-start gap-3 p-4">
+                    <Checkbox
+                        :checked="selectedIds?.has(getItemKey(item))"
+                        class="mt-0.5 cursor-pointer"
+                        @click.stop
+                        @update:checked="emit('toggleSelect', getItemKey(item))"
+                    />
+                    <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-2">
-                            <Checkbox
-                                :checked="selectedIds?.has(getItemKey(item))"
-                                class="cursor-pointer"
-                                @click.stop
-                                @update:checked="emit('toggleSelect', getItemKey(item))"
-                            />
                             <CreditCard
-                                class="size-5"
+                                class="size-5 shrink-0"
                                 :style="{ color: item.items[0].card?.color ?? '#6b7280' }"
                             />
-                            {{ item.name }}
+                            <span class="truncate font-medium">{{ item.name }}</span>
                         </div>
-                        <StatusBadge
+                        <div
                             v-if="item.status"
-                            :status="item.status"
-                            :base-status="item.base_status"
-                        />
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted-foreground">
-                            {{ formatDateRange(getClosingDate(item), getDueDate(item)) }}
-                        </span>
-                        <span class="font-semibold">{{ formatCurrency(item.total) }}</span>
-                    </div>
-                    <div
-                        v-if="item.paid_amount && item.paid_amount < item.total"
-                        class="mt-1 text-xs text-muted-foreground"
-                    >
-                        Pago {{ formatCurrency(item.paid_amount) }} de {{ formatCurrency(item.total) }}
+                            class="mt-1.5"
+                        >
+                            <StatusBadge
+                                :status="item.status"
+                                :base-status="item.base_status"
+                            />
+                        </div>
+                        <div class="mt-1.5 flex items-center justify-between gap-2 text-sm">
+                            <span class="text-muted-foreground">
+                                {{ formatDateRange(getClosingDate(item), getDueDate(item)) }}
+                            </span>
+                            <span class="shrink-0 font-semibold tabular-nums">{{ formatCurrency(item.total) }}</span>
+                        </div>
+                        <div
+                            v-if="item.paid_amount && item.paid_amount < item.total"
+                            class="mt-1 text-xs text-muted-foreground"
+                        >
+                            Pago {{ formatCurrency(item.paid_amount) }} de {{ formatCurrency(item.total) }}
+                        </div>
                     </div>
                 </CardContent>
             </CardComponent>
 
             <CardComponent
                 v-else
-                class="relative cursor-grab active:cursor-grabbing overflow-hidden transition-colors hover:bg-muted/30"
+                class="relative overflow-hidden transition-colors hover:bg-muted/30"
+                :class="isMobile ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'"
                 :style="{ borderRadius: '0 var(--radius) var(--radius) 0' }"
                 @click="openIndividualDetails(item)"
             >
@@ -154,55 +168,53 @@ function onEditPurchase(purchase: Purchase): void {
                     class="absolute inset-y-0 left-0 w-1"
                     :style="{ backgroundColor: typeColors[item.items[0].type] ?? '#6b7280' }"
                 />
-                <CardHeader class="pb-2">
-                    <CardTitle class="flex items-center justify-between">
+                <CardContent class="flex items-start gap-3 p-4">
+                    <Checkbox
+                        :checked="selectedIds?.has(getItemKey(item))"
+                        class="mt-0.5 cursor-pointer"
+                        @click.stop
+                        @update:checked="emit('toggleSelect', getItemKey(item))"
+                    />
+                    <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-2">
-                            <Checkbox
-                                :checked="selectedIds?.has(getItemKey(item))"
-                                class="cursor-pointer"
-                                @click.stop
-                                @update:checked="emit('toggleSelect', getItemKey(item))"
-                            />
                             <component
                                 :is="typeIcons[item.items[0].type] ?? ShoppingCart"
-                                class="size-5"
+                                class="size-5 shrink-0"
                                 :style="{ color: typeColors[item.items[0].type] ?? '#6b7280' }"
                             />
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    {{ item.name ? toTitleCase(item.name) : 'Sem nome' }}
-                                    <TooltipProvider v-if="item.items[0].notify_due">
-                                        <Tooltip>
-                                            <TooltipTrigger as-child>
-                                                <Bell class="size-3.5 text-amber-500" />
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Notificação de vencimento ativa</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </div>
-                                <p
-                                    v-if="item.current_installment && item.installments_total"
-                                    class="text-xs text-muted-foreground"
-                                >
-                                    Parcela {{ item.current_installment }} de {{ item.installments_total }}
-                                </p>
-                            </div>
+                            <span class="truncate font-medium">{{ item.name ? toTitleCase(item.name) : 'Sem nome' }}</span>
+                            <TooltipProvider v-if="item.items[0].notify_due">
+                                <Tooltip>
+                                    <TooltipTrigger as-child>
+                                        <Bell class="size-3.5 shrink-0 text-amber-500" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Notificação de vencimento ativa</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
-                        <StatusBadge
+                        <div
                             v-if="item.status"
-                            :status="item.status"
-                            :base-status="item.base_status"
-                        />
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted-foreground">
-                            Dia {{ getPaymentDay(item) }}
-                        </span>
-                        <span class="font-semibold">{{ formatCurrency(item.installment_value ?? item.total) }}</span>
+                            class="mt-1.5"
+                        >
+                            <StatusBadge
+                                :status="item.status"
+                                :base-status="item.base_status"
+                            />
+                        </div>
+                        <p
+                            v-if="item.current_installment && item.installments_total"
+                            class="mt-1 text-xs text-muted-foreground"
+                        >
+                            Parcela {{ item.current_installment }} de {{ item.installments_total }}
+                        </p>
+                        <div class="mt-1.5 flex items-center justify-between gap-2 text-sm">
+                            <span class="text-muted-foreground">
+                                Dia {{ getPaymentDay(item) }}
+                            </span>
+                            <span class="shrink-0 font-semibold tabular-nums">{{ formatCurrency(item.installment_value ?? item.total) }}</span>
+                        </div>
                     </div>
                 </CardContent>
             </CardComponent>

@@ -3,9 +3,9 @@ import { ref, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import type { Card } from '@/types/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import ResponsiveModal from '@/Components/ResponsiveModal.vue';
 import Toggle from '@/Components/Toggle.vue';
 
 const props = defineProps<{
@@ -80,79 +80,82 @@ function selectCustomColor(): void {
 </script>
 
 <template>
-    <Dialog :open="open" @update:open="emit('update:open', $event)">
-        <DialogContent class="sm:max-w-md">
-            <DialogHeader>
-                <DialogTitle>{{ card ? 'Editar cartão' : 'Novo cartão' }}</DialogTitle>
-            </DialogHeader>
+    <ResponsiveModal
+        :open="open"
+        :title="card ? 'Editar cartão' : 'Novo cartão'"
+        @update:open="emit('update:open', $event)"
+    >
+        <form
+            class="space-y-4"
+            @submit.prevent="submit"
+        >
+            <div class="space-y-2">
+                <Label for="name">Nome do cartão</Label>
+                <Input id="name" v-model="form.name" placeholder="Ex: Nubank" />
+                <p v-if="form.errors.name" class="text-xs text-destructive">{{ form.errors.name }}</p>
+            </div>
 
-            <form @submit.prevent="submit" class="space-y-4">
+            <div class="space-y-2">
+                <Label>Cor</Label>
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        v-for="color in predefinedColors"
+                        :key="color"
+                        type="button"
+                        class="size-8 rounded-full border-2 transition-all"
+                        :class="form.color === color ? 'border-foreground scale-110' : 'border-transparent'"
+                        :style="{ backgroundColor: color }"
+                        @click="selectColor(color)"
+                    />
+                    <button
+                        type="button"
+                        class="size-8 rounded-full border-2 border-dashed border-muted-foreground transition-all"
+                        :class="{ 'border-foreground scale-110': showCustomColor }"
+                        @click="selectCustomColor"
+                    >
+                        <span class="text-xs">+</span>
+                    </button>
+                </div>
+                <div v-if="showCustomColor" class="mt-2 flex items-center gap-2">
+                    <input type="color" v-model="customColor" @input="form.color = customColor" class="size-8 cursor-pointer" />
+                    <Input v-model="form.color" placeholder="#000000" class="w-32" />
+                </div>
+                <p v-if="form.errors.color" class="text-xs text-destructive">{{ form.errors.color }}</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-2">
-                    <Label for="name">Nome do cartão</Label>
-                    <Input id="name" v-model="form.name" placeholder="Ex: Nubank" />
-                    <p v-if="form.errors.name" class="text-xs text-destructive">{{ form.errors.name }}</p>
+                    <Label for="closing_day">Dia de fechamento</Label>
+                    <Input id="closing_day" v-model="form.closing_day" type="number" min="1" max="31" />
+                    <p v-if="form.errors.closing_day" class="text-xs text-destructive">{{ form.errors.closing_day }}</p>
                 </div>
-
                 <div class="space-y-2">
-                    <Label>Cor</Label>
-                    <div class="flex flex-wrap gap-2">
-                        <button
-                            v-for="color in predefinedColors"
-                            :key="color"
-                            type="button"
-                            class="size-8 rounded-full border-2 transition-all"
-                            :class="form.color === color ? 'border-foreground scale-110' : 'border-transparent'"
-                            :style="{ backgroundColor: color }"
-                            @click="selectColor(color)"
-                        />
-                        <button
-                            type="button"
-                            class="size-8 rounded-full border-2 border-dashed border-muted-foreground transition-all"
-                            :class="{ 'border-foreground scale-110': showCustomColor }"
-                            @click="selectCustomColor"
-                        >
-                            <span class="text-xs">+</span>
-                        </button>
-                    </div>
-                    <div v-if="showCustomColor" class="mt-2 flex items-center gap-2">
-                        <input type="color" v-model="customColor" @input="form.color = customColor" class="size-8 cursor-pointer" />
-                        <Input v-model="form.color" placeholder="#000000" class="w-32" />
-                    </div>
-                    <p v-if="form.errors.color" class="text-xs text-destructive">{{ form.errors.color }}</p>
+                    <Label for="due_day">Dia de vencimento</Label>
+                    <Input id="due_day" v-model="form.due_day" type="number" min="1" max="31" />
+                    <p v-if="form.errors.due_day" class="text-xs text-destructive">{{ form.errors.due_day }}</p>
                 </div>
+            </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <Label for="closing_day">Dia de fechamento</Label>
-                        <Input id="closing_day" v-model="form.closing_day" type="number" min="1" max="31" />
-                        <p v-if="form.errors.closing_day" class="text-xs text-destructive">{{ form.errors.closing_day }}</p>
-                    </div>
-                    <div class="space-y-2">
-                        <Label for="due_day">Dia de vencimento</Label>
-                        <Input id="due_day" v-model="form.due_day" type="number" min="1" max="31" />
-                        <p v-if="form.errors.due_day" class="text-xs text-destructive">{{ form.errors.due_day }}</p>
-                    </div>
+            <div class="space-y-3">
+                <Label>Notificações por e-mail</Label>
+                <div class="flex items-center justify-between">
+                    <Label for="notify_closing" class="text-sm text-muted-foreground">Lembrete de fechamento</Label>
+                    <Toggle id="notify_closing" :checked="form.notify_closing" @update:checked="form.notify_closing = $event" />
                 </div>
-
-                <div class="space-y-3">
-                    <Label>Notificações por e-mail</Label>
-                    <div class="flex items-center justify-between">
-                        <Label for="notify_closing" class="text-sm text-muted-foreground">Lembrete de fechamento</Label>
-                        <Toggle id="notify_closing" :checked="form.notify_closing" @update:checked="form.notify_closing = $event" />
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <Label for="notify_due" class="text-sm text-muted-foreground">Lembrete de vencimento</Label>
-                        <Toggle id="notify_due" :checked="form.notify_due" @update:checked="form.notify_due = $event" />
-                    </div>
+                <div class="flex items-center justify-between">
+                    <Label for="notify_due" class="text-sm text-muted-foreground">Lembrete de vencimento</Label>
+                    <Toggle id="notify_due" :checked="form.notify_due" @update:checked="form.notify_due = $event" />
                 </div>
+            </div>
+        </form>
 
-                <DialogFooter>
-                    <Button type="button" variant="outline" @click="emit('update:open', false)">Cancelar</Button>
-                    <Button type="submit" :disabled="form.processing">
-                        {{ form.processing ? 'Salvando…' : 'Salvar' }}
-                    </Button>
-                </DialogFooter>
-            </form>
-        </DialogContent>
-    </Dialog>
+        <template #footer>
+            <div class="flex gap-2">
+                <Button type="button" variant="outline" class="flex-1" @click="emit('update:open', false)">Cancelar</Button>
+                <Button type="button" class="flex-1" :disabled="form.processing" @click="submit">
+                    {{ form.processing ? 'Salvando…' : 'Salvar' }}
+                </Button>
+            </div>
+        </template>
+    </ResponsiveModal>
 </template>

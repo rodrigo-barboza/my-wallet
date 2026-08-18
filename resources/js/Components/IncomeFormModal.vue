@@ -1,11 +1,5 @@
 <script setup lang="ts">
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import ResponsiveModal from '@/Components/ResponsiveModal.vue';
 import IncomeForm from '@/Components/IncomeForm.vue';
 
 defineProps<{
@@ -22,13 +16,12 @@ function close(): void {
 </script>
 
 <template>
-    <Dialog :open="open" @update:open="emit('update:open', $event)">
-        <DialogContent class="sm:max-w-md">
-            <DialogHeader>
-                <DialogTitle>Nova entrada</DialogTitle>
-                <DialogDescription>Adicione um recebimento mensal</DialogDescription>
-            </DialogHeader>
-            <IncomeForm @success="close" />
-        </DialogContent>
-    </Dialog>
+    <ResponsiveModal
+        :open="open"
+        title="Nova entrada"
+        description="Adicione um recebimento mensal"
+        @update:open="emit('update:open', $event)"
+    >
+        <IncomeForm @success="close" />
+    </ResponsiveModal>
 </template>
