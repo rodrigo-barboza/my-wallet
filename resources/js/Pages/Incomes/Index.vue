@@ -46,7 +46,15 @@ const fillDialog = ref<{ incomeId: number; month: number; year: number; amount: 
 const fillCount = ref(1)
 
 const visibleMonths = computed(() => {
-    return [{ month: centerMonth.value, year: centerYear.value, label: monthAbbrs[centerMonth.value - 1] }]
+    const months: { month: number; year: number; label: string }[] = []
+    for (let i = -3; i <= 3; i++) {
+        let m = centerMonth.value + i
+        let y = centerYear.value
+        if (m < 1) { m += 12; y-- }
+        if (m > 12) { m -= 12; y++ }
+        months.push({ month: m, year: y, label: monthAbbrs[m - 1] })
+    }
+    return months
 })
 
 const sortedIncomes = computed(() => {
@@ -260,7 +268,12 @@ function nextMonth(): void {
             >
                 <ChevronLeft class="size-4" />
             </Button>
-            <div class="text-base font-semibold text-foreground">
+            <div v-if="!isMobile" class="text-sm text-muted-foreground">
+                <span class="text-base font-semibold text-foreground">{{ monthAbbrs[visibleMonths[0].month - 1] }}/{{ visibleMonths[0].year }}</span>
+                <span class="mx-1">até</span>
+                <span class="text-base font-semibold text-foreground">{{ monthAbbrs[visibleMonths[6].month - 1] }}/{{ visibleMonths[6].year }}</span>
+            </div>
+            <div v-else class="text-base font-semibold text-foreground">
                 {{ monthNames[centerMonth - 1] }} {{ centerYear }}
             </div>
             <Button
@@ -314,8 +327,6 @@ function nextMonth(): void {
         <IncomesCardMode
             v-else
             :incomes="sortedIncomes"
-            :visible-months="visibleMonths"
-            :totals="totals"
             :selected-ids="selectedIds"
             :center-month="centerMonth"
             :center-year="centerYear"

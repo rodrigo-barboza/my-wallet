@@ -28,6 +28,9 @@ const visibleCount = computed(() => isMobile.value ? 3 : 6)
 
 const visibleWindow = computed(() => props.window.slice(0, visibleCount.value))
 const visibleMonthlySummary = computed(() => props.monthlySummary.slice(0, visibleCount.value))
+const visibleMatrix = computed(() =>
+    props.matrix.map(row => ({ ...row, totals: row.totals.slice(0, visibleCount.value) }))
+)
 
 const highlightedIndex = computed(() => Math.max(0, props.window.findIndex((m) => m.isHighlighted)))
 const highlighted = computed(() => (props.monthlySummary[highlightedIndex.value] ?? props.monthlySummary[0]) as MonthlySummary)
@@ -38,6 +41,12 @@ const highlightedExpenses = computed(() =>
 const highlightedColumnTotal = computed(() =>
     highlightedExpenses.value.reduce((sum, row) => sum + row.total, 0)
 )
+
+const columnTotals = computed(() => {
+    return Array.from({ length: visibleCount.value }, (_, i) =>
+        visibleMatrix.value.reduce((sum, row) => sum + (row.totals[i] || 0), 0)
+    )
+})
 
 const hasData = computed(() => visibleMonthlySummary.value.some((ms) => ms.income > 0 || ms.expenses > 0))
 
@@ -239,7 +248,105 @@ function categoryColor(index: number, type: string): string {
                 </div>
             </CardHeader>
 
-            <CardContent class="p-0">
+                        <!-- Desktop table (multi-month) -->
+            <CardContent class="hidden p-0 md:block">
+                <div class="overflow-x-auto rounded-b-xl">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b bg-muted/40">
+                                <th class="sticky left-0 z-10 bg-muted/40 pl-4 pr-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground rounded-tl-xl">
+                                    Descrição
+                                </th>
+                                <th
+                                    v-for="(month, index) in visibleWindow"
+                                    :key="index"
+                                    class="px-3 py-2.5 text-center text-[11px] cursor-pointer select-none transition-colors"
+                                    :class="month.isHighlighted ? 'bg-primary/10 font-bold text-primary border-b-2 border-primary' : 'font-medium text-muted-foreground hover:bg-muted/30'"
+                                    @click="goToMonth(month.month, month.year)"
+                                >
+                                    <div class="uppercase tracking-wider leading-tight">{{ month.label.slice(0, 3) }}</div>
+                                    <div class="text-[10px] font-normal text-muted-foreground/60 leading-tight">{{ month.year }}</div>
+                                    <Badge
+                                        v-if="month.isCurrent && !month.isHighlighted"
+                                        variant="secondary"
+                                        class="mt-0.5 text-[10px] px-1 py-0 h-3.5 leading-none rounded-sm"
+                                    >
+                                        atual
+                                    </Badge>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-if="visibleMatrix.length === 0">
+                                <td
+                                    :colspan="visibleWindow.length + 1"
+                                    class="py-16 text-center text-muted-foreground text-sm"
+                                >
+                                    Nenhuma despesa prevista para este período.
+                                </td>
+                            </tr>
+                            <tr
+                                v-for="(row, ri) in visibleMatrix"
+                                :key="row.id"
+                                class="transition-colors"
+                                :class="ri % 2 === 0 ? 'bg-background' : 'bg-muted/20'"
+                            >
+                                <td
+                                    class="sticky left-0 z-10 pl-4 pr-3 py-2.5 text-sm"
+                                    :class="ri % 2 === 0 ? 'bg-background' : 'bg-muted/20'"
+                                >
+                                    <div class="flex items-center gap-2.5">
+                                        <div
+                                            class="h-5 w-1 rounded-full shrink-0"
+                                            :style="{ backgroundColor: typeColor(row.type) }"
+                                        />
+                                        <span class="font-medium truncate">{{ row.name }}</span>
+                                        <Badge
+                                            variant="outline"
+                                            class="text-[10px] px-1.5 py-0 h-4 leading-none shrink-0 border-muted-foreground/20 text-muted-foreground"
+                                        >
+                                            {{ typeLabel(row.type) }}
+                                        </Badge>
+                                    </div>
+                                </td>
+                                <td
+                                    v-for="(total, ti) in row.totals"
+                                    :key="ti"
+                                    class="px-3 py-2.5 text-center text-sm tabular-nums transition-colors"
+                                    :class="{
+                                        'bg-primary/5 font-semibold': visibleWindow[ti]?.isHighlighted,
+                                        'bg-muted/20': !visibleWindow[ti]?.isHighlighted && ri % 2 === 1,
+                                    }"
+                                >
+                                    <span v-if="total > 0">{{ formatCurrency(total) }}</span>
+                                    <span
+                                        v-else
+                                        class="text-muted-foreground/40"
+                                    >&mdash;</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="border-t-2 bg-muted/30">
+                                <td class="sticky left-0 z-10 bg-muted/30 pl-4 pr-3 py-2.5 text-sm font-bold text-foreground">
+                                    Total
+                                </td>
+                                <td
+                                    v-for="(total, ti) in columnTotals"
+                                    :key="ti"
+                                    class="px-3 py-2.5 text-center text-sm font-bold tabular-nums"
+                                    :class="visibleWindow[ti]?.isHighlighted ? 'bg-primary/5' : ''"
+                                >
+                                    {{ total > 0 ? formatCurrency(total) : '—' }}
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </CardContent>
+
+            <!-- Mobile: current month only -->
+            <CardContent class="p-0 md:hidden">
                 <div
                     v-if="highlightedExpenses.length === 0"
                     class="py-16 text-center text-muted-foreground text-sm"

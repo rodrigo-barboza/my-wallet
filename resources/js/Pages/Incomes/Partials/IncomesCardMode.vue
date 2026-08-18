@@ -9,7 +9,6 @@ import type { Income, IncomeActionButton, IncomeEditingCell, IncomeEditingName }
 
 const props = defineProps<{
     incomes: Income[]
-    visibleMonths: { month: number; year: number; label: string }[]
     centerMonth: number
     centerYear: number
     selectedIds: Set<number>
@@ -34,7 +33,7 @@ const emit = defineEmits<{
     'update:editingNameValue': [value: string]
 }>()
 
-const currentMonth = props.visibleMonths[0]
+const currentMonth = { month: props.centerMonth, year: props.centerYear }
 
 function getAmount(income: Income, month: number, year: number): number | null {
     return income.months[year]?.[month]?.amount ?? null
