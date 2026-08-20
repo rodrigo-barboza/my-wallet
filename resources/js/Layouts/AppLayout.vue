@@ -15,9 +15,11 @@ import NavLink from '@/Components/NavLink.vue'
 import OnboardingProvider from '@/Components/OnboardingProvider.vue'
 import ToastContainer from '@/Components/ToastContainer.vue'
 import UserDropdown from '@/Components/UserDropdown.vue'
+import { useOnboarding } from '@/composables/useOnboarding'
 import { useToast } from '@/composables/useToast'
 
 const { show } = useToast()
+const { hasPendingNoveltyOnPage } = useOnboarding()
 
 const page = usePage()
 
@@ -32,10 +34,10 @@ function isActive(name: string): boolean {
 }
 
 const navLinks = [
-    { name: 'Dashboard', route: 'dashboard', pattern: 'dashboard', icon: LayoutDashboard },
-    { name: 'Compras', route: 'purchases.index', pattern: 'purchases*', icon: ShoppingCart },
-    { name: 'Entradas', route: 'incomes.index', pattern: 'incomes*', icon: Banknote },
-    { name: 'Cartões', route: 'cards.index', pattern: 'cards*', icon: CreditCard },
+    { name: 'Dashboard', route: 'dashboard', pattern: 'dashboard', page: 'Dashboard', icon: LayoutDashboard },
+    { name: 'Compras', route: 'purchases.index', pattern: 'purchases*', page: 'Purchases/Index', icon: ShoppingCart },
+    { name: 'Entradas', route: 'incomes.index', pattern: 'incomes*', page: 'Incomes/Index', icon: Banknote },
+    { name: 'Cartões', route: 'cards.index', pattern: 'cards*', page: 'Cards/Index', icon: CreditCard },
 ]
 </script>
 
@@ -56,6 +58,7 @@ const navLinks = [
                         :key="link.route"
                         :href="route(link.route)"
                         :active="isActive(link.pattern)"
+                        :show-dot="hasPendingNoveltyOnPage(link.page)"
                     >
                         {{ link.name }}
                     </NavLink>
@@ -87,7 +90,16 @@ const navLinks = [
                                     :class="isActive(link.pattern) ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
                                 >
                                     <component :is="link.icon" class="size-4" />
-                                    {{ link.name }}
+                                    <span class="flex items-center gap-1.5">
+                                        {{ link.name }}
+                                        <span
+                                            v-if="hasPendingNoveltyOnPage(link.page)"
+                                            class="relative flex size-2"
+                                        >
+                                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
+                                            <span class="relative inline-flex size-2 rounded-full bg-primary" />
+                                        </span>
+                                    </span>
                                 </Link>
                             </SheetClose>
                             <SheetClose as-child>

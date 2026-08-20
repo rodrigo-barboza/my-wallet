@@ -6,6 +6,8 @@ import 'driver.js/dist/driver.css'
 const TOUR_STORAGE_KEY = 'my-wallet-onboarding-tour'
 const NOVELTY_TOUR_KEY = 'my-wallet-novelty-groups-seen'
 
+export const NOVELTY_PAGE = 'Incomes/Index'
+
 const CURRENT_ONBOARDING_VERSION = 2
 
 interface TourState {
@@ -243,8 +245,24 @@ export function useOnboarding() {
     function shouldShowNoveltyTour(): boolean {
         return onboardingCompleted.value
             && onboardingVersion.value < CURRENT_ONBOARDING_VERSION
-            && getPageName() === 'Incomes/Index'
+            && getPageName() === NOVELTY_PAGE
             && !noveltyTourSeen()
+    }
+
+    function pendingNoveltyPage(): string | null {
+        if (!onboardingCompleted.value) {
+            return null
+        }
+
+        if (onboardingVersion.value >= CURRENT_ONBOARDING_VERSION) {
+            return null
+        }
+
+        return NOVELTY_PAGE
+    }
+
+    function hasPendingNoveltyOnPage(page: string): boolean {
+        return pendingNoveltyPage() === page
     }
 
     function shouldShowTour(): boolean {
@@ -458,6 +476,8 @@ export function useOnboarding() {
         onboardingVersion,
         shouldShowTour,
         shouldShowNoveltyTour,
+        pendingNoveltyPage,
+        hasPendingNoveltyOnPage,
         startNoveltyTour,
         startTour,
         startTourOnPage,
