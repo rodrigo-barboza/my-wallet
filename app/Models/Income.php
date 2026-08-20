@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
-#[Fillable(['user_id', 'name'])]
+#[Fillable(['user_id', 'name', 'group_id'])]
 class Income extends Model
 {
     public function name(): Attribute
@@ -19,6 +19,11 @@ class Income extends Model
         return Attribute::make(
             get: fn (string $name) => Str::title($name),
         );
+    }
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(IncomeGroup::class, 'group_id');
     }
 
     public function user(): BelongsTo

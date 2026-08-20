@@ -4,6 +4,9 @@ import { driver, type DriveStep, type Config } from 'driver.js'
 import 'driver.js/dist/driver.css'
 
 const TOUR_STORAGE_KEY = 'my-wallet-onboarding-tour'
+const NOVELTY_TOUR_KEY = 'my-wallet-novelty-groups-seen'
+
+const CURRENT_ONBOARDING_VERSION = 2
 
 interface TourState {
     active: boolean
@@ -167,6 +170,14 @@ const PAGE_TOURS: Record<string, () => DriveStep[]> = {
                 side: 'top',
             },
         },
+        {
+            element: '#onboarding-incomes-groups',
+            popover: {
+                title: 'Agrupar Entradas',
+                description: 'Selecione várias entradas com o checkbox e use o botão "Agrupar" para organizá-las em grupos. Cada grupo mostra o total do mês e pode ser recolhido/expandido. Use este botão para abrir ou fechar todos os grupos de uma vez.',
+                side: 'bottom',
+            },
+        },
     ],
     'Cards/Index': () => [
         {
@@ -201,9 +212,39 @@ const ALL_PAGES = ['Dashboard', 'Purchases/Index', 'Incomes/Index', 'Cards/Index
 export function useOnboarding() {
     const page = usePage()
     const onboardingCompleted = computed(() => (page.props as any).onboarding_completed as boolean)
+    const onboardingVersion = computed(() => (page.props as any).onboarding_version as number ?? 0)
 
     function getPageName(): string {
         return (page as any).component as string
+    }
+
+    function sendOnboardingRequest(url: string, version: number): void {
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-XSRF-TOKEN': decodeURIComponent(
+                    document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '',
+                ),
+            },
+            body: JSON.stringify({ version }),
+        })
+    }
+
+    function noveltyTourSeen(): boolean {
+        return sessionStorage.getItem(NOVELTY_TOUR_KEY) === String(CURRENT_ONBOARDING_VERSION)
+    }
+
+    function markNoveltyTourSeen(): void {
+        sessionStorage.setItem(NOVELTY_TOUR_KEY, String(CURRENT_ONBOARDING_VERSION))
+    }
+
+    function shouldShowNoveltyTour(): boolean {
+        return onboardingCompleted.value
+            && onboardingVersion.value < CURRENT_ONBOARDING_VERSION
+            && getPageName() === 'Incomes/Index'
+            && !noveltyTourSeen()
     }
 
     function shouldShowTour(): boolean {
@@ -238,17 +279,40 @@ export function useOnboarding() {
         setTourState(null)
         destroyDriver()
 
-        fetch(route('onboarding.complete'), {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-XSRF-TOKEN': decodeURIComponent(
-                    document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '',
-                ),
-            },
-        })
+        sendOnboardingRequest(route('onboarding.complete'), CURRENT_ONBOARDING_VERSION)
 
-        router.reload({ only: ['onboarding_completed'] })
+        router.reload({ only: ['onboarding_completed', 'onboarding_version'] })
+    }
+
+    function completeNoveltyTour(): void {
+        destroyDriver()
+        markNoveltyTourSeen()
+
+        sendOnboardingRequest(route('onboarding.groups-complete'), CURRENT_ONBOARDING_VERSION)
+
+        router.reload({ only: ['onboarding_version'] })
+    }
+
+    function startNoveltyTour(): void {
+        const steps: DriveStep[] = [
+            {
+                element: '#onboarding-incomes-groups',
+                popover: {
+                    title: 'Novidade: Agrupar Entradas',
+                    description: 'Agora você pode selecionar várias entradas com o checkbox e agrupá-las para organizar suas fontes de renda. Cada grupo mostra o total do mês e pode ser recolhido ou expandido.',
+                    side: 'bottom',
+                },
+            },
+        ]
+
+        destroyDriver()
+        driverInstance = driver({
+            ...getConfig(),
+            onDestroyStarted: completeNoveltyTour,
+            onDoneClick: completeNoveltyTour,
+        })
+        driverInstance.setSteps(steps)
+        driverInstance.drive()
     }
 
     function markPageVisited(pageName: string): void {
@@ -355,6 +419,7 @@ export function useOnboarding() {
 
     function resetTour(): void {
         destroyDriver()
+        sessionStorage.removeItem(NOVELTY_TOUR_KEY)
 
         fetch(route('onboarding.reset'), {
             method: 'POST',
@@ -366,7 +431,7 @@ export function useOnboarding() {
             },
         }).finally(() => {
             router.reload({
-                only: ['onboarding_completed'],
+                only: ['onboarding_completed', 'onboarding_version'],
                 onSuccess: () => {
                     setTourState({
                         active: true,
@@ -390,7 +455,10 @@ export function useOnboarding() {
 
     return {
         onboardingCompleted,
+        onboardingVersion,
         shouldShowTour,
+        shouldShowNoveltyTour,
+        startNoveltyTour,
         startTour,
         startTourOnPage,
         skipTour,

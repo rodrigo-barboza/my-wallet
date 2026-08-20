@@ -3,7 +3,14 @@ import type { Component } from 'vue'
 export interface Income {
     id: number;
     name: string;
+    group_id: number | null;
     months: Record<number, Record<number, { id: number; amount: number }>>;
+}
+
+export interface IncomeGroup {
+    id: number
+    name: string
+    incomeIds: number[]
 }
 
 export interface IncomeFormData {
@@ -12,6 +19,7 @@ export interface IncomeFormData {
     start_month: number;
     start_year: number;
     repeat_count: number;
+    group_id: number | null;
 }
 
 export interface IncomeEditingCell {

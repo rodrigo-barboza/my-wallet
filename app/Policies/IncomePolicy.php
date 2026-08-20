@@ -33,4 +33,14 @@ class IncomePolicy
     {
         return $income->user_id === $user->id;
     }
+
+    public function attach(User $user, Income $income): bool
+    {
+        return $income->user_id === $user->id;
+    }
+
+    public function detach(User $user, Income $income): bool
+    {
+        return $income->user_id === $user->id;
+    }
 }

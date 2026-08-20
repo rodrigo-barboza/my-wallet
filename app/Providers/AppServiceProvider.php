@@ -31,5 +31,17 @@ class AppServiceProvider extends ServiceProvider
 
             return $preferences['onboarding_completed'] ?? false;
         });
+
+        Inertia::share('onboarding_version', function (): int {
+            $user = auth()->user();
+
+            if (! $user) {
+                return 0;
+            }
+
+            $preferences = $user->preferences ?? [];
+
+            return (int) ($preferences['onboarding_version'] ?? 0);
+        });
     }
 }

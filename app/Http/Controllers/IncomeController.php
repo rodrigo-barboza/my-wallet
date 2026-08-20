@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\IncomeRequest;
 use App\Models\Income;
+use App\Models\IncomeGroup;
 use App\Models\IncomeMonth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,13 +35,26 @@ final readonly class IncomeController
                 return [
                     'id' => $income->id,
                     'name' => $income->name,
+                    'group_id' => $income->group_id,
                     'months' => $months,
                 ];
             })
             ->values();
 
+        $groups = IncomeGroup::where('user_id', auth()->id())
+            ->with('incomes')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($group) => [
+                'id' => $group->id,
+                'name' => $group->name,
+                'incomeIds' => $group->incomes->pluck('id')->values()->all(),
+            ])
+            ->values();
+
         return Inertia::render('Incomes/Index', [
             'incomes' => $incomes,
+            'groups' => $groups,
             'year' => $year,
         ]);
     }
@@ -49,9 +63,18 @@ final readonly class IncomeController
     {
         $validated = $request->validated();
 
+        $group = $validated['group_id'] ?? null;
+        if ($group !== null) {
+            $groupExists = IncomeGroup::where('id', $group)->where('user_id', auth()->id())->exists();
+            if (! $groupExists) {
+                $group = null;
+            }
+        }
+
         $income = Income::create([
             'user_id' => auth()->id(),
             'name' => $validated['name'],
+            'group_id' => $group,
         ]);
 
         $startMonth = (int) $validated['start_month'];
@@ -114,6 +137,7 @@ final readonly class IncomeController
         $copy = Income::create([
             'user_id' => auth()->id(),
             'name' => $income->name.' (cópia)',
+            'group_id' => $income->group_id,
         ]);
 
         foreach ($income->incomeMonths as $month) {

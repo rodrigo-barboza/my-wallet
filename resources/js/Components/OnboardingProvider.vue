@@ -3,7 +3,7 @@ import { watch } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import { useOnboarding } from '@/composables/useOnboarding'
 
-const { shouldShowTour, startTourOnPage } = useOnboarding()
+const { shouldShowTour, shouldShowNoveltyTour, startTourOnPage, startNoveltyTour } = useOnboarding()
 
 const page = usePage()
 
@@ -14,6 +14,11 @@ watch(() => (page as any).component as string | undefined, (component) => {
 
     if (shouldShowTour()) {
         startTourOnPage()
+        return
+    }
+
+    if (shouldShowNoveltyTour()) {
+        startNoveltyTour()
     }
 }, { immediate: true })
 </script>

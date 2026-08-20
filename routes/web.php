@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CardController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IncomeController;
+use App\Http\Controllers\IncomeGroupController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PreferencesController;
@@ -73,6 +74,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/incomes/{income}/months/fill', [IncomeController::class, 'fillMonths'])->name('incomes.fill-months');
     Route::post('/incomes/{income}/duplicate', [IncomeController::class, 'duplicate'])->name('incomes.duplicate');
     Route::delete('/income-months/{incomeMonth}', [IncomeController::class, 'deleteMonth'])->name('incomes.delete-month');
+    Route::post('/income-groups', [IncomeGroupController::class, 'store'])->name('incomes.groups.store');
+    Route::patch('/income-groups/{incomeGroup}', [IncomeGroupController::class, 'update'])->name('incomes.groups.update');
+    Route::delete('/income-groups/{incomeGroup}', [IncomeGroupController::class, 'destroy'])->name('incomes.groups.destroy');
+    Route::post('/income-groups/{incomeGroup}/incomes', [IncomeGroupController::class, 'attachIncomes'])->name('incomes.groups.attach');
+    Route::delete('/incomes/{income}/group', [IncomeGroupController::class, 'detachIncome'])->name('incomes.group-detach');
 
     Route::get('profile', [ProfileController::class, 'index'])->name('profile');
     Route::patch('profile/name', [ProfileController::class, 'updateName'])->name('profile.update-name');
@@ -84,5 +90,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/preferences', [PreferencesController::class, 'update'])->name('preferences.update');
 
     Route::post('onboarding/complete', [OnboardingController::class, 'complete'])->name('onboarding.complete');
+    Route::post('onboarding/groups-complete', [OnboardingController::class, 'groupsComplete'])->name('onboarding.groups-complete');
     Route::post('onboarding/reset', [OnboardingController::class, 'reset'])->name('onboarding.reset');
 });

@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useForm } from '@inertiajs/vue3';
-import type { IncomeFormData } from '@/types/income';
+import type { IncomeFormData, IncomeGroup } from '@/types/income';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,12 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import CurrencyInput from '@/Components/CurrencyInput.vue';
+
+const props = withDefaults(defineProps<{
+    groups?: IncomeGroup[]
+}>(), {
+    groups: () => [],
+});
 
 const emit = defineEmits<{
     success: [];
@@ -31,6 +38,12 @@ const form = useForm<IncomeFormData>({
     start_month: currentMonth,
     start_year: currentYear,
     repeat_count: 1,
+    group_id: null,
+});
+
+const selectedGroup = computed<string>({
+    get: () => form.group_id !== null ? String(form.group_id) : '',
+    set: (value: string) => { form.group_id = value ? Number(value) : null },
 });
 
 const monthOptions = monthNames.map((name, i) => ({ value: i + 1, label: name }));
@@ -57,6 +70,26 @@ function submit(): void {
             <Label for="amount">Valor</Label>
             <CurrencyInput id="amount" v-model="form.amount" />
             <p v-if="form.errors.amount" class="text-sm text-destructive">{{ form.errors.amount }}</p>
+        </div>
+
+        <div class="space-y-2">
+            <Label for="group_id">Grupo</Label>
+            <Select v-model="selectedGroup">
+                <SelectTrigger class="w-full">
+                    <SelectValue placeholder="Sem grupo" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="">Sem grupo</SelectItem>
+                    <SelectItem
+                        v-for="g in groups"
+                        :key="g.id"
+                        :value="String(g.id)"
+                    >
+                        {{ g.name }}
+                    </SelectItem>
+                </SelectContent>
+            </Select>
+            <p v-if="form.errors.group_id" class="text-sm text-destructive">{{ form.errors.group_id }}</p>
         </div>
 
         <div class="grid grid-cols-2 gap-4">

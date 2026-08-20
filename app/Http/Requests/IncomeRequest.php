@@ -21,6 +21,7 @@ class IncomeRequest extends FormRequest
             'start_month' => ['required', 'integer', 'min:1', 'max:12'],
             'start_year' => ['required', 'integer', 'min:2020', 'max:2100'],
             'repeat_count' => ['required', 'integer', 'min:1', 'max:12'],
+            'group_id' => ['nullable', 'integer', 'exists:income_groups,id'],
         ];
     }
 }

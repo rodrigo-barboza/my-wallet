@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import type { IncomeGroup } from '@/types/income';
 import ResponsiveModal from '@/Components/ResponsiveModal.vue';
 import IncomeForm from '@/Components/IncomeForm.vue';
 
 defineProps<{
     open: boolean;
+    groups?: IncomeGroup[];
 }>();
 
 const emit = defineEmits<{
@@ -22,6 +24,9 @@ function close(): void {
         description="Adicione um recebimento mensal"
         @update:open="emit('update:open', $event)"
     >
-        <IncomeForm @success="close" />
+        <IncomeForm
+            :groups="groups"
+            @success="close"
+        />
     </ResponsiveModal>
 </template>
