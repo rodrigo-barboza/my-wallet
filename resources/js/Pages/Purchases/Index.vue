@@ -305,12 +305,12 @@ async function handleReorder(order: string[]): Promise<void> {
         </div>
 
         <template v-if="activeTab === 'compras'">
-            <div id="onboarding-purchases-filters" class="relative">
-                <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <div id="onboarding-purchases-filters" class="relative w-full">
+                <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
                 <Input
                     v-model="searchQuery"
                     placeholder="Buscar compra..."
-                    class="pl-9"
+                    class="h-11 pl-10 text-base"
                 />
             </div>
             <div id="onboarding-purchases-list">

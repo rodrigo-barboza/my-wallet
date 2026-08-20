@@ -276,12 +276,12 @@ function goToMonth(month: number, year: number): void {
             Total: <span class="font-semibold">{{ formatCurrency(totalAmount) }}</span>
         </div>
 
-        <div class="relative">
-            <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+        <div class="relative w-full">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
             <Input
                 v-model="searchQuery"
                 placeholder="Buscar compra..."
-                class="pl-9"
+                class="h-11 pl-10 text-base"
             />
         </div>
 

@@ -3,7 +3,7 @@ import { computed, ref, watchEffect } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ChevronLeft, ChevronRight, Copy, Plus, Trash2 } from '@lucide/vue'
+import { ChevronLeft, ChevronRight, Copy, Plus, Search, Trash2 } from '@lucide/vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 import IncomeFormModal from '@/Components/IncomeFormModal.vue'
@@ -33,6 +33,7 @@ const centerMonth = ref(new Date().getMonth() + 1)
 const centerYear = ref(props.year)
 const sortAsc = ref(true)
 const showAll = ref(false)
+const searchQuery = ref('')
 const filteredIncomes = ref<Income[]>([])
 const showFormModal = ref(false)
 const showDeleteDialog = ref(false)
@@ -62,6 +63,12 @@ const sortedIncomes = computed(() => {
     sorted.sort((a, b) => a.name.localeCompare(b.name))
     if (!sortAsc.value) sorted.reverse()
     return sorted
+})
+
+const displayedIncomes = computed(() => {
+    if (!searchQuery.value) return sortedIncomes.value
+    const query = searchQuery.value.toLowerCase()
+    return sortedIncomes.value.filter(income => income.name.toLowerCase().includes(query))
 })
 
 const totals = computed(() => {
@@ -216,10 +223,10 @@ function toggleSelect(id: number): void {
 }
 
 function selectAll(): void {
-    if (selectedIds.value.size === sortedIncomes.value.length) {
+    if (selectedIds.value.size === displayedIncomes.value.length) {
         selectedIds.value = new Set()
     } else {
-        selectedIds.value = new Set(sortedIncomes.value.map(i => i.id))
+        selectedIds.value = new Set(displayedIncomes.value.map(i => i.id))
     }
 }
 
@@ -295,10 +302,19 @@ function nextMonth(): void {
             </Button>
         </div>
 
-        <div class="flex items-center justify-end text-sm">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="relative w-full">
+                <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
+                <Input
+                    v-model="searchQuery"
+                    placeholder="Buscar entrada..."
+                    class="h-11 pl-10 text-base"
+                />
+            </div>
             <Button
                 variant="outline"
                 size="sm"
+                class="shrink-0"
                 @click="toggleShowAll(!showAll)"
             >
                 {{ showAll ? 'Ocultar vazias' : 'Mostrar todas' }}
@@ -307,7 +323,7 @@ function nextMonth(): void {
 
         <IncomesTableMode
             v-if="!isMobile"
-            :incomes="sortedIncomes"
+            :incomes="displayedIncomes"
             :visible-months="visibleMonths"
             :totals="totals"
             :selected-ids="selectedIds"
@@ -336,7 +352,7 @@ function nextMonth(): void {
 
         <IncomesCardMode
             v-else
-            :incomes="sortedIncomes"
+            :incomes="displayedIncomes"
             :selected-ids="selectedIds"
             :center-month="centerMonth"
             :center-year="centerYear"
