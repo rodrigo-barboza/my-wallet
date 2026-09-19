@@ -43,5 +43,9 @@ class AppServiceProvider extends ServiceProvider
 
             return (int) ($preferences['onboarding_version'] ?? 0);
         });
+
+        Inertia::share('wallet_balance', fn (): float => (float) (auth()->user()?->wallet_balance ?? 0));
+
+        Inertia::share('wallet_hidden', fn (): bool => (bool) ((auth()->user()?->preferences ?? [])['wallet_hidden'] ?? false));
     }
 }

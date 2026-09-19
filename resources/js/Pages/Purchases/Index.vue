@@ -17,6 +17,7 @@ import SelectionStatsBar from '@/Components/SelectionStatsBar.vue'
 import PaymentHistory from '@/Pages/Purchases/Partials/PaymentHistory.vue'
 import PurchasesTableMode from '@/Pages/Purchases/Partials/PurchasesTableMode.vue'
 import PurchaseSummary from '@/Pages/Purchases/Partials/PurchaseSummary.vue'
+import WalletBalance from '@/Components/WalletBalance.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
 import { useMonthNavigation } from '@/composables/useMonthNavigation'
 import { formatCurrency } from '@/lib/format'
@@ -223,6 +224,8 @@ async function handleReorder(order: string[]): Promise<void> {
             </div>
         </div>
 
+        <WalletBalance variant="block" />
+
         <div id="onboarding-purchases-month">
             <MonthNavigator
                 :month="month"
@@ -293,7 +296,7 @@ async function handleReorder(order: string[]): Promise<void> {
                         <span class="font-semibold text-destructive">{{ formatCurrency(totalAmount) }}</span>
                     </div>
                     <div class="border-t pt-2 flex items-center justify-between text-sm font-semibold">
-                        <span class="text-muted-foreground">Saldo</span>
+                        <span class="text-muted-foreground">Diferença</span>
                         <span
                             :class="balance >= 0 ? 'text-green-600' : 'text-destructive'"
                         >

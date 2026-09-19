@@ -15,6 +15,7 @@ import NavLink from '@/Components/NavLink.vue'
 import OnboardingProvider from '@/Components/OnboardingProvider.vue'
 import ToastContainer from '@/Components/ToastContainer.vue'
 import UserDropdown from '@/Components/UserDropdown.vue'
+import WalletBalance from '@/Components/WalletBalance.vue'
 import { useOnboarding } from '@/composables/useOnboarding'
 import { useToast } from '@/composables/useToast'
 
@@ -66,9 +67,11 @@ const navLinks = [
             </div>
 
             <div class="flex items-center gap-2">
-            <div class="hidden sm:inline-flex">
-                <UserDropdown />
-            </div>
+                <WalletBalance class="hidden sm:flex" />
+
+                <div class="hidden sm:inline-flex">
+                    <UserDropdown />
+                </div>
 
                 <Sheet>
                     <SheetTrigger as-child>
@@ -82,7 +85,10 @@ const navLinks = [
                                 <img src="/images/my-wallet.png" alt="Minha Carteira" class="h-8" />
                             </SheetTitle>
                         </SheetHeader>
-                        <nav class="mt-8 flex flex-col gap-1">
+                        <div class="mt-1">
+                            <WalletBalance variant="block" />
+                        </div>
+                        <nav class="mt-4 flex flex-col gap-1">
                             <SheetClose as-child v-for="link in navLinks" :key="link.route">
                                 <Link
                                     :href="route(link.route)"

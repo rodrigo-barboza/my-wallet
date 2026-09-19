@@ -30,6 +30,7 @@ final readonly class IncomeController
                     ->map(fn ($months) => $months->keyBy('month')->map(fn ($m) => [
                         'id' => $m->id,
                         'amount' => (float) $m->amount,
+                        'received' => $m->received_at !== null,
                     ]));
 
                 return [
@@ -161,7 +162,13 @@ final readonly class IncomeController
             'amount' => ['required', 'numeric', 'min:0'],
         ]);
 
+        $oldAmount = (float) $incomeMonth->amount;
+
         $incomeMonth->update(['amount' => $validated['amount']]);
+
+        if ($incomeMonth->isReceived()) {
+            $incomeMonth->income->user->increment('wallet_balance', (float) $validated['amount'] - $oldAmount);
+        }
 
         Inertia::flash('toast', ['message' => 'Valor atualizado!', 'type' => 'success']);
 
@@ -178,6 +185,20 @@ final readonly class IncomeController
             'amount' => ['required', 'numeric', 'min:0'],
         ]);
 
+        $existing = $income->incomeMonths()
+            ->where('month', $validated['month'])
+            ->where('year', $validated['year'])
+            ->first();
+
+        if ($existing && $existing->isReceived()) {
+            $oldAmount = (float) $existing->amount;
+            $existing->update(['amount' => $validated['amount']]);
+            $income->user->increment('wallet_balance', (float) $validated['amount'] - $oldAmount);
+            Inertia::flash('toast', ['message' => 'Valor atualizado!', 'type' => 'success']);
+
+            return back();
+        }
+
         $income->incomeMonths()->updateOrCreate(
             [
                 'month' => $validated['month'],
@@ -187,6 +208,28 @@ final readonly class IncomeController
         );
 
         Inertia::flash('toast', ['message' => 'Valor atualizado!', 'type' => 'success']);
+
+        return back();
+    }
+
+    public function receive(Request $request, IncomeMonth $incomeMonth): RedirectResponse
+    {
+        Gate::authorize('update', $incomeMonth->income);
+
+        $incomeMonth->setReceived();
+
+        Inertia::flash('toast', ['message' => 'Valor marcado como recebido!', 'type' => 'success']);
+
+        return back();
+    }
+
+    public function unreceive(Request $request, IncomeMonth $incomeMonth): RedirectResponse
+    {
+        Gate::authorize('update', $incomeMonth->income);
+
+        $incomeMonth->clearReceived();
+
+        Inertia::flash('toast', ['message' => 'Recebimento desmarcado.', 'type' => 'success']);
 
         return back();
     }

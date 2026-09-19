@@ -16,6 +16,7 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PreferencesController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\WalletController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => to_route('dashboard'))->name('home');
@@ -79,6 +80,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/income-groups/{incomeGroup}', [IncomeGroupController::class, 'destroy'])->name('incomes.groups.destroy');
     Route::post('/income-groups/{incomeGroup}/incomes', [IncomeGroupController::class, 'attachIncomes'])->name('incomes.groups.attach');
     Route::delete('/incomes/{income}/group', [IncomeGroupController::class, 'detachIncome'])->name('incomes.group-detach');
+    Route::post('/income-months/{incomeMonth}/receive', [IncomeController::class, 'receive'])->name('incomes.receive');
+    Route::delete('/income-months/{incomeMonth}/receive', [IncomeController::class, 'unreceive'])->name('incomes.unreceive');
+    Route::patch('/wallet', [WalletController::class, 'update'])->name('wallet.update');
 
     Route::get('profile', [ProfileController::class, 'index'])->name('profile');
     Route::patch('profile/name', [ProfileController::class, 'updateName'])->name('profile.update-name');

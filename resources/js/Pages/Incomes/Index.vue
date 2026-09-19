@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { Head, router, usePage } from '@inertiajs/vue3'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ChevronLeft, ChevronRight, Copy, FolderPlus, Plus, Search, Trash2, X } from '@lucide/vue'
+import { Check, Calendar, CalendarRange, ChevronLeft, ChevronRight, Copy, Eye, EyeOff, FolderPlus, List, Plus, Search, Trash2, Wallet, X } from '@lucide/vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
@@ -13,6 +14,7 @@ import IncomesCardMode from '@/Pages/Incomes/Partials/IncomesCardMode.vue'
 import IncomesTableMode from '@/Pages/Incomes/Partials/IncomesTableMode.vue'
 import ResponsiveModal from '@/Components/ResponsiveModal.vue'
 import { useIsMobile } from '@/composables/useIsMobile'
+import { useWallet } from '@/composables/useWallet'
 import { formatCurrency } from '@/lib/format'
 import { monthAbbrs, monthNames } from '@/lib/constants'
 import type { Income, IncomeEditingCell, IncomeEditingName, IncomeGroup } from '@/types/income'
@@ -31,6 +33,17 @@ const actionButtons = [
 ]
 
 const isMobile = useIsMobile()
+const initialPrefs = (usePage().props.preferences as Record<string, any>) ?? {}
+const currentMonthOnly = ref<boolean>(!!initialPrefs.incomes_current_month_only)
+const {
+    walletBalance,
+    walletHidden,
+    editingWallet,
+    walletInput,
+    toggleWalletHidden,
+    startEditWallet,
+    saveWallet,
+} = useWallet()
 const centerMonth = ref(new Date().getMonth() + 1)
 const centerYear = ref(props.year)
 const sortAsc = ref(true)
@@ -56,6 +69,10 @@ const renameName = ref('')
 const deleteTarget = ref<IncomeGroup | null>(null)
 
 const visibleMonths = computed(() => {
+    if (currentMonthOnly.value) {
+        return [{ month: centerMonth.value, year: centerYear.value, label: monthAbbrs[centerMonth.value - 1] }]
+    }
+
     const months: { month: number; year: number; label: string }[] = []
     for (let i = -3; i <= 3; i++) {
         let m = centerMonth.value + i
@@ -67,6 +84,14 @@ const visibleMonths = computed(() => {
     return months
 })
 
+watch(currentMonthOnly, (value) => {
+    fetch(route('preferences.update'), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'incomes_current_month_only', value }),
+    })
+})
+
 const sortedIncomes = computed(() => {
     const sorted = [...props.incomes]
     sorted.sort((a, b) => a.name.localeCompare(b.name))
@@ -75,9 +100,13 @@ const sortedIncomes = computed(() => {
 })
 
 const displayedIncomes = computed(() => {
-    if (!searchQuery.value) return sortedIncomes.value
+    const withMonthFilter = currentMonthOnly.value
+        ? sortedIncomes.value.filter(income => income.months[centerYear.value]?.[centerMonth.value] !== undefined)
+        : sortedIncomes.value
+
+    if (!searchQuery.value) return withMonthFilter
     const query = searchQuery.value.toLowerCase()
-    return sortedIncomes.value.filter(income => income.name.toLowerCase().includes(query))
+    return withMonthFilter.filter(income => income.name.toLowerCase().includes(query))
 })
 
 const totals = computed(() => {
@@ -90,6 +119,25 @@ const totals = computed(() => {
         return total
     })
 })
+
+const incomesInFocusedMonth = computed(() =>
+    props.incomes.filter(income => income.months[centerYear.value]?.[centerMonth.value] !== undefined)
+)
+
+const focusedMonthForecast = computed(() =>
+    incomesInFocusedMonth.value.reduce((sum, income) => {
+        return sum + (income.months[centerYear.value]?.[centerMonth.value]?.amount ?? 0)
+    }, 0)
+)
+
+const focusedMonthIncomeCount = computed(() => incomesInFocusedMonth.value.length)
+
+const focusedMonthReceivedTotal = computed(() =>
+    incomesInFocusedMonth.value.reduce((sum, income) => {
+        const value = income.months[centerYear.value]?.[centerMonth.value]
+        return value?.received ? sum + value.amount : sum
+    }, 0)
+)
 
 function getAmount(income: Income, month: number, year: number): number | null {
     return income.months[year]?.[month]?.amount ?? null
@@ -249,6 +297,18 @@ function nextMonth(): void {
     }
 }
 
+function toggleReceived(income: Income, month: number, year: number): void {
+    const value = income.months[year]?.[month]
+    if (!value) return
+
+    const options = { preserveScroll: true }
+    if (value.received) {
+        router.delete(route('incomes.unreceive', value.id), options)
+    } else {
+        router.post(route('incomes.receive', value.id), {}, options)
+    }
+}
+
 function toggleGroupCollapse(id: number): void {
     const next = new Set(collapsedGroups.value)
     if (next.has(id)) {
@@ -378,6 +438,100 @@ function detachIncome(income: Income): void {
             </div>
         </div>
 
+        <div class="flex flex-col gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-4">
+            <Card>
+                <CardHeader class="pb-1">
+                    <CardTitle class="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                        <Wallet class="size-3.5" />
+                        Saldo atual
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            class="ms-auto size-6"
+                            @click="toggleWalletHidden"
+                        >
+                            <EyeOff v-if="walletHidden" class="size-4" />
+                            <Eye v-else class="size-4" />
+                        </Button>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div v-if="editingWallet" class="flex items-center gap-2">
+                        <Input
+                            v-model="walletInput"
+                            type="text"
+                            inputmode="decimal"
+                            class="h-10 w-40 text-right text-lg font-semibold tabular-nums"
+                            @keydown.enter="saveWallet"
+                            @keydown.esc="editingWallet = false"
+                            @blur="saveWallet"
+                        />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            class="size-9"
+                            @mousedown.prevent="saveWallet"
+                        >
+                            <Check class="size-4" />
+                        </Button>
+                    </div>
+                    <button
+                        v-else
+                        type="button"
+                        class="text-3xl font-bold tabular-nums cursor-pointer hover:text-primary"
+                        @click="startEditWallet"
+                    >
+                        {{ walletHidden ? '••••' : formatCurrency(walletBalance) }}
+                    </button>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader class="pb-1">
+                    <CardTitle class="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                        <Calendar class="size-3.5" />
+                        Recebimento previsto
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="text-xl font-bold leading-tight tabular-nums">
+                        {{ formatCurrency(focusedMonthForecast) }}
+                    </div>
+                    <div class="text-[11px] text-muted-foreground">{{ monthNames[centerMonth - 1] }}</div>
+                </CardContent>
+            </Card>
+
+            <Card class="hidden sm:block">
+                <CardHeader class="pb-1">
+                    <CardTitle class="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                        <List class="size-3.5" />
+                        Entradas
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="text-xl font-bold leading-tight tabular-nums">
+                        {{ focusedMonthIncomeCount }}
+                    </div>
+                    <div class="text-[11px] text-muted-foreground">no mês</div>
+                </CardContent>
+            </Card>
+
+            <Card class="hidden sm:block">
+                <CardHeader class="pb-1">
+                    <CardTitle class="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                        <Check class="size-3.5" />
+                        Recebidas
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="text-xl font-bold leading-tight tabular-nums">
+                        {{ walletHidden ? '••••' : formatCurrency(focusedMonthReceivedTotal) }}
+                    </div>
+                    <div class="text-[11px] text-muted-foreground">no mês</div>
+                </CardContent>
+            </Card>
+        </div>
+
         <div id="onboarding-incomes-month" class="flex items-center justify-center gap-4">
             <Button
                 variant="outline"
@@ -388,8 +542,8 @@ function detachIncome(income: Income): void {
             </Button>
             <div v-if="!isMobile" class="text-sm text-muted-foreground">
                 <span class="text-base font-semibold text-foreground">{{ monthAbbrs[visibleMonths[0].month - 1] }}/{{ visibleMonths[0].year }}</span>
-                <span class="mx-1">até</span>
-                <span class="text-base font-semibold text-foreground">{{ monthAbbrs[visibleMonths[6].month - 1] }}/{{ visibleMonths[6].year }}</span>
+                <span v-if="visibleMonths.length > 1" class="mx-1">até</span>
+                <span v-if="visibleMonths.length > 1" class="text-base font-semibold text-foreground">{{ monthAbbrs[visibleMonths[visibleMonths.length - 1].month - 1] }}/{{ visibleMonths[visibleMonths.length - 1].year }}</span>
             </div>
             <div v-else class="text-base font-semibold text-foreground">
                 {{ monthNames[centerMonth - 1] }} {{ centerYear }}
@@ -412,14 +566,38 @@ function detachIncome(income: Income): void {
                     class="h-11 pl-10 text-base"
                 />
             </div>
-            <Button
-                id="onboarding-incomes-groups"
-                variant="outline"
-                class="h-11 shrink-0"
-                @click="collapsedGroups.size > 0 ? expandAllGroups() : collapseAllGroups()"
-            >
-                {{ collapsedGroups.size > 0 ? 'Abrir todos' : 'Fechar todos' }}
-            </Button>
+            <div class="flex shrink-0 items-center gap-2">
+                <div class="hidden items-center rounded-lg border p-0.5 sm:flex">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        class="h-9 px-3"
+                        :class="!currentMonthOnly ? 'bg-muted text-foreground' : ''"
+                        @click="currentMonthOnly = false"
+                    >
+                        <CalendarRange class="mr-2 size-4" />
+                        Período
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        class="h-9 px-3"
+                        :class="currentMonthOnly ? 'bg-muted text-foreground' : ''"
+                        @click="currentMonthOnly = true"
+                    >
+                        <Calendar class="mr-2 size-4" />
+                        Mês atual
+                    </Button>
+                </div>
+                <Button
+                    id="onboarding-incomes-groups"
+                    variant="outline"
+                    class="h-11 shrink-0"
+                    @click="collapsedGroups.size > 0 ? expandAllGroups() : collapseAllGroups()"
+                >
+                    {{ collapsedGroups.size > 0 ? 'Abrir todos' : 'Fechar todos' }}
+                </Button>
+            </div>
         </div>
 
         <div
@@ -486,6 +664,7 @@ function detachIncome(income: Income): void {
             @rename-group="openRenameGroup"
             @delete-group="openDeleteGroup"
             @detach-income="detachIncome"
+            @toggle-received="toggleReceived"
         />
 
         <IncomesCardMode
@@ -516,6 +695,7 @@ function detachIncome(income: Income): void {
             @rename-group="openRenameGroup"
             @delete-group="openDeleteGroup"
             @detach-income="detachIncome"
+            @toggle-received="toggleReceived"
         />
 
         <div

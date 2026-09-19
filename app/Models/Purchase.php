@@ -84,6 +84,13 @@ class Purchase extends Model
         return $monthsDiff + 1;
     }
 
+    public function monthlyValue(): float
+    {
+        $amount = (float) $this->amount;
+
+        return $this->installments_total ? round($amount / $this->installments_total, 2) : $amount;
+    }
+
     public function getStatusAttribute(): string
     {
         $status = $this->attributes['status'] ?? null;

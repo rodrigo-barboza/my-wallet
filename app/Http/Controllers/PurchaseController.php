@@ -136,6 +136,8 @@ final readonly class PurchaseController
                 'year' => $purchase->start_date->year,
                 'paid_at' => now(),
             ]);
+
+            auth()->user()->decrement('wallet_balance', $purchase->monthlyValue());
         }
 
         Inertia::flash('toast', ['message' => 'Compra criada com sucesso!', 'type' => 'success']);
@@ -248,6 +250,8 @@ final readonly class PurchaseController
                 'paid_at' => now(),
             ]);
 
+            auth()->user()->decrement('wallet_balance', $amount);
+
             $newPaidAmount = (float) $invoice->payments()->sum('amount');
 
             if ($newPaidAmount >= $total - 0.01) {
@@ -264,10 +268,19 @@ final readonly class PurchaseController
                 ]);
             }
         } else {
+            $alreadyPaid = $purchase->payments()
+                ->where('month', $month)
+                ->where('year', $year)
+                ->exists();
+
             $purchase->payments()->updateOrCreate(
                 ['month' => $month, 'year' => $year],
                 ['paid_at' => now()],
             );
+
+            if (! $alreadyPaid) {
+                auth()->user()->decrement('wallet_balance', $purchase->monthlyValue());
+            }
         }
 
         Inertia::flash('toast', ['message' => 'Marcado como pago!', 'type' => 'success']);
@@ -301,15 +314,30 @@ final readonly class PurchaseController
                 ->first();
 
             if ($invoice) {
+                $paidTotal = (float) $invoice->payments()->sum('amount');
+
                 $invoice->payments()->delete();
                 $invoice->update([
                     'paid_amount' => null,
                     'paid_at' => null,
                     'status' => InvoiceStatus::Aberta,
                 ]);
+
+                if ($paidTotal > 0) {
+                    auth()->user()->increment('wallet_balance', $paidTotal);
+                }
             }
         } else {
+            $paid = $purchase->payments()
+                ->where('month', $month)
+                ->where('year', $year)
+                ->exists();
+
             $purchase->payments()->where('month', $month)->where('year', $year)->delete();
+
+            if ($paid) {
+                auth()->user()->increment('wallet_balance', $purchase->monthlyValue());
+            }
         }
 
         Inertia::flash('toast', ['message' => 'Pagamento desmarcado!', 'type' => 'success']);

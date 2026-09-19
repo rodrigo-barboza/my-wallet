@@ -43,9 +43,10 @@ const emit = defineEmits<{
     renameGroup: [group: IncomeGroup]
     deleteGroup: [group: IncomeGroup]
     detachIncome: [income: Income]
+    toggleReceived: [income: Income, month: number, year: number]
 }>()
 
-const currentMonth = { month: props.centerMonth, year: props.centerYear }
+const currentMonth = computed(() => ({ month: props.centerMonth, year: props.centerYear }))
 
 const visibleGroups = computed<GroupWithItems[]>(() =>
     props.groups
@@ -57,7 +58,7 @@ const visibleGroups = computed<GroupWithItems[]>(() =>
 const ungrouped = computed(() => props.incomes.filter(i => i.group_id === null))
 
 function groupTotal(group: GroupWithItems): number {
-    return group.items.reduce((sum, item) => sum + (item.months[currentMonth.year]?.[currentMonth.month]?.amount ?? 0), 0)
+    return group.items.reduce((sum, item) => sum + (item.months[currentMonth.value.year]?.[currentMonth.value.month]?.amount ?? 0), 0)
 }
 
 function getAmount(income: Income, month: number, year: number): number | null {
@@ -71,8 +72,8 @@ function displayAmount(income: Income, month: number, year: number): string {
 
 function isEditingCell(income: Income): boolean {
     return props.editingCell?.incomeId === income.id
-        && props.editingCell?.month === currentMonth.month
-        && props.editingCell?.year === currentMonth.year
+        && props.editingCell?.month === currentMonth.value.month
+        && props.editingCell?.year === currentMonth.value.year
 }
 
 function updateEditingValue(value: string): void {
@@ -235,10 +236,25 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                             </div>
                             <button
                                 v-else
-                                class="text-sm font-semibold tabular-nums cursor-pointer hover:text-primary"
+                                class="flex items-center gap-1.5 text-sm font-semibold tabular-nums cursor-pointer hover:text-primary"
                                 @click="emit('startEdit', income, currentMonth.month, currentMonth.year)"
                             >
+                                <Check
+                                    v-if="income.months[currentMonth.year]?.[currentMonth.month]?.received"
+                                    class="size-3.5 text-green-600"
+                                />
                                 {{ displayAmount(income, currentMonth.month, currentMonth.year) }}
+                            </button>
+                            <button
+                                type="button"
+                                class="shrink-0 rounded-full border p-0.5 cursor-pointer"
+                                :class="income.months[currentMonth.year]?.[currentMonth.month]?.received
+                                    ? 'border-green-600 bg-green-600 text-primary-foreground'
+                                    : 'border-muted-foreground/40'"
+                                :title="income.months[currentMonth.year]?.[currentMonth.month]?.received ? 'Desmarcar recebido' : 'Marcar como recebido'"
+                                @click.stop="emit('toggleReceived', income, currentMonth.month, currentMonth.year)"
+                            >
+                                <Check class="size-3" />
                             </button>
                         </div>
                     </CardContent>
@@ -334,10 +350,25 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                     </div>
                     <button
                         v-else
-                        class="text-sm font-semibold tabular-nums cursor-pointer hover:text-primary"
+                        class="flex items-center gap-1.5 text-sm font-semibold tabular-nums cursor-pointer hover:text-primary"
                         @click="emit('startEdit', income, currentMonth.month, currentMonth.year)"
                     >
+                        <Check
+                            v-if="income.months[currentMonth.year]?.[currentMonth.month]?.received"
+                            class="size-3.5 text-green-600"
+                        />
                         {{ displayAmount(income, currentMonth.month, currentMonth.year) }}
+                    </button>
+                    <button
+                        type="button"
+                        class="shrink-0 rounded-full border p-0.5 cursor-pointer"
+                        :class="income.months[currentMonth.year]?.[currentMonth.month]?.received
+                            ? 'border-green-600 bg-green-600 text-primary-foreground'
+                            : 'border-muted-foreground/40'"
+                        :title="income.months[currentMonth.year]?.[currentMonth.month]?.received ? 'Desmarcar recebido' : 'Marcar como recebido'"
+                        @click.stop="emit('toggleReceived', income, currentMonth.month, currentMonth.year)"
+                    >
+                        <Check class="size-3" />
                     </button>
                 </div>
             </CardContent>

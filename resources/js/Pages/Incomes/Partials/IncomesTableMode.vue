@@ -48,6 +48,7 @@ const emit = defineEmits<{
     renameGroup: [group: IncomeGroup]
     deleteGroup: [group: IncomeGroup]
     detachIncome: [income: Income]
+    toggleReceived: [income: Income, month: number, year: number]
 }>()
 
 const visibleGroups = computed<GroupWithItems[]>(() =>
@@ -56,6 +57,8 @@ const visibleGroups = computed<GroupWithItems[]>(() =>
         .filter(g => g.items.length > 0)
         .sort((a, b) => a.name.localeCompare(b.name))
 )
+
+const isSingleMonth = computed(() => props.visibleMonths.length === 1)
 
 const ungrouped = computed(() => props.incomes.filter(i => i.group_id === null))
 
@@ -96,7 +99,8 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
             <thead>
                 <tr class="border-b bg-muted/50">
                     <th
-                        class="sticky left-0 z-10 bg-muted/50 px-3 py-2.5 text-left font-medium text-muted-foreground min-w-[140px] cursor-pointer select-none"
+                        class="sticky left-0 z-10 bg-muted/50 px-3 py-2.5 text-left font-medium text-muted-foreground cursor-pointer select-none"
+                        :class="isSingleMonth ? 'w-0 min-w-[325px]' : 'min-w-[140px]'"
                         @click="emit('sortToggle')"
                     >
                         <div class="flex items-center gap-2">
@@ -111,8 +115,11 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                     <th
                         v-for="m in visibleMonths"
                         :key="`${m.month}-${m.year}`"
-                        class="px-3 py-2.5 text-center font-medium text-muted-foreground min-w-[100px]"
-                        :class="m.month === centerMonth && m.year === centerYear ? 'text-foreground bg-primary/5' : ''"
+                        class="px-3 py-2.5 font-medium text-muted-foreground"
+                        :class="[
+                            isSingleMonth ? 'w-full min-w-[160px] text-left' : 'min-w-[100px] text-center',
+                            m.month === centerMonth && m.year === centerYear ? 'text-foreground bg-primary/5' : '',
+                        ]"
                     >
                         {{ m.label }}
                         <span
@@ -143,8 +150,11 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                         <td
                             v-for="(total, ti) in groupTotal(group)"
                             :key="ti"
-                            class="px-3 py-2 text-center font-semibold tabular-nums"
-                            :class="visibleMonths[ti].month === centerMonth && visibleMonths[ti].year === centerYear ? 'bg-primary/10' : ''"
+                            class="px-3 py-2 font-semibold tabular-nums"
+                            :class="[
+                                isSingleMonth ? 'text-left' : 'text-center',
+                                visibleMonths[ti].month === centerMonth && visibleMonths[ti].year === centerYear ? 'bg-primary/10' : '',
+                            ]"
                         >
                             {{ total > 0 ? formatCurrency(total) : '-' }}
                         </td>
@@ -192,8 +202,8 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                             :key="income.id"
                             class="border-b last:border-b-0 hover:bg-muted/30"
                         >
-                            <td class="sticky left-0 z-10 bg-background px-3 py-2.5 font-medium">
-                                <div class="flex items-center gap-2">
+                            <td class="sticky left-0 z-10 bg-background px-3 py-2.5 font-medium min-w-0" :class="isSingleMonth ? 'w-0 min-w-[325px]' : 'min-w-[140px]'">
+                                <div class="flex items-center gap-2 min-w-0">
                                     <Checkbox
                                         :checked="selectedIds.has(income.id)"
                                         @click.stop
@@ -229,7 +239,7 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                                     </div>
                                     <span
                                         v-else
-                                        class="cursor-pointer hover:text-primary"
+                                        class="truncate cursor-pointer hover:text-primary"
                                         @click="emit('startEditName', income)"
                                     >
                                         {{ income.name }}
@@ -248,8 +258,11 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                             <td
                                 v-for="m in visibleMonths"
                                 :key="`${m.month}-${m.year}`"
-                                class="px-3 py-2.5 text-center tabular-nums cursor-pointer"
-                                :class="m.month === centerMonth && m.year === centerYear ? 'bg-primary/5' : ''"
+                                class="px-3 py-2.5 tabular-nums cursor-pointer"
+                                :class="[
+                                    isSingleMonth ? 'w-full min-w-[160px] text-left' : 'text-center',
+                                    m.month === centerMonth && m.year === centerYear ? 'bg-primary/5' : '',
+                                ]"
                                 @click="emit('startEdit', income, m.month, m.year)"
                             >
                                 <div
@@ -284,8 +297,25 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                                         <span class="text-[10px] font-bold">→</span>
                                     </Button>
                                 </div>
-                                <span v-else class="text-muted-foreground">
-                                    {{ displayAmount(income, m.month, m.year) }}
+                                <span v-else :class="isSingleMonth ? 'flex items-center gap-1' : 'flex items-center justify-center gap-1'">
+                                    <button
+                                        type="button"
+                                        class="flex items-center gap-1 cursor-pointer"
+                                        :title="income.months[m.year]?.[m.month]?.received ? 'Marcado como recebido' : 'Marcar como recebido'"
+                                        @click.stop="emit('toggleReceived', income, m.month, m.year)"
+                                    >
+                                        <Check
+                                            v-if="income.months[m.year]?.[m.month]?.received"
+                                            class="size-3 text-green-600"
+                                        />
+                                        <span
+                                            v-else
+                                            class="size-2.5 rounded-full border border-muted-foreground/40"
+                                        />
+                                    </button>
+                                    <span class="text-muted-foreground">
+                                        {{ displayAmount(income, m.month, m.year) }}
+                                    </span>
                                 </span>
                             </td>
                             <td class="px-3 py-2.5 text-right">
@@ -334,8 +364,8 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                         :key="income.id"
                         class="border-b last:border-b-0 hover:bg-muted/30"
                     >
-                        <td class="sticky left-0 z-10 bg-background px-3 py-2.5 font-medium">
-                            <div class="flex items-center gap-2">
+                        <td class="sticky left-0 z-10 bg-background px-3 py-2.5 font-medium min-w-0" :class="isSingleMonth ? 'w-0 min-w-[325px]' : 'min-w-[140px]'">
+                            <div class="flex items-center gap-2 min-w-0">
                                 <Checkbox
                                     :checked="selectedIds.has(income.id)"
                                     @click.stop
@@ -371,7 +401,7 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                                 </div>
                                 <span
                                     v-else
-                                    class="cursor-pointer hover:text-primary"
+                                    class="truncate cursor-pointer hover:text-primary"
                                     @click="emit('startEditName', income)"
                                 >
                                     {{ income.name }}
@@ -381,8 +411,11 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                         <td
                             v-for="m in visibleMonths"
                             :key="`${m.month}-${m.year}`"
-                            class="px-3 py-2.5 text-center tabular-nums cursor-pointer"
-                            :class="m.month === centerMonth && m.year === centerYear ? 'bg-primary/5' : ''"
+                            class="px-3 py-2.5 tabular-nums cursor-pointer"
+                            :class="[
+                                isSingleMonth ? 'w-full min-w-[160px] text-left' : 'text-center',
+                                m.month === centerMonth && m.year === centerYear ? 'bg-primary/5' : '',
+                            ]"
                             @click="emit('startEdit', income, m.month, m.year)"
                         >
                             <div
@@ -417,8 +450,25 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                                     <span class="text-[10px] font-bold">→</span>
                                 </Button>
                             </div>
-                            <span v-else class="text-muted-foreground">
-                                {{ displayAmount(income, m.month, m.year) }}
+                            <span v-else :class="isSingleMonth ? 'flex items-center gap-1' : 'flex items-center justify-center gap-1'">
+                                <button
+                                    type="button"
+                                    class="flex items-center gap-1 cursor-pointer"
+                                    :title="income.months[m.year]?.[m.month]?.received ? 'Marcado como recebido' : 'Marcar como recebido'"
+                                    @click.stop="emit('toggleReceived', income, m.month, m.year)"
+                                >
+                                    <Check
+                                        v-if="income.months[m.year]?.[m.month]?.received"
+                                        class="size-3 text-green-600"
+                                    />
+                                    <span
+                                        v-else
+                                        class="size-2.5 rounded-full border border-muted-foreground/40"
+                                    />
+                                </button>
+                                <span class="text-muted-foreground">
+                                    {{ displayAmount(income, m.month, m.year) }}
+                                </span>
                             </span>
                         </td>
                         <td class="px-3 py-2.5 text-right">
@@ -472,8 +522,11 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                     <td
                         v-for="(total, i) in totals"
                         :key="i"
-                        class="px-3 py-2.5 text-center tabular-nums text-primary"
-                        :class="visibleMonths[i].month === centerMonth && visibleMonths[i].year === centerYear ? 'bg-primary/10' : ''"
+                        class="px-3 py-2.5 tabular-nums text-primary"
+                        :class="[
+                            isSingleMonth ? 'text-left' : 'text-center',
+                            visibleMonths[i].month === centerMonth && visibleMonths[i].year === centerYear ? 'bg-primary/10' : '',
+                        ]"
                     >
                         {{ total > 0 ? formatCurrency(total) : '-' }}
                     </td>

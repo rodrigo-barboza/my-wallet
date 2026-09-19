@@ -1,10 +1,16 @@
 import type { Component } from 'vue'
 
+export interface IncomeMonthValue {
+    id: number;
+    amount: number;
+    received: boolean;
+}
+
 export interface Income {
     id: number;
     name: string;
     group_id: number | null;
-    months: Record<number, Record<number, { id: number; amount: number }>>;
+    months: Record<number, Record<number, IncomeMonthValue>>;
 }
 
 export interface IncomeGroup {

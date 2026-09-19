@@ -272,6 +272,124 @@ it('marks individual purchase as paid', function () {
     ]);
 });
 
+it('decrements wallet balance when marking an individual purchase as paid', function () {
+    $user = User::factory()->create(['wallet_balance' => 1000]);
+    $this->actingAs($user);
+
+    $purchase = Purchase::factory()->create([
+        'user_id' => $user->id,
+        'amount' => 300,
+        'installments_total' => null,
+        'is_recurring' => false,
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase))->assertRedirect();
+
+    $user->refresh();
+    expect((float) $user->wallet_balance)->toBe(700.0);
+});
+
+it('decrements wallet by the monthly installment value', function () {
+    $user = User::factory()->create(['wallet_balance' => 1000]);
+    $this->actingAs($user);
+
+    $purchase = Purchase::factory()->create([
+        'user_id' => $user->id,
+        'amount' => 600,
+        'installments_total' => 3,
+        'is_recurring' => false,
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase))->assertRedirect();
+
+    $user->refresh();
+    expect((float) $user->wallet_balance)->toBe(800.0);
+});
+
+it('does not decrement wallet twice when marking the same purchase as paid again', function () {
+    $user = User::factory()->create(['wallet_balance' => 1000]);
+    $this->actingAs($user);
+
+    $purchase = Purchase::factory()->create([
+        'user_id' => $user->id,
+        'amount' => 300,
+        'installments_total' => null,
+        'is_recurring' => false,
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase))->assertRedirect();
+    patch(route('purchases.mark-as-paid', $purchase))->assertRedirect();
+
+    $user->refresh();
+    expect((float) $user->wallet_balance)->toBe(700.0);
+});
+
+it('increments wallet balance when unmarking an individual purchase as paid', function () {
+    $user = User::factory()->create(['wallet_balance' => 1000]);
+    $this->actingAs($user);
+
+    $purchase = Purchase::factory()->create([
+        'user_id' => $user->id,
+        'amount' => 300,
+        'installments_total' => null,
+        'is_recurring' => false,
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase));
+
+    patch(route('purchases.unmark-as-paid', $purchase))->assertRedirect();
+
+    $user->refresh();
+    expect((float) $user->wallet_balance)->toBe(1000.0);
+});
+
+it('decrements wallet balance when paying a card purchase', function () {
+    $user = User::factory()->create(['wallet_balance' => 1000]);
+    $this->actingAs($user);
+    $card = Card::factory()->create(['user_id' => $user->id]);
+
+    $purchase = Purchase::factory()->forCard($card)->create([
+        'user_id' => $user->id,
+        'start_date' => '2024-07-01',
+        'amount' => 500,
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase), [
+        'amount' => 200,
+        'month' => 7,
+        'year' => 2024,
+    ])->assertRedirect();
+
+    $user->refresh();
+    expect((float) $user->wallet_balance)->toBe(800.0);
+});
+
+it('increments wallet balance when unmarking a card purchase payment', function () {
+    $user = User::factory()->create(['wallet_balance' => 1000]);
+    $this->actingAs($user);
+    $card = Card::factory()->create(['user_id' => $user->id]);
+
+    $purchase = Purchase::factory()->forCard($card)->create([
+        'user_id' => $user->id,
+        'start_date' => '2024-07-01',
+        'amount' => 500,
+    ]);
+
+    patch(route('purchases.mark-as-paid', $purchase), [
+        'amount' => 200,
+        'month' => 7,
+        'year' => 2024,
+    ]);
+
+    patch(route('purchases.unmark-as-paid', $purchase), [
+        'month' => 7,
+        'year' => 2024,
+    ])->assertRedirect();
+
+    $user->refresh();
+    expect((float) $user->wallet_balance)->toBe(1000.0);
+});
+
 it('partially pays card purchase invoice', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
