@@ -2,6 +2,7 @@
 
 use App\Models\Income;
 use App\Models\IncomeGroup;
+use App\Models\IncomeMonth;
 use App\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -152,4 +153,53 @@ it('ignores a group id that belongs to another user when storing', function () {
     ])->assertRedirect();
 
     $this->assertDatabaseHas('incomes', ['name' => 'Salário', 'group_id' => null]);
+});
+
+it('marks all group incomes as received for the month', function () {
+    $user = User::factory()->create(['wallet_balance' => 0]);
+    $group = IncomeGroup::create(['user_id' => $user->id, 'name' => 'Grupo']);
+    $a = Income::create(['user_id' => $user->id, 'name' => 'A', 'group_id' => $group->id]);
+    $b = Income::create(['user_id' => $user->id, 'name' => 'B', 'group_id' => $group->id]);
+
+    IncomeMonth::create(['income_id' => $a->id, 'month' => 3, 'year' => 2026, 'amount' => 100]);
+    IncomeMonth::create(['income_id' => $b->id, 'month' => 3, 'year' => 2026, 'amount' => 200]);
+
+    actingAs($user)->post(route('incomes.groups.receive', $group), [
+        'month' => 3,
+        'year' => 2026,
+    ])->assertRedirect();
+
+    $this->assertDatabaseHas('income_months', ['income_id' => $a->id, 'month' => 3, 'year' => 2026, 'received_at' => now()]);
+    $this->assertDatabaseHas('income_months', ['income_id' => $b->id, 'month' => 3, 'year' => 2026, 'received_at' => now()]);
+    $this->assertDatabaseHas('users', ['id' => $user->id, 'wallet_balance' => 300.00]);
+});
+
+it('unmarks all group incomes for the month', function () {
+    $user = User::factory()->create(['wallet_balance' => 300]);
+    $group = IncomeGroup::create(['user_id' => $user->id, 'name' => 'Grupo']);
+    $a = Income::create(['user_id' => $user->id, 'name' => 'A', 'group_id' => $group->id]);
+    $b = Income::create(['user_id' => $user->id, 'name' => 'B', 'group_id' => $group->id]);
+
+    IncomeMonth::create(['income_id' => $a->id, 'month' => 3, 'year' => 2026, 'amount' => 100, 'received_at' => now()]);
+    IncomeMonth::create(['income_id' => $b->id, 'month' => 3, 'year' => 2026, 'amount' => 200, 'received_at' => now()]);
+
+    actingAs($user)->delete(route('incomes.groups.unreceive', $group), [
+        'month' => 3,
+        'year' => 2026,
+    ])->assertRedirect();
+
+    $this->assertDatabaseHas('income_months', ['income_id' => $a->id, 'month' => 3, 'year' => 2026, 'received_at' => null]);
+    $this->assertDatabaseHas('income_months', ['income_id' => $b->id, 'month' => 3, 'year' => 2026, 'received_at' => null]);
+    $this->assertDatabaseHas('users', ['id' => $user->id, 'wallet_balance' => 0.00]);
+});
+
+it('does not allow marking another user group as received', function () {
+    $owner = User::factory()->create();
+    $other = User::factory()->create();
+    $group = IncomeGroup::create(['user_id' => $owner->id, 'name' => 'Grupo']);
+
+    actingAs($other)->post(route('incomes.groups.receive', $group), [
+        'month' => 3,
+        'year' => 2026,
+    ])->assertForbidden();
 });

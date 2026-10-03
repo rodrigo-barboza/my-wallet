@@ -79,6 +79,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/income-groups/{incomeGroup}', [IncomeGroupController::class, 'update'])->name('incomes.groups.update');
     Route::delete('/income-groups/{incomeGroup}', [IncomeGroupController::class, 'destroy'])->name('incomes.groups.destroy');
     Route::post('/income-groups/{incomeGroup}/incomes', [IncomeGroupController::class, 'attachIncomes'])->name('incomes.groups.attach');
+    Route::post('/income-groups/{incomeGroup}/receive', [IncomeGroupController::class, 'receiveAll'])->name('incomes.groups.receive');
+    Route::delete('/income-groups/{incomeGroup}/receive', [IncomeGroupController::class, 'unreceiveAll'])->name('incomes.groups.unreceive');
     Route::delete('/incomes/{income}/group', [IncomeGroupController::class, 'detachIncome'])->name('incomes.group-detach');
     Route::post('/income-months/{incomeMonth}/receive', [IncomeController::class, 'receive'])->name('incomes.receive');
     Route::delete('/income-months/{incomeMonth}/receive', [IncomeController::class, 'unreceive'])->name('incomes.unreceive');

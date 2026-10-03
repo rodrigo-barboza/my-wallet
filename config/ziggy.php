@@ -47,6 +47,8 @@ return [
         'incomes.groups.update',
         'incomes.groups.destroy',
         'incomes.groups.attach',
+        'incomes.groups.receive',
+        'incomes.groups.unreceive',
         'incomes.group-detach',
         'incomes.receive',
         'incomes.unreceive',

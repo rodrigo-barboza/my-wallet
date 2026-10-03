@@ -49,6 +49,8 @@ const emit = defineEmits<{
     deleteGroup: [group: IncomeGroup]
     detachIncome: [income: Income]
     toggleReceived: [income: Income, month: number, year: number]
+    toggleGroupReceived: [group: IncomeGroup, month: number, year: number]
+    untoggleGroupReceived: [group: IncomeGroup, month: number, year: number]
 }>()
 
 const visibleGroups = computed<GroupWithItems[]>(() =>
@@ -66,6 +68,16 @@ function groupTotal(group: GroupWithItems): number[] {
     return props.visibleMonths.map(m =>
         group.items.reduce((sum, item) => sum + (item.months[m.year]?.[m.month]?.amount ?? 0), 0)
     )
+}
+
+function isGroupAllReceived(group: GroupWithItems, month: number, year: number): boolean {
+    const values = group.items.map(item => item.months[year]?.[month]).filter(Boolean)
+    if (values.length === 0) return false
+    return values.every(v => (v as { received: boolean }).received)
+}
+
+function isGroupAnyReceived(group: GroupWithItems, month: number, year: number): boolean {
+    return group.items.some(item => item.months[year]?.[month]?.received)
 }
 
 function getAmount(income: Income, month: number, year: number): number | null {
@@ -156,7 +168,34 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                                 visibleMonths[ti].month === centerMonth && visibleMonths[ti].year === centerYear ? 'bg-primary/10' : '',
                             ]"
                         >
-                            {{ total > 0 ? formatCurrency(total) : '-' }}
+                            <div
+                                class="flex items-center gap-1.5"
+                                :class="isSingleMonth ? 'justify-start' : 'justify-center'"
+                            >
+                                <button
+                                    v-if="visibleMonths[ti].month === centerMonth && visibleMonths[ti].year === centerYear"
+                                    type="button"
+                                    class="flex items-center cursor-pointer"
+                                    :title="isGroupAllReceived(group, centerMonth, centerYear) ? 'Desmarcar recebido do grupo' : 'Marcar grupo como recebido'"
+                                    @click="isGroupAllReceived(group, centerMonth, centerYear)
+                                        ? emit('untoggleGroupReceived', group, centerMonth, centerYear)
+                                        : emit('toggleGroupReceived', group, centerMonth, centerYear)"
+                                >
+                                    <Check
+                                        v-if="isGroupAllReceived(group, centerMonth, centerYear)"
+                                        class="size-3.5 text-green-600"
+                                    />
+                                    <span
+                                        v-else-if="isGroupAnyReceived(group, centerMonth, centerYear)"
+                                        class="size-2.5 rounded-full border border-green-600/50 bg-green-600/20"
+                                    />
+                                    <span
+                                        v-else
+                                        class="size-2.5 rounded-full border border-muted-foreground/40"
+                                    />
+                                </button>
+                                <span>{{ total > 0 ? formatCurrency(total) : '-' }}</span>
+                            </div>
                         </td>
                         <td class="px-3 py-2">
                             <div class="flex items-center justify-end gap-0.5">

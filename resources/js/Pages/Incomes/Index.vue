@@ -311,6 +311,18 @@ function toggleReceived(income: Income, month: number, year: number): void {
     }
 }
 
+function toggleGroupReceived(group: IncomeGroup, month: number, year: number): void {
+    const options = { preserveScroll: true }
+    router.post(route('incomes.groups.receive', group.id), { month, year }, options)
+}
+
+function untoggleGroupReceived(group: IncomeGroup, month: number, year: number): void {
+    router.delete(route('incomes.groups.unreceive', group.id), {
+        preserveScroll: true,
+        data: { month, year },
+    })
+}
+
 function toggleGroupCollapse(id: number): void {
     const next = new Set(collapsedGroups.value)
     if (next.has(id)) {
@@ -667,6 +679,8 @@ function detachIncome(income: Income): void {
             @delete-group="openDeleteGroup"
             @detach-income="detachIncome"
             @toggle-received="toggleReceived"
+            @toggle-group-received="toggleGroupReceived"
+            @untoggle-group-received="untoggleGroupReceived"
         />
 
         <IncomesCardMode
@@ -698,6 +712,8 @@ function detachIncome(income: Income): void {
             @delete-group="openDeleteGroup"
             @detach-income="detachIncome"
             @toggle-received="toggleReceived"
+            @toggle-group-received="toggleGroupReceived"
+            @untoggle-group-received="untoggleGroupReceived"
         />
 
         <div

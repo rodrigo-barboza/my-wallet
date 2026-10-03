@@ -44,6 +44,8 @@ const emit = defineEmits<{
     deleteGroup: [group: IncomeGroup]
     detachIncome: [income: Income]
     toggleReceived: [income: Income, month: number, year: number]
+    toggleGroupReceived: [group: IncomeGroup, month: number, year: number]
+    untoggleGroupReceived: [group: IncomeGroup, month: number, year: number]
 }>()
 
 const currentMonth = computed(() => ({ month: props.centerMonth, year: props.centerYear }))
@@ -59,6 +61,18 @@ const ungrouped = computed(() => props.incomes.filter(i => i.group_id === null))
 
 function groupTotal(group: GroupWithItems): number {
     return group.items.reduce((sum, item) => sum + (item.months[currentMonth.value.year]?.[currentMonth.value.month]?.amount ?? 0), 0)
+}
+
+function isGroupAllReceived(group: GroupWithItems): boolean {
+    const { month, year } = currentMonth.value
+    const values = group.items.map(item => item.months[year]?.[month]).filter(Boolean)
+    if (values.length === 0) return false
+    return values.every(v => (v as { received: boolean }).received)
+}
+
+function isGroupAnyReceived(group: GroupWithItems): boolean {
+    const { month, year } = currentMonth.value
+    return group.items.some(item => item.months[year]?.[month]?.received)
 }
 
 function getAmount(income: Income, month: number, year: number): number | null {
@@ -115,9 +129,24 @@ function handleAction(income: Income, action: 'duplicate' | 'delete'): void {
                         />
                         <span class="min-w-0 truncate font-semibold">{{ group.name }}</span>
                     </button>
-                    <span class="shrink-0 text-sm font-semibold tabular-nums">
-                        {{ formatCurrency(groupTotal(group)) }}
-                    </span>
+                    <div class="flex shrink-0 items-center gap-1.5">
+                        <button
+                            type="button"
+                            class="shrink-0 rounded-full border p-0.5 cursor-pointer"
+                            :class="isGroupAllReceived(group)
+                                ? 'border-green-600 bg-green-600 text-primary-foreground'
+                                : isGroupAnyReceived(group) ? 'border-green-600/50 bg-green-600/20' : 'border-muted-foreground/40'"
+                            :title="isGroupAllReceived(group) ? 'Desmarcar recebido do grupo' : 'Marcar grupo como recebido'"
+                            @click="isGroupAllReceived(group)
+                                ? emit('untoggleGroupReceived', group, currentMonth.month, currentMonth.year)
+                                : emit('toggleGroupReceived', group, currentMonth.month, currentMonth.year)"
+                        >
+                            <Check class="size-3" />
+                        </button>
+                        <span class="text-sm font-semibold tabular-nums">
+                            {{ formatCurrency(groupTotal(group)) }}
+                        </span>
+                    </div>
                     <Button
                         variant="ghost"
                         size="icon"

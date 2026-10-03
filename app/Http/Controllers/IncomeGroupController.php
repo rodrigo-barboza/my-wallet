@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Income;
 use App\Models\IncomeGroup;
+use App\Models\IncomeMonth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -84,6 +85,52 @@ final readonly class IncomeGroupController
         $income->update(['group_id' => null]);
 
         Inertia::flash('toast', ['message' => 'Item removido do grupo!', 'type' => 'success']);
+
+        return back();
+    }
+
+    public function receiveAll(Request $request, IncomeGroup $incomeGroup): RedirectResponse
+    {
+        Gate::authorize('update', $incomeGroup);
+
+        $month = (int) $request->input('month', now()->month);
+        $year = (int) $request->input('year', now()->year);
+
+        $incomeMonths = IncomeMonth::whereHas('income', function ($query) use ($incomeGroup) {
+            $query->where('group_id', $incomeGroup->id);
+        })
+            ->where('month', $month)
+            ->where('year', $year)
+            ->get();
+
+        foreach ($incomeMonths as $incomeMonth) {
+            $incomeMonth->setReceived();
+        }
+
+        Inertia::flash('toast', ['message' => 'Grupo marcado como recebido!', 'type' => 'success']);
+
+        return back();
+    }
+
+    public function unreceiveAll(Request $request, IncomeGroup $incomeGroup): RedirectResponse
+    {
+        Gate::authorize('update', $incomeGroup);
+
+        $month = (int) $request->input('month', now()->month);
+        $year = (int) $request->input('year', now()->year);
+
+        $incomeMonths = IncomeMonth::whereHas('income', function ($query) use ($incomeGroup) {
+            $query->where('group_id', $incomeGroup->id);
+        })
+            ->where('month', $month)
+            ->where('year', $year)
+            ->get();
+
+        foreach ($incomeMonths as $incomeMonth) {
+            $incomeMonth->clearReceived();
+        }
+
+        Inertia::flash('toast', ['message' => 'Recebimento do grupo desmarcado.', 'type' => 'success']);
 
         return back();
     }
