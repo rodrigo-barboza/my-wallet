@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Check, Calendar, CalendarRange, ChevronLeft, ChevronRight, Copy, Eye, EyeOff, FolderPlus, List, Plus, Search, Trash2, Wallet, X } from '@lucide/vue'
+import { Check, Calendar, CalendarRange, ChevronLeft, ChevronRight, Clock, Copy, Eye, EyeOff, FolderPlus, Plus, Search, Trash2, Wallet, X } from '@lucide/vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
@@ -130,13 +130,15 @@ const focusedMonthForecast = computed(() =>
     }, 0)
 )
 
-const focusedMonthIncomeCount = computed(() => incomesInFocusedMonth.value.length)
-
 const focusedMonthReceivedTotal = computed(() =>
     incomesInFocusedMonth.value.reduce((sum, income) => {
         const value = income.months[centerYear.value]?.[centerMonth.value]
         return value?.received ? sum + value.amount : sum
     }, 0)
+)
+
+const focusedMonthPendingTotal = computed(() =>
+    Math.max(0, focusedMonthForecast.value - focusedMonthReceivedTotal.value)
 )
 
 function getAmount(income: Income, month: number, year: number): number | null {
@@ -504,13 +506,13 @@ function detachIncome(income: Income): void {
             <Card class="hidden sm:block">
                 <CardHeader class="pb-1">
                     <CardTitle class="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                        <List class="size-3.5" />
-                        Entradas
+                        <Clock class="size-3.5" />
+                        Faltando receber
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div class="text-xl font-bold leading-tight tabular-nums">
-                        {{ focusedMonthIncomeCount }}
+                        {{ walletHidden ? '••••' : formatCurrency(focusedMonthPendingTotal) }}
                     </div>
                     <div class="text-[11px] text-muted-foreground">no mês</div>
                 </CardContent>
