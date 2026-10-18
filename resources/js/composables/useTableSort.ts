@@ -5,12 +5,19 @@ export function useTableSort(initialKey: string | null = null, initialDir: 'asc'
     const sortDir = ref<'asc' | 'desc'>(initialDir)
 
     function toggleSort(key: string): void {
-        if (sortKey.value === key) {
-            sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
-        } else {
+        if (sortKey.value !== key) {
             sortKey.value = key
             sortDir.value = 'asc'
+            return
         }
+
+        if (sortDir.value === 'asc') {
+            sortDir.value = 'desc'
+            return
+        }
+
+        sortKey.value = null
+        sortDir.value = 'asc'
     }
 
     function sortIcon(key: string): string {

@@ -69,6 +69,8 @@ const totalAmount = computed(() =>
 )
 
 const sortedPurchases = computed(() => {
+    if (!sortKey.value) return [...props.purchases]
+
     return [...props.purchases].sort((a, b) => {
         const values: Record<string, number> = {
             name: a.name.localeCompare(b.name),
